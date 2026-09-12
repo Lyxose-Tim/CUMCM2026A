@@ -1,0 +1,137 @@
+# A 题「药材的烘干问题」集中配置 v1.1（可由标准 YAML 解析器加载；由 config_check.py 校验）
+# 约定：每个数值参数带 value / unit / source；source 取 "题面Q1" "附录2" "附录3" "附录4" "附件1" "附件2" "D0x"（决策编号）"B0x" "H0x"
+# 公式字符串仅作说明；运行时由 props.py 映射到明确函数，不使用 eval。
+version: "1.1"
+status_note: "配置解析通过不等于模型验证通过；生产配置须经 V-3/V-11 验收后由 production.approved=true 标记（当前 false）"
+
+geometry:
+  R0: {value: 0.02, unit: "m", source: "题面Q1"}
+  L: {value: 0.25, unit: "m", source: "题面Q1", note: "固定，H01"}
+
+initial:
+  T0: {value: 28.0, unit: "degC", source: "题面Q1"}
+  C0: {value: 2.55, unit: "kg/kg", source: "题面Q1"}
+
+bc:
+  h: {value: 25.0, unit: "W/(m^2 K)", source: "附录2", reuse_q2_q4: true, reuse_note: "跨问沿用为额外有效系数假设（D04, H07）"}
+  hm: {value: 8.0e-7, unit: "m/s", source: "附录2", reuse_q2_q4: true, reuse_note: "同上"}
+  mass_basis: "effective_C"          # D02-A；候选 emc_isotherm / vapor_density 未实现
+  heat_latent: false                 # D05-A；true 仅用于 8.3 结构性检验（不入主线，不导出 result）
+
+air:
+  file: "附件1.xlsx"
+  read_only: true
+  interp: "linear"                   # D07-A；唯一情景 "smooth121"
+  extrapolation: "hold_window_mean"  # D03-A；对照 "hold_last"
+  window_s: [10800, 14400]           # 含两端点，61 个原始样本，运行时全精度计算均值
+  breakpoints_s: [14400]
+  sensitivity:
+    dT_degC: 0.39                    # 只作用于外推段
+    dC: 0.0011                       # 只作用于外推段
+
+radius:
+  file: "附件2.xlsx"
+  interp: "linear"                   # B12a
+  after_72h: "hold_last"             # B12b：1.198 cm = 0.01198 m，仅在超过 72 h 时生效并记录外推区间
+  inside_tol: 1.0e-12                # r_j <= R(t)*(1+tol) 判域内（含相等）
+
+props:
+  q1:
+    rho: {value: 820.0, unit: "kg/m^3", source: "附录2"}
+    cp: {value: 2600.0, unit: "J/(kg K)", source: "附录2"}
+    k: {value: 0.36, unit: "W/(m K)", source: "附录2"}
+    D_formula: "7e-9*exp(-0.89/C)"   # 说明；函数 props.D_app2(C)
+  q23:
+    rho_formula: "650+128*C"
+    cp_formula: "1450+2736*C/(C+1)"
+    k_formula: "0.21+0.38*C/(C+1)"
+    D_formula: "2.4e-3*exp(-0.45/C)*exp(-3850/T_K)"
+    source: "附录3"
+  q4:
+    rho_formula: "760+90*C"
+    cp_formula: "1850+2150*C/(C+1)"
+    k_formula: "0.12+0.20*C/(C+1)"
+    D_formula: "4.2e-4*exp(-0.30/C)*exp(-3850/T_K)"
+    source: "附录4"
+  rho_role: "effective_heat_capacity"   # D06 Ⅰ-A
+  rho_s0: "rho(C0)/(1+C0)"              # H12；备选 "rho(0)"（仅换算）
+  energy_form: "effective"              # Ⅰ-B "enthalpy_advective" 仅登记，未实现
+  guards:
+    C_floor_for_exp: 1.0e-300           # 仅防除零；C<=0 时 D:=0 并计数，不裁剪状态
+    exp_underflow_arg: -700.0
+
+numerics:
+  scheme_baseline: "backward_euler"     # 验证基线（B06）
+  scheme_production_candidate: "BDF"    # 经验证后可用于长时生产/情景
+  interface: "harmonic"                 # 当前默认（B11）；优先待验收候选 "integral"（8 点 Gauss，16 点对照）
+  N_default: 200
+  N_verify: [100, 200, 400, 800]
+  dt_be_s: 1.0
+  dt_be_verify_s: [1.0, 0.5, 0.25]
+  picard:
+    tol_dC: 1.0e-9                      # 状态增量 ∞-范数，kg/kg
+    tol_dT_K: 1.0e-7
+    tol_res_C_rel: 1.0e-10              # 非线性残差（速率形式）相对 C0/dt 归一化
+    tol_res_T_K_per_s: 1.0e-8
+    max_iter: 30
+  retry:
+    halvings_max: 10
+    dt_min_s: 1.0e-3
+    resample_rule: "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+  bdf:
+    rtol: 1.0e-8
+    atol_C: 1.0e-11
+    atol_T_K: 1.0e-8
+    max_step_data_s: 60.0
+    max_step_after_s: 600.0
+    restart_at_breakpoints: true
+    jac_sparsity: "2x2 块三对角（含 T→D、C→b/k 交叉块）"
+  envelope_tol:
+    C: 1.0e-9
+    T_K: 1.0e-6
+
+q4:
+  kinematics: "affine"                  # D10 K-1
+  frame: "reference_x"                  # D10 N-1
+  mesh_velocity: "solid"
+  axial: "fixed_L"
+
+criterion:
+  threshold: 0.15
+  domain: "full_unrounded"              # 全节点（分段线性重构的全域最大值即节点最大值）
+  event: "continuous_root_on_reconstructed_field"   # g(t)=max_i[(1-a)C_i^n + a C_i^{n+1}] - 0.15
+  post_margin_s: 600
+  t_sample_rule: "首个 60 s 网格点使实测（未舍入）max C < 0.15"
+  t_safe_rule: "首个时刻使 max C < 0.15 - delta；delta 由生产配置与更精细对照估计（数值裕量，非认证）"
+
+output:
+  decimals: 4
+  number_format: "0.0000"
+  excel_max_rows_including_header: 1048576
+  result1: {t_s: "1..1800", cols_cm: "0..2.0 step 0.1", sheets: ["温度", "水分浓度"]}
+  result2: {t_end: "until_dry_1s", cols_cm: "0..2.0 step 0.1", sheets: ["温度", "水分浓度"]}   # 备选 "3h" "72h" 保留不用
+  result3: {t_s: "60..t_sample step 60", cols_cm: "0..2.0 step 0.1", sheet: "Sheet1"}
+  result4: {t_s: "60..t_sample step 60", cols_cm: "0..1.9 step 0.1", surface_col: "药材表面", outside_fill: "blank", sheet: "Sheet1"}
+  a1_text: "时间\\到药材中心的距离"
+
+acceptance:
+  table_points: {dT_degC: 0.01, dC: 5.0e-4}          # 生产配置 vs 更精细对照
+  t_star_h: 0.02
+  early_rows: {times_s: [1, 10, 100], rule: "同源轨迹，误差预算必须覆盖；不得自动豁免"}
+  analytic_spatial: {rule: "半离散精确解对照，二阶收敛", tol_factor: 2.0e-4}
+  analytic_temporal: {rule: "固定细网格，BE dt=1/0.5/0.25 s 一阶收敛"}
+  discrete_balance_rel: 1.0e-12                       # BE 代数收支（实际时间格式权重）
+  flux_integral: {method: "trapezoid_or_ode", refine_check: true, tol_rel: 1.0e-4}
+  energy_residual: {abs_W_per_m: 1.0e-6, rel: 1.0e-8, ref_scale: "2*pi*R*L*h*max(|T_air-T0|_max, 1 K)"}
+
+production:
+  approved: false
+  config_id: null
+  note: "候选（N、interface、scheme）须经 V-1~V-13 验收后写入；配置变化后全部 result/表/图统一重生成"
+
+storage:
+  full_field_cache: false
+  checkpoint_interval_s: 3600
+  keep_profiles_at: "输出采样时刻（1 s/60 s 行）与表格时刻"
+  keep_scalars: ["Cbar", "Cmax", "argmax", "C_surface", "T_surface", "flux", "RM", "RE"]
+  scenario_keep_full_trajectory: false

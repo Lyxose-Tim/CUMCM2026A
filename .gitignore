@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# 候选缓存（大文件，不入库）
+cache/
+
+# 大型逐秒中间产物（如临时导出）
+exports/*.npy
+exports/*.npz
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 保留目录占位
+!cache/.gitkeep

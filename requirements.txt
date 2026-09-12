@@ -1,0 +1,8 @@
+# A题 药材烘干问题 求解依赖
+# 本轮实测环境：Python 3.13.9
+numpy>=2.0
+scipy>=1.13
+openpyxl>=3.1
+PyYAML>=6.0
+matplotlib>=3.8
+pytest>=8.0

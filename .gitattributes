@@ -1,0 +1,12 @@
+# 文本按仓库 LF 归一，检出时按平台
+* text=auto
+
+# 二进制文件不做行尾转换
+*.xlsx binary
+*.xls  binary
+*.pdf  binary
+*.doc  binary
+*.docx binary
+*.png  binary
+*.jpg  binary
+*.mat  binary
