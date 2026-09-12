@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 
 from . import config as cfgmod
+from . import criterion as CR
 from . import data_io
 from .grid import RadialGrid, RefGrid
 from .operators import FVMOperator
@@ -104,3 +105,66 @@ def v3_early_rows_q1(cfg, *, Ns=(200, 400, 800, 1600, 3200), interface="integral
         prev = Csurf[0]
         rows[N] = {"C_surf": Csurf, "d_surf_1s_vs_prev": d1}
     return {"probe_times": list(probe_times), "interface": interface, "by_N": rows}
+
+
+# --------------------------------------------------------------------------
+# Q2/Q3 候选：整个烘干过程（附录 3），达标判据 t*
+# --------------------------------------------------------------------------
+def _cmax_fn_from(res, n):
+    def f(t):
+        return CR.cmax(res.eval([t])[0][:n])
+    return f
+
+
+def q23_detect(cfg, *, N=400, interface="integral", scenario="base",
+               t_cap_h=90.0, post_s=None, question="q23"):
+    """Q2/Q3（或 Q4）达标检测：积分至 C_max 下穿 0.15，续算 post_s 检查回穿。
+
+    返回 (Detection, res, cont, op)。question='q4' 时用参考坐标动域算子。
+    """
+    thr = cfg.threshold
+    post_s = float(cfg.post_margin_s if post_s is None else post_s)
+    if question == "q4":
+        op, env, _ = build_ref_operator(cfg, "q4", N, interface=interface, scenario=scenario)
+    else:
+        op, env = build_fixed_operator(cfg, question, N, interface=interface,
+                                       scenario=scenario, decoupled=False)
+    n = N + 1
+    y0 = initial_state(cfg, N)
+    res = SBDF.integrate_bdf(op, y0, 0.0, t_cap_h * 3600.0, cfg.bdf,
+                             breakpoints=(14400.0,), threshold=thr)
+    if not res.ok:
+        raise RuntimeError(res.message)
+    if res.t_cross is None:
+        raise RuntimeError(f"{question} 未在 {t_cap_h} h 内达标（N={N}, {interface}）")
+
+    t_cross = res.t_cross
+    argmax_node = int(np.argmax(res.y_cross[:n]))
+    cont = SBDF.continue_bdf(op, res.y_cross, t_cross, post_s, cfg.bdf)
+    cmax_cont = _cmax_fn_from(cont, n)
+
+    tt = np.linspace(t_cross, t_cross + post_s, 61)
+    post_max = max(cmax_cont(t) for t in tt)
+    post_ok = post_max <= thr + 1e-9
+
+    t_sample = CR.first_sample_below(cmax_cont, t_cross, 60.0, thr, t_cross + post_s)
+
+    det = CR.Detection(
+        t_cross=t_cross, t_star=t_cross, t_sample=t_sample, t_safe=None,
+        delta=float("nan"), dt_star=float("nan"),
+        argmax_node=argmax_node, post_ok=post_ok, post_max_cmax=post_max,
+        threshold=thr,
+    )
+    return det, res, cont, op
+
+
+def q23_interface_grid_study(cfg, *, Ns=(200, 400, 800), interfaces=("harmonic", "integral"),
+                             t_cap_h=90.0):
+    """V-11/F01：harmonic vs integral × N 的 t*（h）收敛研究（对照 E17 探针）。"""
+    table = {}
+    for interface in interfaces:
+        table[interface] = {}
+        for N in Ns:
+            det, *_ = q23_detect(cfg, N=N, interface=interface, t_cap_h=t_cap_h)
+            table[interface][N] = det.t_cross / 3600.0
+    return table

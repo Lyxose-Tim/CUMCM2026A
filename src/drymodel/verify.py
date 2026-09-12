@@ -183,3 +183,72 @@ def order_from_errors(errs):
         if errs[i + 1] > 0:
             orders.append(float(np.log2(errs[i] / errs[i + 1])))
     return orders
+
+
+# --------------------------------------------------------------------------
+# V-4a/b：离散代数收支 与 独立连续通量积分（BE，固定域）
+# --------------------------------------------------------------------------
+def mass_balances_be(op, y0, t_end, dt, cfg):
+    """V-4a：C̄_N-C̄_0 = -Δt Σ f_n（f 取步末）；V-4b：梯形积分 vs ΔC̄。
+
+    f(t) = (2 h_m / R0)(C_N - C_env)。返回残差与理论差 (Δt/2)(f_0-f_N)。
+    """
+    recs = []
+
+    def rec(t, C, T):
+        f = (2.0 * op.hm / op.R0) * (C[-1] - float(op.env.C_env(t)))
+        recs.append((float(t), op.grid.cbar(C), float(f)))
+
+    solver_be.integrate_be(op, y0, t_end, dt, C0_ref=cfg.C0, picard=cfg.picard,
+                           retry=cfg.retry, record_times={int(t_end)}, scalar_recorder=rec)
+    ts = np.array([r[0] for r in recs])
+    cbar = np.array([r[1] for r in recs])
+    f = np.array([r[2] for r in recs])
+
+    dCbar = cbar[-1] - cbar[0]
+    f_steps = f[1:]                                    # f_n（步末，n=1..Nsteps）
+    balance_rhs = -dt * np.sum(f_steps)                # V-4a
+    res_v4a = abs(dCbar - balance_rhs)
+    rel_v4a = res_v4a / max(abs(dCbar), 1e-300)
+
+    I_trap = dt * (0.5 * f[0] + np.sum(f[1:-1]) + 0.5 * f[-1])
+    diff_v4b = I_trap - (-dCbar)
+    theory_v4b = 0.5 * dt * (f[0] - f[-1])             # (Δt/2)(f_0-f_N)
+    rel_v4b = abs(diff_v4b) / max(abs(dCbar), 1e-300)
+
+    return {
+        "dCbar": float(dCbar), "rel_v4a": float(rel_v4a),
+        "rel_v4b": float(rel_v4b), "diff_v4b": float(diff_v4b),
+        "theory_v4b": float(theory_v4b), "f0": float(f[0]), "fN": float(f[-1]),
+    }
+
+
+def energy_residual_be(op, y0, t_probe, dt, cfg):
+    """V-4c（W/m 口径）：R_E^(ℓ)=2π∫_0^R b(C)∂_tT r dr − 2πR h[T_air−T_s]（固定域）。
+
+    用 BE 差商近似 ∂_tT；返回绝对/相对残差与参考尺度。
+    """
+    recorded = {}
+
+    def rec(t, C, T):
+        recorded[round(t)] = (C.copy(), T.copy())
+
+    solver_be.integrate_be(op, y0, t_probe, dt, C0_ref=cfg.C0, picard=cfg.picard,
+                           retry=cfg.retry,
+                           record_times={int(t_probe), int(t_probe) - int(dt)},
+                           scalar_recorder=rec)
+    tp = int(round(t_probe))
+    C1, T1 = recorded[tp]
+    C0a, T0a = recorded[tp - int(dt)]
+    dTdt = (T1 - T0a) / dt
+
+    R0 = op.R0
+    b = op.props.b(C1)
+    # 2π ∫ b ∂_tT r dr ≈ 2π Σ V_i b_i dTdt_i（V_i 已含 r 度量，单位长度弧度积分 → ×2π）
+    integral = 2.0 * np.pi * np.sum(op.V * b * dTdt)
+    Tair = float(op.env.T_air_K(t_probe))
+    surface = 2.0 * np.pi * R0 * op.h * (Tair - T1[-1])
+    RE = integral - surface
+    ref_scale = 2.0 * np.pi * R0 * op.h * max(abs(Tair - (cfg.T0_K)), 1.0)
+    return {"RE_W_per_m": float(RE), "rel": float(abs(RE) / max(ref_scale, 1e-300)),
+            "ref_scale": float(ref_scale)}
