@@ -435,3 +435,154 @@ def static_limit_q4(cfg, *, N=200, interface="integral", t_probe=3600.0):
     rel = float(np.max(np.abs(ym - yf) / denom))
     absdiff = float(np.max(np.abs(ym - yf)))
     return {"rel_max": rel, "abs_max": absdiff, "t_probe": t_probe, "N": N}
+
+
+# --------------------------------------------------------------------------
+# V-3：按问题 / 输出对象分别实施的网格与时间收敛（W3）
+# --------------------------------------------------------------------------
+# 证据范围分列：
+#  - 空间对照：半离散/高精度参考解（时间近精确）在网格 N 序列上的差 → 空间离散误差；
+#  - 时间对照：固定网格、收紧时间容差/步长 → 时间离散误差。
+#  二者不可互替：时长收敛（t*）不替代表点/固定厘米位置收敛（尤其 Q4 r=1.2 cm）。
+
+def _fixed_op(cfg, question, N, interface="integral"):
+    from . import data_io
+    env = data_io.make_env_functions(cfg, "base")
+    return FVMOperator(RadialGrid(N, cfg.R0), cfg.props(question), env,
+                       h=cfg.h, hm=cfg.hm, R0=cfg.R0, interface=interface,
+                       decoupled=(question == "q1"))
+
+
+def _ref_op(cfg, N, interface="integral"):
+    from . import data_io
+    env = data_io.make_env_functions(cfg, "base")
+    radius = data_io.make_radius_function(cfg)
+    return FVMOperator(RefGrid(N), cfg.props("q4"), env, h=cfg.h, hm=cfg.hm,
+                       R0=cfg.R0, interface=interface, radius_fn=radius), radius
+
+
+def v3_early_surface(cfg, *, question="q1", Ns=(200, 400, 800), interface="integral",
+                     probe_times=(1.0, 10.0, 100.0)):
+    """空间对照：result1/2 早期逐秒行表面 C（半离散/高精度参考）随 N 的相邻差。"""
+    rows = {}
+    prev = {}
+    for N in Ns:
+        op = _fixed_op(cfg, question, N, interface)
+        y0 = np.concatenate([np.full(N + 1, cfg.C0), np.full(N + 1, cfg.T0_K)])
+        ref = hi_precision_reference(op, y0, list(probe_times))
+        surf = {tp: float(ref[k][:N + 1][-1]) for k, tp in enumerate(probe_times)}
+        diffs = {tp: (None if N == Ns[0] else abs(surf[tp] - prev[tp])) for tp in probe_times}
+        rows[N] = {"C_surf": surf, "d_vs_prev": diffs}
+        prev = surf
+    max_diff = max((d for N in Ns[1:] for d in rows[N]["d_vs_prev"].values()), default=0.0)
+    return {"kind": "spatial", "question": question, "interface": interface,
+            "probe_times": list(probe_times), "by_N": rows, "max_adjacent_diff": float(max_diff)}
+
+
+def v3_q4_profile(cfg, *, Ns=(200, 400, 800), interface="integral", t_probe_h=24.0):
+    """空间对照：Q4 全部固定厘米位置（0.1–1.9 cm + 表面）晚期剖面随 N 收敛。
+
+    **单列 r=1.2 cm 回归点**（独立于 t*，不以时长收敛替代）。返回各位置相邻差与最大差·位置。
+    """
+    from . import postprocess as PP
+    t_probe = t_probe_h * 3600.0
+    cols = [round(0.1 * j, 4) for j in range(1, 20)]     # 0.1..1.9
+    prof = {}
+    surf = {}
+    for N in Ns:
+        op, radius = _ref_op(cfg, N, interface)
+        n = N + 1
+        y0 = np.concatenate([np.full(n, cfg.C0), np.full(n, cfg.T0_K)])
+        res = _SBDF.integrate_bdf(op, y0, 0.0, t_probe, cfg.bdf, breakpoints=(14400.0,))
+        if not res.ok:
+            raise RuntimeError(res.message)
+        c = res.eval([t_probe])[0][:n]
+        R_t = float(radius.R(t_probe))
+        row = PP.sample_q4_row(c, op.grid, R_t, cols)
+        prof[N] = {cols[j]: row[j] for j in range(len(cols))}
+        surf[N] = float(c[-1])
+    # 相邻差（仅域内位置）
+    worst = {"diff": 0.0, "r_cm": None, "N_pair": None}
+    for j, rc in enumerate(cols):
+        for a, b in zip(Ns[:-1], Ns[1:]):
+            va, vb = prof[a][rc], prof[b][rc]
+            if va is not None and vb is not None:
+                d = abs(va - vb)
+                if d > worst["diff"]:
+                    worst = {"diff": float(d), "r_cm": rc, "N_pair": (a, b)}
+    # r=1.2 cm 回归点单列
+    reg = {N: prof[N].get(1.2) for N in Ns}
+    reg_diffs = [abs(prof[b][1.2] - prof[a][1.2])
+                 for a, b in zip(Ns[:-1], Ns[1:])
+                 if prof[a].get(1.2) is not None and prof[b].get(1.2) is not None]
+    return {"kind": "spatial", "t_probe_h": t_probe_h, "cols_cm": cols,
+            "profile_by_N": prof, "surface_by_N": surf,
+            "worst": worst, "r1_2cm_by_N": reg,
+            "r1_2cm_max_adjacent_diff": float(max(reg_diffs, default=0.0))}
+
+
+def v3_tstar_grid(cfg, *, question="q23", Ns=(200, 400, 800), interface="integral",
+                  t_cap_h=200.0):
+    """空间对照：t*（h）随 N（阈值穿越，网格收敛）。moving 由 question 推断。"""
+    from . import runners
+    moving = (question == "q4")
+    out = {}
+    for N in Ns:
+        det, *_ = runners.q23_detect(cfg, N=N, interface=interface, question=question,
+                                     moving=moving, t_cap_h=t_cap_h)
+        out[N] = det.t_cross / 3600.0
+    diffs = [abs(out[b] - out[a]) for a, b in zip(Ns[:-1], Ns[1:])]
+    return {"kind": "spatial", "question": question, "by_N": out,
+            "max_adjacent_diff_h": float(max(diffs, default=0.0))}
+
+
+def v3_tstar_time(cfg, *, question="q23", N=400, interface="integral",
+                  rtols=(1e-8, 1e-10), t_cap_h=200.0):
+    """时间对照：固定 N，收紧 BDF rtol（时间/稠密输出精度）→ t*（h）差。"""
+    from . import runners
+    base_bdf = dict(cfg.bdf)
+    out = {}
+    for rt in rtols:
+        bdf = dict(base_bdf); bdf["rtol"] = rt
+        # 临时替换 cfg.bdf：用 q23_detect 但注入 bdf 通过 monkey——改为直接积分
+        import numpy as _np
+        moving = (question == "q4")
+        if moving:
+            op, radius = _ref_op(cfg, N, interface)
+        else:
+            op = _fixed_op(cfg, question, N, interface)
+        n = N + 1
+        y0 = _np.concatenate([_np.full(n, cfg.C0), _np.full(n, cfg.T0_K)])
+        res = _SBDF.integrate_bdf(op, y0, 0.0, t_cap_h * 3600.0, bdf,
+                                  breakpoints=(14400.0,), threshold=cfg.threshold)
+        if res.t_cross is None:
+            raise RuntimeError(f"t* 未在 {t_cap_h} h 内命中（rtol={rt}）")
+        out[rt] = res.t_cross / 3600.0
+    diffs = [abs(out[b] - out[a]) for a, b in zip(rtols[:-1], rtols[1:])]
+    return {"kind": "temporal", "question": question, "N": N, "by_rtol": out,
+            "max_adjacent_diff_h": float(max(diffs, default=0.0))}
+
+
+def v3_flux_mean(cfg, *, question="q23", Ns=(200, 400, 800), interface="integral",
+                 t_probe_s=10800.0):
+    """空间对照：表面通量 f 与平均含水率 C̄ 在 t_probe 随 N 收敛（通量/平均量对象）。"""
+    moving = (question == "q4")
+    out = {}
+    for N in Ns:
+        if moving:
+            op, _ = _ref_op(cfg, N, interface)
+        else:
+            op = _fixed_op(cfg, question, N, interface)
+        n = N + 1
+        y0 = np.concatenate([np.full(n, cfg.C0), np.full(n, cfg.T0_K)])
+        res = _SBDF.integrate_bdf(op, y0, 0.0, t_probe_s, cfg.bdf, breakpoints=(14400.0,))
+        if not res.ok:
+            raise RuntimeError(res.message)
+        y = res.eval([t_probe_s])[0]
+        C = y[:n]
+        out[N] = {"flux": float(op.flux_cbar(t_probe_s, C)), "cbar": float(op.grid.cbar(C))}
+    fdiffs = [abs(out[b]["flux"] - out[a]["flux"]) for a, b in zip(Ns[:-1], Ns[1:])]
+    cdiffs = [abs(out[b]["cbar"] - out[a]["cbar"]) for a, b in zip(Ns[:-1], Ns[1:])]
+    return {"kind": "spatial", "question": question, "t_probe_s": t_probe_s, "by_N": out,
+            "max_flux_diff": float(max(fdiffs, default=0.0)),
+            "max_cbar_diff": float(max(cdiffs, default=0.0))}
