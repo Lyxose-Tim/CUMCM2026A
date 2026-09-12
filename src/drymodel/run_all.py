@@ -203,11 +203,16 @@ def _write_verification_report(cfg, d):
     L.append("|---|---|---|---|")
     L.append(f"| V-4a 离散代数恒等式 rel | {v1['rel_v4a']:.3e} | {v025['rel_v4a']:.3e} | 同一 RHS 恒等式，非时间精度 |")
     L.append(f"| V-4b(BE) 独立梯形 rel | {v1['rel_v4b']:.6e} | {v025['rel_v4b']:.6e} | 粗步 vs 细步：O(Δt) 下降 |")
-    coarse = "未过 5e-4" if v1["rel_v4b"] > 5e-4 else "过"
-    fine = "未过 5e-4" if v025["rel_v4b"] > 5e-4 else "过"
-    L.append(f"\nV-4b(BE) 粗步(Δt=1)={coarse}、细步(Δt=0.25)={fine}（阈值仅示意，真实值见上）；"
+    acc = cfg.raw["acceptance"]
+    tbe = float(acc["flux_integral"]["be"]["tol_rel"])
+    tbdf = float(acc["flux_integral"]["bdf"]["tol_rel_factor_of_rtol"]) * float(cfg.bdf["rtol"])
+    coarse = "粗步未过" if v1["rel_v4b"] > tbe else "过"
+    fine = "细步通过" if v025["rel_v4b"] <= tbe else "未过"
+    L.append(f"\nV-4b(BE) 门槛 {tbe:.0e}：粗步(Δt=1) rel {v1['rel_v4b']:.2e} → {coarse}；"
+             f"细步(Δt=0.25) rel {v025['rel_v4b']:.2e} → {fine}；"
              f"= 变步长理论差 Σ Δt_k(f_{{k-1}}−f_k)/2（diff−theory={abs(v1['diff_v4b']-v1['theory_v4b']):.1e}）。")
-    L.append(f"\nV-4b(BDF) 独立连续通量求积 rel = {vb['rel']:.3e}，加密一致性 rel_refine = {vb['rel_refine']:.3e}"
+    L.append(f"\nV-4b(BDF) 独立连续自适应求积 rel = {vb['rel']:.3e} {'≤' if vb['rel']<=tbdf else '>'} 10×rtol={tbdf:.0e}"
+             f"（{'通过' if vb['rel']<=tbdf else '未过'}），加密复核 rel_refine = {vb['rel_refine']:.3e}"
              f"（区别于同一 RHS 恒等式）。")
     L.append(f"\nV-4c 有效热残差（W/m）= {d['v4c']['RE_W_per_m']:.3e}，相对 {d['v4c']['rel']:.3e}"
              f"（离散代数平衡，时间精度由 V-3）。\n")
