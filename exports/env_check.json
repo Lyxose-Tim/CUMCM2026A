@@ -16,6 +16,184 @@
   "C0": 2.55,
   "h": 25.0,
   "hm": 8e-07,
-  "interface": "harmonic",
-  "production_approved": false
+  "effective_candidate_configs": {
+    "q1": {
+      "digest": "028adb8ba47d8561",
+      "question": "q1",
+      "purpose": "candidate",
+      "N": 800,
+      "interface": "integral",
+      "integral_npts": 8,
+      "scheme": "BDF",
+      "rtol": 1e-08,
+      "atol_C": 1e-11,
+      "atol_T_K": 1e-08,
+      "atol_I": 1e-11,
+      "max_step_data_s": 60.0,
+      "max_step_after_s": 600.0,
+      "restart_at_breakpoints": true,
+      "breakpoints_s": [
+        14400.0
+      ],
+      "air_data_end_s": 14400.0,
+      "dt_be_s": 1.0,
+      "picard": {
+        "max_iter": 30,
+        "tol_dC": 1e-09,
+        "tol_dT_K": 1e-07,
+        "tol_res_C_rel": 1e-10,
+        "tol_res_T_K_per_s": 1e-08
+      },
+      "retry": {
+        "dt_min_s": 0.001,
+        "halvings_max": 10,
+        "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+      },
+      "scenario": "base",
+      "h_mult": 1.0,
+      "hm_mult": 1.0,
+      "sensitivity_dT_degC": 0.39,
+      "sensitivity_dC": 0.0011,
+      "augmented": false
+    },
+    "q23": {
+      "digest": "54cc2666b51a991f",
+      "question": "q23",
+      "purpose": "candidate",
+      "N": 800,
+      "interface": "integral",
+      "integral_npts": 8,
+      "scheme": "BDF",
+      "rtol": 1e-08,
+      "atol_C": 1e-11,
+      "atol_T_K": 1e-08,
+      "atol_I": 1e-11,
+      "max_step_data_s": 60.0,
+      "max_step_after_s": 600.0,
+      "restart_at_breakpoints": true,
+      "breakpoints_s": [
+        14400.0
+      ],
+      "air_data_end_s": 14400.0,
+      "dt_be_s": 1.0,
+      "picard": {
+        "max_iter": 30,
+        "tol_dC": 1e-09,
+        "tol_dT_K": 1e-07,
+        "tol_res_C_rel": 1e-10,
+        "tol_res_T_K_per_s": 1e-08
+      },
+      "retry": {
+        "dt_min_s": 0.001,
+        "halvings_max": 10,
+        "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+      },
+      "scenario": "base",
+      "h_mult": 1.0,
+      "hm_mult": 1.0,
+      "sensitivity_dT_degC": 0.39,
+      "sensitivity_dC": 0.0011,
+      "augmented": true
+    },
+    "q4": {
+      "digest": "c11eb5b2c61c4c53",
+      "question": "q4",
+      "purpose": "candidate",
+      "N": 800,
+      "interface": "integral",
+      "integral_npts": 8,
+      "scheme": "BDF",
+      "rtol": 1e-08,
+      "atol_C": 1e-11,
+      "atol_T_K": 1e-08,
+      "atol_I": 1e-11,
+      "max_step_data_s": 60.0,
+      "max_step_after_s": 600.0,
+      "restart_at_breakpoints": true,
+      "breakpoints_s": [
+        14400.0
+      ],
+      "air_data_end_s": 14400.0,
+      "dt_be_s": 1.0,
+      "picard": {
+        "max_iter": 30,
+        "tol_dC": 1e-09,
+        "tol_dT_K": 1e-07,
+        "tol_res_C_rel": 1e-10,
+        "tol_res_T_K_per_s": 1e-08
+      },
+      "retry": {
+        "dt_min_s": 0.001,
+        "halvings_max": 10,
+        "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+      },
+      "scenario": "base",
+      "h_mult": 1.0,
+      "hm_mult": 1.0,
+      "sensitivity_dT_degC": 0.39,
+      "sensitivity_dC": 0.0011,
+      "augmented": true
+    }
+  },
+  "production_approved": false,
+  "record": {
+    "check_id": "C-1-config",
+    "question": "global",
+    "status": "pass",
+    "metric": {
+      "authoritative_config_validated": true,
+      "mirror_exists": true,
+      "yaml_files_byte_identical": true,
+      "effective_config_digests": {
+        "q1": "028adb8ba47d8561",
+        "q23": "54cc2666b51a991f",
+        "q4": "c11eb5b2c61c4c53"
+      }
+    },
+    "limit": {
+      "authoritative_config_validated_required": true,
+      "mirror_exists_required": true,
+      "yaml_files_byte_identical_required": true
+    },
+    "config": {
+      "source": "E:\\Lyxose\\Documents\\数模国赛\\2026CUMCM\\config\\A题_config.yaml",
+      "mirror": "E:\\Lyxose\\Documents\\数模国赛\\2026CUMCM\\建模方案v1.1\\A题_config.yaml"
+    },
+    "coverage": {
+      "questions": [
+        "q1",
+        "q23",
+        "q4"
+      ],
+      "fields": [
+        "N",
+        "air_data_end_s",
+        "atol_C",
+        "atol_I",
+        "atol_T_K",
+        "augmented",
+        "breakpoints_s",
+        "digest",
+        "dt_be_s",
+        "h_mult",
+        "hm_mult",
+        "integral_npts",
+        "interface",
+        "max_step_after_s",
+        "max_step_data_s",
+        "picard",
+        "purpose",
+        "question",
+        "restart_at_breakpoints",
+        "retry",
+        "rtol",
+        "scenario",
+        "scheme",
+        "sensitivity_dC",
+        "sensitivity_dT_degC"
+      ]
+    },
+    "worst_location": null,
+    "message": ""
+  }
 }

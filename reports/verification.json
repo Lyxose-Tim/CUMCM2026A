@@ -1,0 +1,3351 @@
+{
+  "generated_at": "2026-09-12 02:44:26",
+  "software": {
+    "python": "3.13.9",
+    "numpy": "2.3.5",
+    "scipy": "1.16.3",
+    "openpyxl": "3.1.5",
+    "pyyaml": "6.0.3"
+  },
+  "records": [
+    {
+      "check_id": "C-1-config",
+      "question": "global",
+      "status": "pass",
+      "metric": {
+        "authoritative_config_validated": true,
+        "mirror_exists": true,
+        "yaml_files_byte_identical": true,
+        "effective_config_digests": {
+          "q1": "028adb8ba47d8561",
+          "q23": "54cc2666b51a991f",
+          "q4": "c11eb5b2c61c4c53"
+        }
+      },
+      "limit": {
+        "authoritative_config_validated_required": true,
+        "mirror_exists_required": true,
+        "yaml_files_byte_identical_required": true
+      },
+      "config": {
+        "source": "E:\\Lyxose\\Documents\\数模国赛\\2026CUMCM\\config\\A题_config.yaml",
+        "mirror": "E:\\Lyxose\\Documents\\数模国赛\\2026CUMCM\\建模方案v1.1\\A题_config.yaml"
+      },
+      "coverage": {
+        "questions": [
+          "q1",
+          "q23",
+          "q4"
+        ],
+        "fields": [
+          "N",
+          "air_data_end_s",
+          "atol_C",
+          "atol_I",
+          "atol_T_K",
+          "augmented",
+          "breakpoints_s",
+          "digest",
+          "dt_be_s",
+          "h_mult",
+          "hm_mult",
+          "integral_npts",
+          "interface",
+          "max_step_after_s",
+          "max_step_data_s",
+          "picard",
+          "purpose",
+          "question",
+          "restart_at_breakpoints",
+          "retry",
+          "rtol",
+          "scenario",
+          "scheme",
+          "sensitivity_dC",
+          "sensitivity_dT_degC"
+        ]
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-1-spatial",
+      "question": "q1-heat",
+      "status": "pass",
+      "metric": {
+        "errors": {
+          "200": 0.00010395770647164682,
+          "400": 2.5989390280756197e-05,
+          "800": 6.499079177046951e-06
+        },
+        "orders": [
+          2.000002017107629,
+          1.9996155588470534
+        ]
+      },
+      "limit": {
+        "order_min": 1.7,
+        "order_max": 2.3
+      },
+      "config": {
+        "Ns": [
+          200,
+          400,
+          800
+        ],
+        "t_probe_s": 100.0,
+        "time_reference": "tight BDF semi-discrete"
+      },
+      "coverage": {
+        "kind": "analytic_spatial",
+        "field": "q1-heat",
+        "nodes": [
+          200,
+          400,
+          800
+        ],
+        "probe_time_s": 100.0
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-2-spatial",
+      "question": "q1-mass",
+      "status": "pass",
+      "metric": {
+        "errors": {
+          "200": 0.0002799504969153155,
+          "400": 6.985650139190724e-05,
+          "800": 1.7456981098007418e-05
+        },
+        "orders": [
+          2.0027054453831576,
+          2.0005903005485495
+        ]
+      },
+      "limit": {
+        "order_min": 1.7,
+        "order_max": 2.3
+      },
+      "config": {
+        "Ns": [
+          200,
+          400,
+          800
+        ],
+        "t_probe_s": 100.0,
+        "time_reference": "tight BDF semi-discrete"
+      },
+      "coverage": {
+        "kind": "analytic_spatial",
+        "field": "q1-mass",
+        "nodes": [
+          200,
+          400,
+          800
+        ],
+        "probe_time_s": 100.0
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-1-temporal",
+      "question": "q1-heat",
+      "status": "pass",
+      "metric": {
+        "errors": {
+          "1.0": 0.008549660284870697,
+          "0.5": 0.00427637248259316,
+          "0.25": 0.002138567249630796
+        },
+        "orders": [
+          0.9994795757699262,
+          0.9997429457475485
+        ]
+      },
+      "limit": {
+        "order_min": 0.8,
+        "order_max": 1.2
+      },
+      "config": {
+        "N": 400,
+        "dt_s": [
+          1.0,
+          0.5,
+          0.25
+        ],
+        "picard": {
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08,
+          "max_iter": 30
+        },
+        "retry": {
+          "halvings_max": 10,
+          "dt_min_s": 0.001,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        }
+      },
+      "coverage": {
+        "kind": "BE_temporal",
+        "probe_time_s": 100.0,
+        "runs": [
+          {
+            "dt_s": 1.0,
+            "accepted_substeps": 100
+          },
+          {
+            "dt_s": 0.5,
+            "accepted_substeps": 200
+          },
+          {
+            "dt_s": 0.25,
+            "accepted_substeps": 400
+          }
+        ]
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-2-temporal",
+      "question": "q1-mass",
+      "status": "pass",
+      "metric": {
+        "errors": {
+          "1.0": 0.0003968708980850444,
+          "0.5": 0.00019849792580961534,
+          "0.25": 9.926438577245733e-05
+        },
+        "orders": [
+          0.9995458435671528,
+          0.9997758287302342
+        ]
+      },
+      "limit": {
+        "order_min": 0.8,
+        "order_max": 1.2
+      },
+      "config": {
+        "N": 400,
+        "dt_s": [
+          1.0,
+          0.5,
+          0.25
+        ],
+        "picard": {
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08,
+          "max_iter": 30
+        },
+        "retry": {
+          "halvings_max": 10,
+          "dt_min_s": 0.001,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        }
+      },
+      "coverage": {
+        "kind": "BE_temporal",
+        "probe_time_s": 100.0,
+        "runs": [
+          {
+            "dt_s": 1.0,
+            "accepted_substeps": 100
+          },
+          {
+            "dt_s": 0.5,
+            "accepted_substeps": 200
+          },
+          {
+            "dt_s": 0.25,
+            "accepted_substeps": 400
+          }
+        ]
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-3-q1-space",
+      "question": "q1",
+      "status": "pass",
+      "metric": {
+        "dC": 0.00018990649374250879,
+        "dT_C": 0.00019217438972418677,
+        "dCbar": 6.983187583742279e-07,
+        "dflux": 1.519251949938516e-08,
+        "dCmax": 3.9242764593439006e-09,
+        "dt_star_h": null
+      },
+      "limit": {
+        "dC_max": 0.0005,
+        "dT_C_max": 0.01,
+        "dCbar_max": 0.0005,
+        "dCmax_max": 0.0005,
+        "dflux_max": 3.9999999999999994e-08,
+        "dt_star_h_max": 0.02
+      },
+      "config": {
+        "candidate": {
+          "digest": "028adb8ba47d8561",
+          "question": "q1",
+          "purpose": "candidate",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": false
+        },
+        "reference": {
+          "digest": "4fb55582b1ec2377",
+          "question": "q1",
+          "purpose": "space-reference",
+          "N": 1600,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": false
+        }
+      },
+      "coverage": {
+        "comparison": "space",
+        "rows": 1800,
+        "time_start_s": 1.0,
+        "time_end_s": 1800.0,
+        "positions_cm": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0,
+          1.1,
+          1.2,
+          1.3,
+          1.4,
+          1.5,
+          1.6,
+          1.7,
+          1.8,
+          1.9,
+          2.0
+        ],
+        "variables": [
+          "C",
+          "T",
+          "Cbar",
+          "Cmax",
+          "flux"
+        ]
+      },
+      "worst_location": {
+        "dC": {
+          "time_s": 1.0,
+          "position": 2.0
+        },
+        "dT_C": {
+          "time_s": 1500.0,
+          "position": 2.0
+        },
+        "dCbar": {
+          "time_s": 1800.0,
+          "position": "volume_average"
+        },
+        "dflux": {
+          "time_s": 1.0,
+          "position": "surface"
+        },
+        "dCmax": {
+          "time_s": 1800.0,
+          "position": "full_field_max"
+        }
+      },
+      "message": ""
+    },
+    {
+      "check_id": "V-3-q1-time",
+      "question": "q1",
+      "status": "pass",
+      "metric": {
+        "dC": 2.510870062977233e-07,
+        "dT_C": 0.00020319937897284035,
+        "dCbar": 2.893001393999839e-09,
+        "dflux": 2.0086960496627435e-11,
+        "dCmax": 2.6644908501793907e-10,
+        "dt_star_h": null
+      },
+      "limit": {
+        "dC_max": 0.0005,
+        "dT_C_max": 0.01,
+        "dCbar_max": 0.0005,
+        "dCmax_max": 0.0005,
+        "dflux_max": 3.9999999999999994e-08,
+        "dt_star_h_max": 0.02
+      },
+      "config": {
+        "candidate": {
+          "digest": "028adb8ba47d8561",
+          "question": "q1",
+          "purpose": "candidate",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": false
+        },
+        "reference": {
+          "digest": "f88c0b1a7abd9bc6",
+          "question": "q1",
+          "purpose": "time-reference",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-10,
+          "atol_C": 1e-13,
+          "atol_T_K": 1e-10,
+          "atol_I": 1e-13,
+          "max_step_data_s": 15.0,
+          "max_step_after_s": 150.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": false
+        }
+      },
+      "coverage": {
+        "comparison": "time",
+        "rows": 1800,
+        "time_start_s": 1.0,
+        "time_end_s": 1800.0,
+        "positions_cm": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0,
+          1.1,
+          1.2,
+          1.3,
+          1.4,
+          1.5,
+          1.6,
+          1.7,
+          1.8,
+          1.9,
+          2.0
+        ],
+        "variables": [
+          "C",
+          "T",
+          "Cbar",
+          "Cmax",
+          "flux"
+        ]
+      },
+      "worst_location": {
+        "dC": {
+          "time_s": 2.0,
+          "position": 2.0
+        },
+        "dT_C": {
+          "time_s": 1020.0,
+          "position": 2.0
+        },
+        "dCbar": {
+          "time_s": 1383.0,
+          "position": "volume_average"
+        },
+        "dflux": {
+          "time_s": 2.0,
+          "position": "surface"
+        },
+        "dCmax": {
+          "time_s": 1800.0,
+          "position": "full_field_max"
+        }
+      },
+      "message": ""
+    },
+    {
+      "check_id": "V-3-q23-space",
+      "question": "q23",
+      "status": "pass",
+      "metric": {
+        "dC": 0.00015488120684858941,
+        "dT_C": 0.00022504514498677963,
+        "dCbar": 2.9925362913241216e-06,
+        "dflux": 1.2390496547911222e-08,
+        "dCmax": 3.9918915994974213e-07,
+        "dt_star_h": 2.226284478723528e-05
+      },
+      "limit": {
+        "dC_max": 0.0005,
+        "dT_C_max": 0.01,
+        "dCbar_max": 0.0005,
+        "dCmax_max": 0.0005,
+        "dflux_max": 3.9999999999999994e-08,
+        "dt_star_h_max": 0.02
+      },
+      "config": {
+        "candidate": {
+          "digest": "54cc2666b51a991f",
+          "question": "q23",
+          "purpose": "candidate",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        },
+        "reference": {
+          "digest": "9f08725f2ea5a673",
+          "question": "q23",
+          "purpose": "space-reference",
+          "N": 1600,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        }
+      },
+      "coverage": {
+        "comparison": "space",
+        "rows": 206909,
+        "time_start_s": 1.0,
+        "time_end_s": 206940.0,
+        "positions_cm": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0,
+          1.1,
+          1.2,
+          1.3,
+          1.4,
+          1.5,
+          1.6,
+          1.7,
+          1.8,
+          1.9,
+          2.0
+        ],
+        "variables": [
+          "C",
+          "T",
+          "Cbar",
+          "Cmax",
+          "flux"
+        ]
+      },
+      "worst_location": {
+        "dC": {
+          "time_s": 1.0,
+          "position": 2.0
+        },
+        "dT_C": {
+          "time_s": 960.0,
+          "position": 2.0
+        },
+        "dCbar": {
+          "time_s": 119164.0,
+          "position": "volume_average"
+        },
+        "dflux": {
+          "time_s": 1.0,
+          "position": "surface"
+        },
+        "dCmax": {
+          "time_s": 4039.0,
+          "position": "full_field_max"
+        }
+      },
+      "message": ""
+    },
+    {
+      "check_id": "V-3-q23-time",
+      "question": "q23",
+      "status": "pass",
+      "metric": {
+        "dC": 3.508958364983883e-07,
+        "dT_C": 0.00022740847475688497,
+        "dCbar": 6.166933697038246e-08,
+        "dflux": 2.807166691210384e-11,
+        "dCmax": 1.9261896033739845e-07,
+        "dt_star_h": 3.531879002593996e-07
+      },
+      "limit": {
+        "dC_max": 0.0005,
+        "dT_C_max": 0.01,
+        "dCbar_max": 0.0005,
+        "dCmax_max": 0.0005,
+        "dflux_max": 3.9999999999999994e-08,
+        "dt_star_h_max": 0.02
+      },
+      "config": {
+        "candidate": {
+          "digest": "54cc2666b51a991f",
+          "question": "q23",
+          "purpose": "candidate",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        },
+        "reference": {
+          "digest": "fb3c25d9e9f6bf60",
+          "question": "q23",
+          "purpose": "time-reference",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-10,
+          "atol_C": 1e-13,
+          "atol_T_K": 1e-10,
+          "atol_I": 1e-13,
+          "max_step_data_s": 15.0,
+          "max_step_after_s": 150.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        }
+      },
+      "coverage": {
+        "comparison": "time",
+        "rows": 206909,
+        "time_start_s": 1.0,
+        "time_end_s": 206940.0,
+        "positions_cm": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0,
+          1.1,
+          1.2,
+          1.3,
+          1.4,
+          1.5,
+          1.6,
+          1.7,
+          1.8,
+          1.9,
+          2.0
+        ],
+        "variables": [
+          "C",
+          "T",
+          "Cbar",
+          "Cmax",
+          "flux"
+        ]
+      },
+      "worst_location": {
+        "dC": {
+          "time_s": 11161.0,
+          "position": 2.0
+        },
+        "dT_C": {
+          "time_s": 5460.0,
+          "position": 2.0
+        },
+        "dCbar": {
+          "time_s": 10261.0,
+          "position": "volume_average"
+        },
+        "dflux": {
+          "time_s": 11161.0,
+          "position": "surface"
+        },
+        "dCmax": {
+          "time_s": 7757.0,
+          "position": "full_field_max"
+        }
+      },
+      "message": ""
+    },
+    {
+      "check_id": "V-3-q4-space",
+      "question": "q4",
+      "status": "pass",
+      "metric": {
+        "dC": 0.0002194114226440544,
+        "dT_C": 0.0002624411701503959,
+        "dCbar": 3.0422508419114536e-06,
+        "dflux": 1.0581859181978993e-08,
+        "dCmax": 9.677050165635137e-07,
+        "dC_r1p2cm": 0.0002194114226440544,
+        "mask_mismatches": 0,
+        "dt_star_h": 2.210640217015225e-05
+      },
+      "limit": {
+        "dC_max": 0.0005,
+        "dT_C_max": 0.01,
+        "dCbar_max": 0.0005,
+        "dCmax_max": 0.0005,
+        "dC_r1p2cm_max": 0.0005,
+        "dflux_max": 6.666666666666665e-08,
+        "dt_star_h_max": 0.02,
+        "mask_mismatches_max": 0
+      },
+      "config": {
+        "candidate": {
+          "digest": "c11eb5b2c61c4c53",
+          "question": "q4",
+          "purpose": "candidate",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        },
+        "reference": {
+          "digest": "62a17e55facf35c9",
+          "question": "q4",
+          "purpose": "space-reference",
+          "N": 1600,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        }
+      },
+      "coverage": {
+        "comparison": "space",
+        "rows": 3067,
+        "compared_cells": 44301,
+        "time_start_s": 60.0,
+        "time_end_s": 183960.0,
+        "positions_cm": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0,
+          1.1,
+          1.2,
+          1.3,
+          1.4,
+          1.5,
+          1.6,
+          1.7,
+          1.8,
+          1.9,
+          "surface"
+        ],
+        "variables": [
+          "C",
+          "T",
+          "Cbar",
+          "Cmax",
+          "flux",
+          "domain_mask"
+        ]
+      },
+      "worst_location": {
+        "dC": {
+          "time_s": 124620.0,
+          "position": 1.2
+        },
+        "dT_C": {
+          "time_s": 4620.0,
+          "position": "surface"
+        },
+        "dCbar": {
+          "time_s": 720.0,
+          "position": "volume_average"
+        },
+        "dflux": {
+          "time_s": 60.0,
+          "position": "surface"
+        },
+        "dCmax": {
+          "time_s": 11760.0,
+          "position": "full_field_max"
+        },
+        "dC_r1p2cm": {
+          "time_s": 124620.0,
+          "position": 1.2
+        },
+        "mask_mismatches": null
+      },
+      "message": ""
+    },
+    {
+      "check_id": "V-3-q4-time",
+      "question": "q4",
+      "status": "pass",
+      "metric": {
+        "dC": 6.516987552940279e-07,
+        "dT_C": 0.00024892978217394557,
+        "dCbar": 6.438223087990025e-08,
+        "dflux": 6.406475843529977e-11,
+        "dCmax": 1.1447718084589553e-07,
+        "dC_r1p2cm": 6.286989107096019e-08,
+        "mask_mismatches": 0,
+        "dt_star_h": 1.3533540723642545e-06
+      },
+      "limit": {
+        "dC_max": 0.0005,
+        "dT_C_max": 0.01,
+        "dCbar_max": 0.0005,
+        "dCmax_max": 0.0005,
+        "dC_r1p2cm_max": 0.0005,
+        "dflux_max": 6.666666666666665e-08,
+        "dt_star_h_max": 0.02,
+        "mask_mismatches_max": 0
+      },
+      "config": {
+        "candidate": {
+          "digest": "c11eb5b2c61c4c53",
+          "question": "q4",
+          "purpose": "candidate",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        },
+        "reference": {
+          "digest": "a6df1c6baa2c1486",
+          "question": "q4",
+          "purpose": "time-reference",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-10,
+          "atol_C": 1e-13,
+          "atol_T_K": 1e-10,
+          "atol_I": 1e-13,
+          "max_step_data_s": 15.0,
+          "max_step_after_s": 150.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        }
+      },
+      "coverage": {
+        "comparison": "time",
+        "rows": 3067,
+        "compared_cells": 44301,
+        "time_start_s": 60.0,
+        "time_end_s": 183960.0,
+        "positions_cm": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0,
+          1.1,
+          1.2,
+          1.3,
+          1.4,
+          1.5,
+          1.6,
+          1.7,
+          1.8,
+          1.9,
+          "surface"
+        ],
+        "variables": [
+          "C",
+          "T",
+          "Cbar",
+          "Cmax",
+          "flux",
+          "domain_mask"
+        ]
+      },
+      "worst_location": {
+        "dC": {
+          "time_s": 7140.0,
+          "position": "surface"
+        },
+        "dT_C": {
+          "time_s": 4620.0,
+          "position": "surface"
+        },
+        "dCbar": {
+          "time_s": 27000.0,
+          "position": "volume_average"
+        },
+        "dflux": {
+          "time_s": 7140.0,
+          "position": "surface"
+        },
+        "dCmax": {
+          "time_s": 27000.0,
+          "position": "full_field_max"
+        },
+        "dC_r1p2cm": {
+          "time_s": 7200.0,
+          "position": 1.2
+        },
+        "mask_mismatches": null
+      },
+      "message": ""
+    },
+    {
+      "check_id": "V-4-BDF",
+      "question": "q23",
+      "status": "pass",
+      "metric": {
+        "max_abs_augmented_residual": 3.1086244689504383e-15,
+        "relative_augmented_residual": 1.2190684191962503e-15,
+        "independent_flux_integral": 2.4258227682858595,
+        "augmented_I_change": 2.4258226677723402,
+        "relative_independent_quadrature_difference": 4.1434817400659566e-08,
+        "relative_quadrature_refinement_difference": 4.588973739815211e-08,
+        "time_refined_augmented_I_change": 2.4258226682966963,
+        "relative_time_refined_I_difference": 2.161559956287289e-10,
+        "quadrature_refinements": [
+          {
+            "step_s": 15.0,
+            "samples": 13835,
+            "integral": 2.4258341615287162,
+            "relative_to_augmented_I": 4.738085981588164e-06,
+            "relative_to_previous_level": null
+          },
+          {
+            "step_s": 7.5,
+            "samples": 27669,
+            "integral": 2.4258267423547646,
+            "relative_to_augmented_I": 1.6796703561572708e-06,
+            "relative_to_previous_level": 3.058410488309459e-06
+          },
+          {
+            "step_s": 3.75,
+            "samples": 55337,
+            "integral": 2.425824123833759,
+            "relative_to_augmented_I": 6.002340722971405e-07,
+            "relative_to_previous_level": 1.0794356359460826e-06
+          },
+          {
+            "step_s": 1.875,
+            "samples": 110672,
+            "integral": 2.4258232020862587,
+            "relative_to_augmented_I": 2.2026091418048326e-07,
+            "relative_to_previous_level": 3.7997307442344047e-07
+          },
+          {
+            "step_s": 0.9375,
+            "samples": 221342,
+            "integral": 2.4258228796062293,
+            "relative_to_augmented_I": 8.732455670024456e-08,
+            "relative_to_previous_level": 1.329363458716312e-07
+          },
+          {
+            "step_s": 0.46875,
+            "samples": 442682,
+            "integral": 2.4258227682858595,
+            "relative_to_augmented_I": 4.1434817400659566e-08,
+            "relative_to_previous_level": 4.588973739815211e-08
+          }
+        ]
+      },
+      "limit": {
+        "relative_augmented_residual_max": 1e-12,
+        "relative_independent_quadrature_difference_max": 1e-07,
+        "relative_quadrature_refinement_difference_max": 1e-07,
+        "relative_time_refined_I_difference_max": 1e-07
+      },
+      "config": {
+        "candidate": {
+          "digest": "54cc2666b51a991f",
+          "question": "q23",
+          "purpose": "candidate",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        },
+        "time_reference": {
+          "digest": "fb3c25d9e9f6bf60",
+          "question": "q23",
+          "purpose": "time-reference",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-10,
+          "atol_C": 1e-13,
+          "atol_T_K": 1e-10,
+          "atol_I": 1e-13,
+          "max_step_data_s": 15.0,
+          "max_step_after_s": 150.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        }
+      },
+      "coverage": {
+        "t_start_s": 0.0,
+        "t_end_s": 207506.49687158727,
+        "candidate_trajectory_end_s": 207506.4981430637,
+        "time_reference_trajectory_end_s": 207506.49687158727,
+        "augmented_samples": 25,
+        "independent_quadrature_initial_step_s": 15.0,
+        "independent_quadrature_final_step_s": 0.46875,
+        "independent_quadrature_samples": 442682,
+        "independent_quadrature_levels": 6,
+        "moving_domain": false
+      },
+      "worst_location": {
+        "augmented_residual_time_s": 181568.18587518076
+      },
+      "message": ""
+    },
+    {
+      "check_id": "V-4-BDF",
+      "question": "q4",
+      "status": "pass",
+      "metric": {
+        "max_abs_augmented_residual": 4.884981308350689e-15,
+        "relative_augmented_residual": 1.9156789444512508e-15,
+        "independent_flux_integral": 2.431805069987717,
+        "augmented_I_change": 2.4318049610225403,
+        "relative_independent_quadrature_difference": 4.4808353724102735e-08,
+        "relative_quadrature_refinement_difference": 7.144878036583787e-08,
+        "time_refined_augmented_I_change": 2.4318049629627234,
+        "relative_time_refined_I_difference": 7.978366500687657e-10,
+        "quadrature_refinements": [
+          {
+            "step_s": 15.0,
+            "samples": 12304,
+            "integral": 2.4318307729810433,
+            "relative_to_augmented_I": 1.0614321015361297e-05,
+            "relative_to_previous_level": null
+          },
+          {
+            "step_s": 7.5,
+            "samples": 24606,
+            "integral": 2.4318138078795846,
+            "relative_to_augmented_I": 3.6379796842571204e-06,
+            "relative_to_previous_level": 6.976315951408475e-06
+          },
+          {
+            "step_s": 3.75,
+            "samples": 49210,
+            "integral": 2.4318079044419516,
+            "relative_to_augmented_I": 1.2103846560452844e-06,
+            "relative_to_previous_level": 2.4275920898916193e-06
+          },
+          {
+            "step_s": 1.875,
+            "samples": 98418,
+            "integral": 2.431805892784454,
+            "relative_to_augmented_I": 3.831565149268168e-07,
+            "relative_to_previous_level": 8.272278241607374e-07
+          },
+          {
+            "step_s": 0.9375,
+            "samples": 196835,
+            "integral": 2.4318052437372235,
+            "relative_to_augmented_I": 1.1625713729144282e-07,
+            "relative_to_previous_level": 2.6689934660641995e-07
+          },
+          {
+            "step_s": 0.46875,
+            "samples": 393668,
+            "integral": 2.431805069987717,
+            "relative_to_augmented_I": 4.4808353724102735e-08,
+            "relative_to_previous_level": 7.144878036583787e-08
+          }
+        ]
+      },
+      "limit": {
+        "relative_augmented_residual_max": 1e-12,
+        "relative_independent_quadrature_difference_max": 1e-07,
+        "relative_quadrature_refinement_difference_max": 1e-07,
+        "relative_time_refined_I_difference_max": 1e-07
+      },
+      "config": {
+        "candidate": {
+          "digest": "c11eb5b2c61c4c53",
+          "question": "q4",
+          "purpose": "candidate",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        },
+        "time_reference": {
+          "digest": "a6df1c6baa2c1486",
+          "question": "q4",
+          "purpose": "time-reference",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-10,
+          "atol_C": 1e-13,
+          "atol_T_K": 1e-10,
+          "atol_I": 1e-13,
+          "max_step_data_s": 15.0,
+          "max_step_after_s": 150.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        }
+      },
+      "coverage": {
+        "t_start_s": 0.0,
+        "t_end_s": 184531.30085372578,
+        "candidate_trajectory_end_s": 184531.30572580043,
+        "time_reference_trajectory_end_s": 184531.30085372578,
+        "augmented_samples": 25,
+        "independent_quadrature_initial_step_s": 15.0,
+        "independent_quadrature_final_step_s": 0.46875,
+        "independent_quadrature_samples": 393668,
+        "independent_quadrature_levels": 6,
+        "moving_domain": true
+      },
+      "worst_location": {
+        "augmented_residual_time_s": 130709.67488910863
+      },
+      "message": ""
+    },
+    {
+      "check_id": "V-5",
+      "question": "q1",
+      "status": "pass",
+      "metric": {
+        "C_min": 1.5102359196501456,
+        "C_max": 2.5500000000000007,
+        "T_min_K": 301.15,
+        "T_max_K": 309.93556531668975
+      },
+      "limit": {
+        "C_min": 0.019629999000000002,
+        "C_max": 2.550000001,
+        "T_min_K": 301.149999,
+        "T_max_K": 323.39600099999996,
+        "finite_required": true
+      },
+      "config": {
+        "digest": "028adb8ba47d8561",
+        "question": "q1",
+        "purpose": "candidate",
+        "N": 800,
+        "interface": "integral",
+        "integral_npts": 8,
+        "scheme": "BDF",
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "breakpoints_s": [
+          14400.0
+        ],
+        "air_data_end_s": 14400.0,
+        "dt_be_s": 1.0,
+        "picard": {
+          "max_iter": 30,
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08
+        },
+        "retry": {
+          "dt_min_s": 0.001,
+          "halvings_max": 10,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        },
+        "scenario": "base",
+        "h_mult": 1.0,
+        "hm_mult": 1.0,
+        "sensitivity_dT_degC": 0.39,
+        "sensitivity_dC": 0.0011,
+        "augmented": false
+      },
+      "coverage": {
+        "accepted_solver_states": 538,
+        "dense_or_reconstructed_times": 1800,
+        "t_start_s": 0.0,
+        "t_end_s": 1800.0
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-5",
+      "question": "q23",
+      "status": "pass",
+      "metric": {
+        "C_min": 0.05263260543294119,
+        "C_max": 2.5500000000000007,
+        "T_min_K": 301.15,
+        "T_max_K": 323.1898087390529
+      },
+      "limit": {
+        "C_min": 0.019629999000000002,
+        "C_max": 2.550000001,
+        "T_min_K": 301.149999,
+        "T_max_K": 323.39600099999996,
+        "finite_required": true
+      },
+      "config": {
+        "digest": "54cc2666b51a991f",
+        "question": "q23",
+        "purpose": "candidate",
+        "N": 800,
+        "interface": "integral",
+        "integral_npts": 8,
+        "scheme": "BDF",
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "breakpoints_s": [
+          14400.0
+        ],
+        "air_data_end_s": 14400.0,
+        "dt_be_s": 1.0,
+        "picard": {
+          "max_iter": 30,
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08
+        },
+        "retry": {
+          "dt_min_s": 0.001,
+          "halvings_max": 10,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        },
+        "scenario": "base",
+        "h_mult": 1.0,
+        "hm_mult": 1.0,
+        "sensitivity_dT_degC": 0.39,
+        "sensitivity_dC": 0.0011,
+        "augmented": true
+      },
+      "coverage": {
+        "accepted_solver_states": 3864,
+        "dense_or_reconstructed_times": 206909,
+        "t_start_s": 0.0,
+        "t_end_s": 207506.4981430637
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-5",
+      "question": "q4",
+      "status": "pass",
+      "metric": {
+        "C_min": 0.05258852379693136,
+        "C_max": 2.5500000000000003,
+        "T_min_K": 301.15,
+        "T_max_K": 323.20006073970603
+      },
+      "limit": {
+        "C_min": 0.019629999000000002,
+        "C_max": 2.550000001,
+        "T_min_K": 301.149999,
+        "T_max_K": 323.39600099999996,
+        "finite_required": true
+      },
+      "config": {
+        "digest": "c11eb5b2c61c4c53",
+        "question": "q4",
+        "purpose": "candidate",
+        "N": 800,
+        "interface": "integral",
+        "integral_npts": 8,
+        "scheme": "BDF",
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "breakpoints_s": [
+          14400.0
+        ],
+        "air_data_end_s": 14400.0,
+        "dt_be_s": 1.0,
+        "picard": {
+          "max_iter": 30,
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08
+        },
+        "retry": {
+          "dt_min_s": 0.001,
+          "halvings_max": 10,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        },
+        "scenario": "base",
+        "h_mult": 1.0,
+        "hm_mult": 1.0,
+        "sensitivity_dT_degC": 0.39,
+        "sensitivity_dC": 0.0011,
+        "augmented": true
+      },
+      "coverage": {
+        "accepted_solver_states": 4752,
+        "dense_or_reconstructed_times": 3067,
+        "t_start_s": 0.0,
+        "t_end_s": 184531.30572580043
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-6",
+      "question": "q23",
+      "status": "pass",
+      "metric": {
+        "delta_C": 2.3344742500208682e-08,
+        "dt_star_h": 2.226284478723528e-05,
+        "dt_star_space_h": 2.226284478723528e-05,
+        "dt_star_time_h": 3.531879002593996e-07,
+        "sample_time_s": 206940.0,
+        "sample_cmax": 0.14999024341614745,
+        "post_max_cmax": 0.15,
+        "delta_probes": [
+          {
+            "reference": "space",
+            "time_s": 206906.4981430637,
+            "difference": 2.3344711913564353e-08
+          },
+          {
+            "reference": "space",
+            "time_s": 206906.41799682248,
+            "difference": 2.3344742500208682e-08
+          },
+          {
+            "reference": "space",
+            "time_s": 206940.0,
+            "difference": 2.334128007541736e-08
+          },
+          {
+            "reference": "time",
+            "time_s": 206906.4981430637,
+            "difference": 3.70351499467958e-10
+          },
+          {
+            "reference": "time",
+            "time_s": 206906.49687158727,
+            "difference": 3.7035147171238236e-10
+          },
+          {
+            "reference": "time",
+            "time_s": 206940.0,
+            "difference": 5.845848249919072e-10
+          }
+        ]
+      },
+      "limit": {
+        "delta_C_max": 0.0005,
+        "dt_star_h_max": 0.02,
+        "sample_cmax_strict": 0.15,
+        "post_cmax_max": 0.150000001
+      },
+      "config": {
+        "candidate": {
+          "digest": "54cc2666b51a991f",
+          "question": "q23",
+          "purpose": "candidate",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        },
+        "space_reference": {
+          "digest": "9f08725f2ea5a673",
+          "question": "q23",
+          "purpose": "space-reference",
+          "N": 1600,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        },
+        "time_reference": {
+          "digest": "fb3c25d9e9f6bf60",
+          "question": "q23",
+          "purpose": "time-reference",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-10,
+          "atol_C": 1e-13,
+          "atol_T_K": 1e-10,
+          "atol_I": 1e-13,
+          "max_step_data_s": 15.0,
+          "max_step_after_s": 150.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        }
+      },
+      "coverage": {
+        "event": "continuous Cmax downward root",
+        "strict_sample_grid_s": 60,
+        "post_event_check_s": 600.0
+      },
+      "worst_location": {
+        "argmax_node": 0,
+        "delta_C": {
+          "reference": "space",
+          "time_s": 206906.41799682248,
+          "difference": 2.3344742500208682e-08
+        }
+      },
+      "message": ""
+    },
+    {
+      "check_id": "V-6",
+      "question": "q4",
+      "status": "pass",
+      "metric": {
+        "delta_C": 4.0864744560442645e-08,
+        "dt_star_h": 2.210640217015225e-05,
+        "dt_star_space_h": 2.210640217015225e-05,
+        "dt_star_time_h": 1.3533540723642545e-06,
+        "sample_time_s": 183960.0,
+        "sample_cmax": 0.1499852689099634,
+        "post_max_cmax": 0.15,
+        "delta_probes": [
+          {
+            "reference": "space",
+            "time_s": 183931.30572580043,
+            "difference": 4.0864711586818814e-08
+          },
+          {
+            "reference": "space",
+            "time_s": 183931.22614275262,
+            "difference": 4.0864744560442645e-08
+          },
+          {
+            "reference": "space",
+            "time_s": 183960.0,
+            "difference": 4.0856056676696895e-08
+          },
+          {
+            "reference": "time",
+            "time_s": 183931.30572580043,
+            "difference": 2.501738483040583e-09
+          },
+          {
+            "reference": "time",
+            "time_s": 183931.30085372578,
+            "difference": 2.501738705085188e-09
+          },
+          {
+            "reference": "time",
+            "time_s": 183960.0,
+            "difference": 2.8231628146357934e-09
+          }
+        ]
+      },
+      "limit": {
+        "delta_C_max": 0.0005,
+        "dt_star_h_max": 0.02,
+        "sample_cmax_strict": 0.15,
+        "post_cmax_max": 0.150000001
+      },
+      "config": {
+        "candidate": {
+          "digest": "c11eb5b2c61c4c53",
+          "question": "q4",
+          "purpose": "candidate",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        },
+        "space_reference": {
+          "digest": "62a17e55facf35c9",
+          "question": "q4",
+          "purpose": "space-reference",
+          "N": 1600,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        },
+        "time_reference": {
+          "digest": "a6df1c6baa2c1486",
+          "question": "q4",
+          "purpose": "time-reference",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-10,
+          "atol_C": 1e-13,
+          "atol_T_K": 1e-10,
+          "atol_I": 1e-13,
+          "max_step_data_s": 15.0,
+          "max_step_after_s": 150.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        }
+      },
+      "coverage": {
+        "event": "continuous Cmax downward root",
+        "strict_sample_grid_s": 60,
+        "post_event_check_s": 600.0
+      },
+      "worst_location": {
+        "argmax_node": 0,
+        "delta_C": {
+          "reference": "space",
+          "time_s": 183931.22614275262,
+          "difference": 4.0864744560442645e-08
+        }
+      },
+      "message": ""
+    },
+    {
+      "check_id": "V-10",
+      "question": "q4",
+      "status": "pass",
+      "metric": {
+        "relative_max": 3.56216732255534e-08,
+        "absolute_max": 1.0331232033422566e-05
+      },
+      "limit": {
+        "relative_max": 1e-06
+      },
+      "config": {
+        "digest": "a37f5defecdd5980",
+        "question": "q4",
+        "purpose": "V-10-static-limit",
+        "N": 200,
+        "interface": "integral",
+        "integral_npts": 8,
+        "scheme": "BDF",
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "breakpoints_s": [
+          14400.0
+        ],
+        "air_data_end_s": 14400.0,
+        "dt_be_s": 1.0,
+        "picard": {
+          "max_iter": 30,
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08
+        },
+        "retry": {
+          "dt_min_s": 0.001,
+          "halvings_max": 10,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        },
+        "scenario": "base",
+        "h_mult": 1.0,
+        "hm_mult": 1.0,
+        "sensitivity_dT_degC": 0.39,
+        "sensitivity_dC": 0.0011,
+        "augmented": false
+      },
+      "coverage": {
+        "t_probe_s": 3600.0,
+        "nodes": 201,
+        "comparison": "R(t)=R0 reference-domain vs fixed-domain"
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-13",
+      "question": "q4",
+      "status": "pass",
+      "metric": {
+        "source_radius_match_max_m": 0.0,
+        "diffusion_scale_abs_error": 0.0,
+        "surface_mass_coeff_abs_error": 0.0,
+        "surface_heat_coeff_abs_error": 0.0,
+        "flux_factor_abs_error": 0.0,
+        "source_finite_positive": true,
+        "source_nonincreasing": true,
+        "extrapolation_marked": true,
+        "extrapolation_constant_abs_error_m": 0.0,
+        "table_extrapolation_markers_match": true
+      },
+      "limit": {
+        "absolute_error_max": 1e-12,
+        "source_finite_positive_required": true,
+        "source_nonincreasing_required": true,
+        "extrapolation_mark_required": true,
+        "table_marker_match_required": true
+      },
+      "config": {
+        "digest": "c11eb5b2c61c4c53",
+        "question": "q4",
+        "purpose": "candidate",
+        "N": 800,
+        "interface": "integral",
+        "integral_npts": 8,
+        "scheme": "BDF",
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "breakpoints_s": [
+          14400.0
+        ],
+        "air_data_end_s": 14400.0,
+        "dt_be_s": 1.0,
+        "picard": {
+          "max_iter": 30,
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08
+        },
+        "retry": {
+          "dt_min_s": 0.001,
+          "halvings_max": 10,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        },
+        "scenario": "base",
+        "h_mult": 1.0,
+        "hm_mult": 1.0,
+        "sensitivity_dT_degC": 0.39,
+        "sensitivity_dC": 0.0011,
+        "augmented": true
+      },
+      "coverage": {
+        "moving_domain": true,
+        "source_radius_rows": 145,
+        "operator_probe_times_s": [
+          0.0,
+          14400.0,
+          184531.30572580043
+        ],
+        "source_last_time_s": 259200.0,
+        "extrapolation_probe_time_s": 259201.0
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-11-q1-quadrature",
+      "question": "q1",
+      "status": "pass",
+      "metric": {
+        "dC": 2.1558754581540995e-07,
+        "dT_C": 0.00015082499834306873,
+        "dCbar": 4.632811467786269e-09,
+        "dflux": 1.724700368415863e-11,
+        "dCmax": 1.503934754509828e-10,
+        "dt_star_h": null
+      },
+      "limit": {
+        "dC_max": 0.0005,
+        "dT_C_max": 0.01,
+        "dCbar_max": 0.0005,
+        "dCmax_max": 0.0005,
+        "dflux_max": 3.9999999999999994e-08,
+        "dt_star_h_max": 0.02
+      },
+      "config": {
+        "candidate": {
+          "digest": "028adb8ba47d8561",
+          "question": "q1",
+          "purpose": "candidate",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": false
+        },
+        "reference": {
+          "digest": "7b76af7b5fcaec5b",
+          "question": "q1",
+          "purpose": "quadrature-reference",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 16,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": false
+        }
+      },
+      "coverage": {
+        "comparison": "interface_quadrature",
+        "rows": 1800,
+        "time_start_s": 1.0,
+        "time_end_s": 1800.0,
+        "positions_cm": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0,
+          1.1,
+          1.2,
+          1.3,
+          1.4,
+          1.5,
+          1.6,
+          1.7,
+          1.8,
+          1.9,
+          2.0
+        ],
+        "variables": [
+          "C",
+          "T",
+          "Cbar",
+          "Cmax",
+          "flux"
+        ]
+      },
+      "worst_location": {
+        "dC": {
+          "time_s": 1381.0,
+          "position": 2.0
+        },
+        "dT_C": {
+          "time_s": 1620.0,
+          "position": 2.0
+        },
+        "dCbar": {
+          "time_s": 1409.0,
+          "position": "volume_average"
+        },
+        "dflux": {
+          "time_s": 1381.0,
+          "position": "surface"
+        },
+        "dCmax": {
+          "time_s": 1800.0,
+          "position": "full_field_max"
+        }
+      },
+      "message": ""
+    },
+    {
+      "check_id": "V-11-q23-quadrature",
+      "question": "q23",
+      "status": "pass",
+      "metric": {
+        "dC": 3.8322860218542587e-07,
+        "dT_C": 0.00021357816524414375,
+        "dCbar": 1.061946659497437e-07,
+        "dflux": 3.0658288164035416e-11,
+        "dCmax": 2.719078997515112e-07,
+        "dt_star_h": 1.830005516012534e-07
+      },
+      "limit": {
+        "dC_max": 0.0005,
+        "dT_C_max": 0.01,
+        "dCbar_max": 0.0005,
+        "dCmax_max": 0.0005,
+        "dflux_max": 3.9999999999999994e-08,
+        "dt_star_h_max": 0.02
+      },
+      "config": {
+        "candidate": {
+          "digest": "54cc2666b51a991f",
+          "question": "q23",
+          "purpose": "candidate",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        },
+        "reference": {
+          "digest": "9115e9ec35710c9e",
+          "question": "q23",
+          "purpose": "quadrature-reference",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 16,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        }
+      },
+      "coverage": {
+        "comparison": "interface_quadrature",
+        "rows": 206909,
+        "time_start_s": 1.0,
+        "time_end_s": 206940.0,
+        "positions_cm": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0,
+          1.1,
+          1.2,
+          1.3,
+          1.4,
+          1.5,
+          1.6,
+          1.7,
+          1.8,
+          1.9,
+          2.0
+        ],
+        "variables": [
+          "C",
+          "T",
+          "Cbar",
+          "Cmax",
+          "flux"
+        ]
+      },
+      "worst_location": {
+        "dC": {
+          "time_s": 13201.0,
+          "position": 2.0
+        },
+        "dT_C": {
+          "time_s": 12960.0,
+          "position": 2.0
+        },
+        "dCbar": {
+          "time_s": 10568.0,
+          "position": "volume_average"
+        },
+        "dflux": {
+          "time_s": 13201.0,
+          "position": "surface"
+        },
+        "dCmax": {
+          "time_s": 10010.0,
+          "position": "full_field_max"
+        }
+      },
+      "message": ""
+    },
+    {
+      "check_id": "V-11-q4-quadrature",
+      "question": "q4",
+      "status": "pass",
+      "metric": {
+        "dC": 7.389884706388017e-07,
+        "dT_C": 0.00025672940392951205,
+        "dCbar": 1.0193354871290694e-07,
+        "dflux": 7.659896042379755e-11,
+        "dCmax": 1.8523325451269557e-07,
+        "dC_r1p2cm": 9.763683084251795e-08,
+        "mask_mismatches": 0,
+        "dt_star_h": 3.7246076445285325e-06
+      },
+      "limit": {
+        "dC_max": 0.0005,
+        "dT_C_max": 0.01,
+        "dCbar_max": 0.0005,
+        "dCmax_max": 0.0005,
+        "dC_r1p2cm_max": 0.0005,
+        "dflux_max": 6.666666666666665e-08,
+        "dt_star_h_max": 0.02,
+        "mask_mismatches_max": 0
+      },
+      "config": {
+        "candidate": {
+          "digest": "c11eb5b2c61c4c53",
+          "question": "q4",
+          "purpose": "candidate",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 8,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        },
+        "reference": {
+          "digest": "addf6218b9cf5fe2",
+          "question": "q4",
+          "purpose": "quadrature-reference",
+          "N": 800,
+          "interface": "integral",
+          "integral_npts": 16,
+          "scheme": "BDF",
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "breakpoints_s": [
+            14400.0
+          ],
+          "air_data_end_s": 14400.0,
+          "dt_be_s": 1.0,
+          "picard": {
+            "max_iter": 30,
+            "tol_dC": 1e-09,
+            "tol_dT_K": 1e-07,
+            "tol_res_C_rel": 1e-10,
+            "tol_res_T_K_per_s": 1e-08
+          },
+          "retry": {
+            "dt_min_s": 0.001,
+            "halvings_max": 10,
+            "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+          },
+          "scenario": "base",
+          "h_mult": 1.0,
+          "hm_mult": 1.0,
+          "sensitivity_dT_degC": 0.39,
+          "sensitivity_dC": 0.0011,
+          "augmented": true
+        }
+      },
+      "coverage": {
+        "comparison": "interface_quadrature",
+        "rows": 3067,
+        "compared_cells": 44301,
+        "time_start_s": 60.0,
+        "time_end_s": 183960.0,
+        "positions_cm": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0,
+          1.1,
+          1.2,
+          1.3,
+          1.4,
+          1.5,
+          1.6,
+          1.7,
+          1.8,
+          1.9,
+          "surface"
+        ],
+        "variables": [
+          "C",
+          "T",
+          "Cbar",
+          "Cmax",
+          "flux",
+          "domain_mask"
+        ]
+      },
+      "worst_location": {
+        "dC": {
+          "time_s": 11160.0,
+          "position": "surface"
+        },
+        "dT_C": {
+          "time_s": 9600.0,
+          "position": "surface"
+        },
+        "dCbar": {
+          "time_s": 25620.0,
+          "position": "volume_average"
+        },
+        "dflux": {
+          "time_s": 11160.0,
+          "position": "surface"
+        },
+        "dCmax": {
+          "time_s": 25200.0,
+          "position": "full_field_max"
+        },
+        "dC_r1p2cm": {
+          "time_s": 10140.0,
+          "position": 1.2
+        },
+        "mask_mismatches": null
+      },
+      "message": ""
+    },
+    {
+      "check_id": "V-4a",
+      "question": "fixed",
+      "status": "pass",
+      "metric": {
+        "relative_residual": 1.6451482821352073e-14
+      },
+      "limit": {
+        "relative_residual_max": 1e-12
+      },
+      "config": {
+        "digest": "44525691eb3a3879",
+        "question": "q1",
+        "purpose": "V-4-BE-dt-1",
+        "N": 200,
+        "interface": "harmonic",
+        "integral_npts": 8,
+        "scheme": "backward_euler",
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "breakpoints_s": [
+          14400.0
+        ],
+        "air_data_end_s": 14400.0,
+        "dt_be_s": 1.0,
+        "picard": {
+          "max_iter": 30,
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08
+        },
+        "retry": {
+          "dt_min_s": 0.001,
+          "halvings_max": 10,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        },
+        "scenario": "base",
+        "h_mult": 1.0,
+        "hm_mult": 1.0,
+        "sensitivity_dT_degC": 0.39,
+        "sensitivity_dC": 0.0011,
+        "augmented": false
+      },
+      "coverage": {
+        "t_start_s": 0.0,
+        "t_end_requested_s": 1800.0,
+        "t_end_actual_s": 1800.0,
+        "accepted_substeps": 1800,
+        "moving_domain": false
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-4b",
+      "question": "fixed",
+      "status": "fail",
+      "metric": {
+        "relative_difference": 0.00016426411657077458
+      },
+      "limit": {
+        "relative_difference_max": 0.0001
+      },
+      "config": {
+        "digest": "44525691eb3a3879",
+        "question": "q1",
+        "purpose": "V-4-BE-dt-1",
+        "N": 200,
+        "interface": "harmonic",
+        "integral_npts": 8,
+        "scheme": "backward_euler",
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "breakpoints_s": [
+          14400.0
+        ],
+        "air_data_end_s": 14400.0,
+        "dt_be_s": 1.0,
+        "picard": {
+          "max_iter": 30,
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08
+        },
+        "retry": {
+          "dt_min_s": 0.001,
+          "halvings_max": 10,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        },
+        "scenario": "base",
+        "h_mult": 1.0,
+        "hm_mult": 1.0,
+        "sensitivity_dT_degC": 0.39,
+        "sensitivity_dC": 0.0011,
+        "augmented": false
+      },
+      "coverage": {
+        "t_start_s": 0.0,
+        "t_end_requested_s": 1800.0,
+        "t_end_actual_s": 1800.0,
+        "accepted_substeps": 1800,
+        "moving_domain": false
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-4a",
+      "question": "fixed",
+      "status": "pass",
+      "metric": {
+        "relative_residual": 3.116985055378322e-14
+      },
+      "limit": {
+        "relative_residual_max": 1e-12
+      },
+      "config": {
+        "digest": "c6144accab024bc0",
+        "question": "q1",
+        "purpose": "V-4-BE-dt-0.25",
+        "N": 200,
+        "interface": "harmonic",
+        "integral_npts": 8,
+        "scheme": "backward_euler",
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "breakpoints_s": [
+          14400.0
+        ],
+        "air_data_end_s": 14400.0,
+        "dt_be_s": 0.25,
+        "picard": {
+          "max_iter": 30,
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08
+        },
+        "retry": {
+          "dt_min_s": 0.001,
+          "halvings_max": 10,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        },
+        "scenario": "base",
+        "h_mult": 1.0,
+        "hm_mult": 1.0,
+        "sensitivity_dT_degC": 0.39,
+        "sensitivity_dC": 0.0011,
+        "augmented": false
+      },
+      "coverage": {
+        "t_start_s": 0.0,
+        "t_end_requested_s": 1800.0,
+        "t_end_actual_s": 1800.0,
+        "accepted_substeps": 7200,
+        "moving_domain": false
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-4b",
+      "question": "fixed",
+      "status": "pass",
+      "metric": {
+        "relative_difference": 4.106677442300559e-05
+      },
+      "limit": {
+        "relative_difference_max": 0.0001
+      },
+      "config": {
+        "digest": "c6144accab024bc0",
+        "question": "q1",
+        "purpose": "V-4-BE-dt-0.25",
+        "N": 200,
+        "interface": "harmonic",
+        "integral_npts": 8,
+        "scheme": "backward_euler",
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "breakpoints_s": [
+          14400.0
+        ],
+        "air_data_end_s": 14400.0,
+        "dt_be_s": 0.25,
+        "picard": {
+          "max_iter": 30,
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08
+        },
+        "retry": {
+          "dt_min_s": 0.001,
+          "halvings_max": 10,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        },
+        "scenario": "base",
+        "h_mult": 1.0,
+        "hm_mult": 1.0,
+        "sensitivity_dT_degC": 0.39,
+        "sensitivity_dC": 0.0011,
+        "augmented": false
+      },
+      "coverage": {
+        "t_start_s": 0.0,
+        "t_end_requested_s": 1800.0,
+        "t_end_actual_s": 1800.0,
+        "accepted_substeps": 7200,
+        "moving_domain": false
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-4c",
+      "question": "fixed",
+      "status": "pass",
+      "metric": {
+        "RE_W_per_m": 3.2124392035370875e-10,
+        "relative_residual": 1.0225511572502374e-10
+      },
+      "limit": {
+        "abs_W_per_m_max": 1e-06,
+        "relative_residual_max": 1e-08
+      },
+      "config": {
+        "digest": "d2a44384cb32350b",
+        "question": "q23",
+        "purpose": "V-4c-BE-dt-1",
+        "N": 200,
+        "interface": "integral",
+        "integral_npts": 8,
+        "scheme": "backward_euler",
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "breakpoints_s": [
+          14400.0
+        ],
+        "air_data_end_s": 14400.0,
+        "dt_be_s": 1.0,
+        "picard": {
+          "max_iter": 30,
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08
+        },
+        "retry": {
+          "dt_min_s": 0.001,
+          "halvings_max": 10,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        },
+        "scenario": "base",
+        "h_mult": 1.0,
+        "hm_mult": 1.0,
+        "sensitivity_dT_degC": 0.39,
+        "sensitivity_dC": 0.0011,
+        "augmented": false
+      },
+      "coverage": {
+        "t_probe_s": 100.0,
+        "t_end_actual_s": 100.0,
+        "accepted_substeps": 100,
+        "moving_domain": false,
+        "actual_dt_s": 1.0
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-4c",
+      "question": "fixed",
+      "status": "pass",
+      "metric": {
+        "RE_W_per_m": -1.6507195610415692e-10,
+        "relative_residual": 5.2544035559649875e-11
+      },
+      "limit": {
+        "abs_W_per_m_max": 1e-06,
+        "relative_residual_max": 1e-08
+      },
+      "config": {
+        "digest": "30c60c1790211c93",
+        "question": "q23",
+        "purpose": "V-4c-BE-dt-0.5",
+        "N": 200,
+        "interface": "integral",
+        "integral_npts": 8,
+        "scheme": "backward_euler",
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "breakpoints_s": [
+          14400.0
+        ],
+        "air_data_end_s": 14400.0,
+        "dt_be_s": 0.5,
+        "picard": {
+          "max_iter": 30,
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08
+        },
+        "retry": {
+          "dt_min_s": 0.001,
+          "halvings_max": 10,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        },
+        "scenario": "base",
+        "h_mult": 1.0,
+        "hm_mult": 1.0,
+        "sensitivity_dT_degC": 0.39,
+        "sensitivity_dC": 0.0011,
+        "augmented": false
+      },
+      "coverage": {
+        "t_probe_s": 100.0,
+        "t_end_actual_s": 100.0,
+        "accepted_substeps": 200,
+        "moving_domain": false,
+        "actual_dt_s": 0.5
+      },
+      "worst_location": null,
+      "message": ""
+    },
+    {
+      "check_id": "V-11-interface-duration",
+      "question": "q23",
+      "status": "partial",
+      "metric": {
+        "harmonic": {
+          "200": 58.96026300165077,
+          "400": 57.68925368686037,
+          "800": 57.51406045144111
+        },
+        "integral": {
+          "200": 57.47445781274645,
+          "400": 57.47411458230522,
+          "800": 57.47402726196214
+        }
+      },
+      "limit": {
+        "scope": "duration trend only; not full-field acceptance"
+      },
+      "config": {
+        "interfaces": [
+          "harmonic",
+          "integral"
+        ],
+        "Ns": [
+          200,
+          400,
+          800
+        ]
+      },
+      "coverage": {
+        "variables": [
+          "t_star"
+        ],
+        "question": "q23"
+      },
+      "worst_location": null,
+      "message": "仅证明 Q23 时长趋势；不替代全场或 Q4 检验"
+    },
+    {
+      "check_id": "V-8",
+      "question": "production",
+      "status": "not_run",
+      "metric": {},
+      "limit": {},
+      "config": {},
+      "coverage": {
+        "cross_file_result2_result3": true
+      },
+      "worst_location": null,
+      "message": "正式 result2/3 未生成；V-8 跨文件一致性按计划留到 D12 后"
+    },
+    {
+      "check_id": "V-9",
+      "question": "production",
+      "status": "not_run",
+      "metric": {},
+      "limit": {},
+      "config": {},
+      "coverage": {
+        "formal_outputs": [
+          "result1",
+          "result2",
+          "result3",
+          "result4"
+        ],
+        "workbook_readback": true
+      },
+      "worst_location": null,
+      "message": "正式工作簿未生成；V-9 检查器已实现但尚无正式文件可验"
+    }
+  ],
+  "gate": {
+    "ready_for_D12_authorization": true,
+    "production_approved": false,
+    "configuration_ready": true,
+    "per_question": {
+      "q1": {
+        "ready": true,
+        "checks": [
+          {
+            "check_id": "V-1-spatial",
+            "question": "q1-heat",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-1-temporal",
+            "question": "q1-heat",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-2-spatial",
+            "question": "q1-mass",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-2-temporal",
+            "question": "q1-mass",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-3-q1-space",
+            "question": "q1",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-3-q1-time",
+            "question": "q1",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-5",
+            "question": "q1",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-11-q1-quadrature",
+            "question": "q1",
+            "status": "pass"
+          }
+        ]
+      },
+      "q23": {
+        "ready": true,
+        "checks": [
+          {
+            "check_id": "V-3-q23-space",
+            "question": "q23",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-3-q23-time",
+            "question": "q23",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-4-BDF",
+            "question": "q23",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-5",
+            "question": "q23",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-6",
+            "question": "q23",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-11-q23-quadrature",
+            "question": "q23",
+            "status": "pass"
+          }
+        ]
+      },
+      "q4": {
+        "ready": true,
+        "checks": [
+          {
+            "check_id": "V-3-q4-space",
+            "question": "q4",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-3-q4-time",
+            "question": "q4",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-4-BDF",
+            "question": "q4",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-5",
+            "question": "q4",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-6",
+            "question": "q4",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-10",
+            "question": "q4",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-13",
+            "question": "q4",
+            "status": "pass"
+          },
+          {
+            "check_id": "V-11-q4-quadrature",
+            "question": "q4",
+            "status": "pass"
+          }
+        ]
+      }
+    }
+  },
+  "candidate_summary": {
+    "q1": {
+      "N": 800,
+      "config_digest": "028adb8ba47d8561"
+    },
+    "q23": {
+      "N": 800,
+      "t_star_h": 57.47402726196214,
+      "t_sample_s": 206940.0,
+      "delta_C": 2.3344742500208682e-08,
+      "dt_star_h": 2.226284478723528e-05,
+      "config_digest": "54cc2666b51a991f"
+    },
+    "q4": {
+      "N": 800,
+      "t_star_h": 51.0920293682779,
+      "t_sample_s": 183960.0,
+      "delta_C": 4.0864744560442645e-08,
+      "dt_star_h": 2.210640217015225e-05,
+      "config_digest": "c11eb5b2c61c4c53"
+    }
+  }
+}

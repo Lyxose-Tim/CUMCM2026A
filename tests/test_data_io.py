@@ -1,4 +1,6 @@
 """data_io 单元测试：加载、61 点均值、断点切换、单位、smooth121、半径。"""
+import copy
+
 import numpy as np
 import pytest
 
@@ -51,6 +53,18 @@ def test_env_scenarios_extrap_only(cfg):
     assert dTp.T_air_K(1000.0) == pytest.approx(base.T_air_K(1000.0))
     # 外推段 +0.39 °C
     assert dTp.T_air_K(20000.0) - base.T_air_K(20000.0) == pytest.approx(0.39, abs=1e-9)
+
+
+def test_env_scenario_amplitudes_are_config_driven(cfg):
+    raw = copy.deepcopy(cfg.raw)
+    raw["air"]["sensitivity"]["dT_degC"] = 0.9
+    raw["air"]["sensitivity"]["dC"] = 0.002
+    changed = cfgmod.Config(raw)
+    base = data_io.make_env_functions(changed, "base")
+    plus_t = data_io.make_env_functions(changed, "dT_air+")
+    minus_c = data_io.make_env_functions(changed, "dC_env-")
+    assert plus_t.T_air_K(20000.0) - base.T_air_K(20000.0) == pytest.approx(0.9)
+    assert minus_c.C_env(20000.0) - base.C_env(20000.0) == pytest.approx(-0.002)
 
 
 def test_smooth121_keeps_endpoints_and_window_mean(cfg):

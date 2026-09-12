@@ -6,6 +6,9 @@
 """
 from __future__ import annotations
 
+import hashlib
+import json
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -62,10 +65,6 @@ class Config:
     @property
     def numerics(self) -> dict:
         return self.raw["numerics"]
-
-    @property
-    def interface(self) -> str:
-        return self.raw["numerics"]["interface"]
 
     @property
     def N_default(self) -> int:
@@ -149,6 +148,156 @@ class Config:
         """干物质基准密度 rho_s0 = rho(C0)/(1+C0)（H12，仅用于质量换算）。"""
         p = self.props(question)
         return float(p.rho(self.C0)) / (1.0 + self.C0)
+
+    def resolve_run(
+        self,
+        question: str,
+        *,
+        purpose: str = "candidate",
+        N: int | None = None,
+        interface: str | None = None,
+        integral_npts: int | None = None,
+        scheme: str | None = None,
+        scenario: str = "base",
+        h_mult: float = 1.0,
+        hm_mult: float = 1.0,
+        augmented: bool = False,
+        bdf_overrides: dict[str, Any] | None = None,
+        dt_be_s: float | None = None,
+    ) -> "RunConfig":
+        """解析一次求解真正生效的完整配置。
+
+        所有研究性覆盖都必须显式传入并进入快照，求解器不得另藏默认常数。
+        """
+        if question not in ("q1", "q23", "q4"):
+            raise ValueError(f"未知问题 {question!r}")
+        numerics = self.raw["numerics"]
+        per_q = numerics["per_question"][question]
+        use_final = N is None
+        if use_final:
+            N = per_q.get("final_N")
+        if N is None:
+            raise ValueError(f"{question}: N 必须显式给出（最终配置尚未授权）")
+
+        default_interface = (
+            per_q.get("final_interface") if use_final else per_q["candidate_interface"]
+        )
+        default_scheme = (
+            per_q.get("final_scheme") if use_final else per_q["candidate_scheme"]
+        )
+        default_npts = (
+            per_q.get("final_quadrature_points")
+            if use_final else numerics["quadrature"]["interface_points"]
+        )
+
+        bdf = dict(numerics["bdf"])
+        if bdf_overrides:
+            unknown = set(bdf_overrides) - {
+                "rtol", "atol_C", "atol_T_K", "atol_I",
+                "max_step_data_s", "max_step_after_s",
+            }
+            if unknown:
+                raise ValueError(f"未知 BDF 覆盖项：{sorted(unknown)}")
+            bdf.update(bdf_overrides)
+
+        return RunConfig(
+            question=question,
+            purpose=str(purpose),
+            N=int(N),
+            interface=str(interface or default_interface),
+            integral_npts=int(
+                integral_npts
+                if integral_npts is not None
+                else default_npts
+            ),
+            scheme=str(scheme or default_scheme),
+            rtol=float(bdf["rtol"]),
+            atol_C=float(bdf["atol_C"]),
+            atol_T_K=float(bdf["atol_T_K"]),
+            atol_I=float(bdf["atol_I"]),
+            max_step_data_s=float(bdf["max_step_data_s"]),
+            max_step_after_s=float(bdf["max_step_after_s"]),
+            restart_at_breakpoints=bool(bdf["restart_at_breakpoints"]),
+            breakpoints_s=tuple(float(value) for value in self.breakpoints_s),
+            air_data_end_s=float(max(self.breakpoints_s)),
+            dt_be_s=float(numerics["dt_be_s"] if dt_be_s is None else dt_be_s),
+            picard=tuple(sorted(numerics["picard"].items())),
+            retry=tuple(sorted(numerics["retry"].items())),
+            scenario=str(scenario),
+            h_mult=float(h_mult),
+            hm_mult=float(hm_mult),
+            sensitivity_dT_degC=float(self.raw["air"]["sensitivity"]["dT_degC"]),
+            sensitivity_dC=float(self.raw["air"]["sensitivity"]["dC"]),
+            augmented=bool(augmented),
+        )
+
+
+@dataclass(frozen=True)
+class RunConfig:
+    """单次运行的不可变、可追溯数值配置。"""
+
+    question: str
+    purpose: str
+    N: int
+    interface: str
+    integral_npts: int
+    scheme: str
+    rtol: float
+    atol_C: float
+    atol_T_K: float
+    atol_I: float
+    max_step_data_s: float
+    max_step_after_s: float
+    restart_at_breakpoints: bool
+    breakpoints_s: tuple[float, ...]
+    air_data_end_s: float
+    dt_be_s: float
+    picard: tuple[tuple[str, Any], ...]
+    retry: tuple[tuple[str, Any], ...]
+    scenario: str
+    h_mult: float
+    hm_mult: float
+    sensitivity_dT_degC: float
+    sensitivity_dC: float
+    augmented: bool = False
+
+    @property
+    def bdf(self) -> dict[str, Any]:
+        return {
+            "rtol": self.rtol,
+            "atol_C": self.atol_C,
+            "atol_T_K": self.atol_T_K,
+            "atol_I": self.atol_I,
+            "max_step_data_s": self.max_step_data_s,
+            "max_step_after_s": self.max_step_after_s,
+            "restart_at_breakpoints": self.restart_at_breakpoints,
+        }
+
+    @property
+    def picard_options(self) -> dict[str, Any]:
+        return dict(self.picard)
+
+    @property
+    def retry_options(self) -> dict[str, Any]:
+        return dict(self.retry)
+
+    def derive(self, *, purpose: str | None = None, **changes: Any) -> "RunConfig":
+        """显式派生研究配置；所有变化仍会进入快照和摘要。"""
+        if purpose is not None:
+            changes["purpose"] = purpose
+        return replace(self, **changes)
+
+    def snapshot(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["picard"] = dict(self.picard)
+        data["retry"] = dict(self.retry)
+        return data
+
+    @property
+    def digest(self) -> str:
+        raw = json.dumps(self.snapshot(), ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":"), allow_nan=False)
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
 def load_config(path: str | Path | None = None, *, validate: bool = True) -> Config:
