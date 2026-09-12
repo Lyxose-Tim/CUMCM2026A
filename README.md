@@ -44,8 +44,22 @@ python -m drymodel.run_all --produce            # 生产续算与正式导出（
 ```
 
 > `run_all` 候选模式实测生成 `reports/{V1_V2,V3_convergence,verification,sensitivity,status}.md`
-> 与 `exports/config_snapshot.json`（生效配置快照）；**正式 result1–4 与生产编排待 D12 授权后实现**。
-> N/界面/求积点/容差/情景由 `config/A题_config.yaml` 的 `numerics.candidate` 与 `per_question` 解析生效。
+> 与 `exports/config_snapshot.json`（生效配置快照）。N/界面/求积点/容差/情景由
+> `config/A题_config.yaml` 的 `numerics.candidate` 与 `per_question` 解析生效。
+
+**D12 已授权并完成正式生产**（final_N 1600/800/800、integral 8 点、BDF rtol 1e-8）：
+
+```bash
+python -m drymodel.d12_evidence   # D12 可追溯证据（全部正式采样场点，任一超差→非零退出）
+python -m drymodel.d12_prep       # D12 配置申请（已授权，存档）
+python -m drymodel.run_all --produce   # 正式 result1–4 + 表 1–6 + V-8/V-9（已执行，见 outputs/）
+python -m drymodel.paper          # 论文表 1–6 与文本 → reports/paper_tables.md
+python -c "from drymodel import config,verify; verify.run_v15(config.load_config())"  # V-15 端面校核
+```
+
+- 正式产出：`outputs/result1–4.xlsx` + `table{1..6}_*.csv`；回执 `reports/production_receipt.md`、
+  `outputs/production_receipt.json`（失败也记 `production_failures.log`）。
+- 未舍入 t*₃=57.474027 h、t*₄=51.092029 h；t* 与严格合格采样 t_sample 的区分见 `reports/paper_tables.md`。
 
 ## 建模要点（摘）
 

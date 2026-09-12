@@ -1,0 +1,50 @@
+{
+  "record_type": "supplementary_review",
+  "note": "对既有官方产出的后续复核补充记录：原生产记录见 reports/production_receipt.md（生产时 HEAD 4ab08be），本补充由既有 outputs/ 文件重算哈希并转录已授权生产的达标/采样结果，非重新生产。",
+  "reviewed_at_commit": "7f9cc9388185e90d2ee4a93a15012175570667c3",
+  "config_id": "D12-20260912-N1600.800.800-integral8pt-bdf1e-8",
+  "config_sha256": "ee73bc0aff14273f71fc832fd1c361ad33f507add199a9ad57a88646bebfee73",
+  "run_command_original": "python -m drymodel.run_all --produce",
+  "software": {
+    "python": "3.13.9",
+    "numpy": "2.3.5",
+    "scipy": "1.16.3",
+    "openpyxl": "3.1.5"
+  },
+  "final_N": {
+    "q1": 1600,
+    "q23": 800,
+    "q4": 800
+  },
+  "interface": "integral",
+  "npts": 8,
+  "bdf": {
+    "rtol": 1e-08,
+    "atol_C": 1e-11,
+    "atol_T_K": 1e-08,
+    "max_step_data_s": 60.0,
+    "max_step_after_s": 600.0
+  },
+  "results": {
+    "q23": {
+      "t_star_s": 206906.496833,
+      "t_end_1s": 206907,
+      "t_sample_s": 206940,
+      "post_max_cmax": 0.15,
+      "Cmax_at_tsample_lt_0.15": true
+    },
+    "q4": {
+      "t_star_s": 183931.302883,
+      "t_sample_s": 183960,
+      "post_max_cmax": 0.15,
+      "Cmax_at_tsample_lt_0.15": true
+    }
+  },
+  "file_sha256": {
+    "result1.xlsx": "b7270ed1b5eec10ace4a0ef2d70ef7294e4ef92e792353c232f010502f7ccdee",
+    "result2.xlsx": "387542f8c9ca09d0dd1af6e3547d47b54d90b0f69b233d4e5943cc13e17de675",
+    "result3.xlsx": "6371fbe98dc5f8e3669c15fe537692e36ea9fe09719af8da81d9fab3c1797ecd",
+    "result4.xlsx": "fb55c152c5c86d693e0342162f78abb25b0011df98fccec5d0b2093ac119f361"
+  },
+  "V8_V9": "见 reports/production_receipt.md：V-9 逐文件通过、V-8 通过（共同时刻3448/不一致0/缺口0）"
+}

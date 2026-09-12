@@ -1,4 +1,14 @@
-# D12 生产配置申请（供审批；approved 仍为 false，未生成正式 result1–4）
+# D12 生产配置申请（**已审批授权并完成正式生产**）
+
+> 状态更新（2026-09-12）：本申请已获批准。`production.approved=true`、
+> `config_id=D12-20260912-N1600.800.800-integral8pt-bdf1e-8`、`final_N=1600/800/800` 已写入
+> `config/` 与 `建模方案v1.1/` 两份配置。正式 result1–4 + 表 1–6 已生产、V-8/V-9 全过；
+> 未舍入 t*₃=57.474027 h、t*₄=51.092029 h。详见 `reports/production_receipt.md`、
+> `reports/D12_evidence.md`、`outputs/production_receipt_supplementary.json`。以下为原申请内容（存档）。
+
+---
+
+# D12 生产配置申请（供审批；原申请存档）
 
 > 由各问实际误差选定最终 N（生产配置 vs 更精细对照，同 BDF rtol）。空间/独立时间/8-16 点界面对照分别登记；不以 t* 收敛替代场点验收。
 
