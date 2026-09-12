@@ -1,6 +1,6 @@
 # 状态汇总（status.md）
 
-生成时间：2026-09-12 09:33:14；软件：Python 3.13.9
+生成时间：2026-09-12 10:35:06；软件：Python 3.13.9
 
 > 状态词：已修复并实测通过 / 仍未执行 / 仍失败 / 待用户授权。**由实测阈值判定，不用 pf(True)、不以 t*>0 判收敛、不以 approved 判文件已生成。**
 
@@ -22,8 +22,8 @@
 | S10 附录4 固定半径对照 | 已实测（三情形登记） | reports/verification.md |
 | 灵敏度 S1–S6 | 已实测（见报告） | reports/sensitivity.md |
 | V-13 Q4 守恒（1/R 收支恒等式） | 已修复并实测通过 | test_balances 增广态 |
-| **D12 生产配置授权** | **待用户授权** | production.approved=False |
-| 正式 result1–4 官方导出 | **仍未执行** | 由 outputs/ 磁盘实际存在判定（非 approved） |
+| **D12 生产配置授权** | 已授权 | production.approved=True |
+| 正式 result1–4 官方导出 | 已生成（磁盘存在） | 由 outputs/ 磁盘实际存在判定（非 approved） |
 | 生产编排 run_production | 已实现（--produce 门控，见 test_production 缩比测试） | run_all.run_production |
 | V-8/V-9 官方文件终检 | 已实现（导出后执行，非 D12 前置） | writers.verify_workbook/cross_file_check |
 | 端面校核 V-15 | 仍未执行 | — |

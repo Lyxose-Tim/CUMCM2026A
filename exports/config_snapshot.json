@@ -1,8 +1,8 @@
 {
   "config_version": "1.2",
   "config_path": "E:\\Lyxose\\Documents\\数模国赛\\2026CUMCM\\config\\A题_config.yaml",
-  "config_sha256": "73dc8fb3f70de52b2db1a23f33ceab9455ae3f882a554408d35fc05de7ca4820",
-  "production_approved": false,
+  "config_sha256": "ee73bc0aff14273f71fc832fd1c361ad33f507add199a9ad57a88646bebfee73",
+  "production_approved": true,
   "default_interface": "harmonic",
   "breakpoints_s": [
     14400
@@ -21,7 +21,7 @@
         1600,
         3200
       ],
-      "final_N": null,
+      "final_N": 1600,
       "applies_event": false,
       "t_cap_h": 200.0,
       "scenario": "base",
@@ -64,7 +64,7 @@
         800,
         1600
       ],
-      "final_N": null,
+      "final_N": 800,
       "applies_event": true,
       "t_cap_h": 90.0,
       "scenario": "base",
@@ -107,7 +107,7 @@
         800,
         1600
       ],
-      "final_N": null,
+      "final_N": 800,
       "applies_event": true,
       "t_cap_h": 200.0,
       "scenario": "base",

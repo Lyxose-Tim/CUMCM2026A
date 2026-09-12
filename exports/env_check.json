@@ -17,5 +17,5 @@
   "h": 25.0,
   "hm": 8e-07,
   "interface": "harmonic",
-  "production_approved": false
+  "production_approved": true
 }
