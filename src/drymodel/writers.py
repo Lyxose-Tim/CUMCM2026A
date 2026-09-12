@@ -73,8 +73,13 @@ def write_result34(path, t_array, value_grid, cols_cm, a1_text, *,
 
 
 def verify_workbook(path, *, expected_sheets, a1_text, expected_cols, n_data_rows,
-                    t_start, t_step, surface_header=None, mask=None):
-    """写后读回校验（V-9）。mask[i][j]=True 表域内（应非空）。返回检查结果 dict。"""
+                    t_start, t_step, surface_header=None, mask=None,
+                    full_format_check=False, require_surface_nonempty=False):
+    """写后读回校验（V-9）。mask[i][j]=True 表域内（应非空）。
+
+    full_format_check=True：检查**所有数据行**的数字格式（生产用，非抽查）。
+    require_surface_nonempty=True：result4 表面列（末列）不得为空。返回检查结果 dict。
+    """
     path = Path(path)
     wb = openpyxl.load_workbook(path, read_only=True)
     issues = []
@@ -118,15 +123,37 @@ def verify_workbook(path, *, expected_sheets, a1_text, expected_cols, n_data_row
                 if v is not None and not (isinstance(v, (int, float)) and not isinstance(v, bool)):
                     issues.append(f"{sn}: 行{i} 列{j} 非数值型 {v!r}")
                     break
-        # 数字格式 0.0000：抽查首/中/末数据行（拒绝后续行格式错误）
+        # 数字格式 0.0000：full_format_check=True 单次流式检查所有数据行；否则抽查首/中/末
         if n_data_rows > 0:
-            sample_rows = sorted({2, 2 + n_data_rows // 2, n_data_rows + 1})
-            for rr in sample_rows:
-                for col in range(2, len(exp_header) + 1):
-                    cell = ws.cell(row=rr, column=col)
-                    if cell.value is not None and cell.number_format != NUMFMT:
-                        issues.append(f"{sn}: 行{rr} 列{col} 数字格式 {cell.number_format!r} != {NUMFMT!r}")
+            bad_fmt = False
+            if full_format_check:
+                rr = 1
+                for cellrow in ws.iter_rows(min_row=2, max_row=n_data_rows + 1):
+                    rr += 1
+                    for col, cell in enumerate(cellrow[1:len(exp_header)], start=2):
+                        if cell.value is not None and cell.number_format != NUMFMT:
+                            issues.append(f"{sn}: 行{rr} 列{col} 数字格式 {cell.number_format!r} != {NUMFMT!r}")
+                            bad_fmt = True
+                            break
+                    if bad_fmt:
                         break
+            else:
+                for rr in sorted({2, 2 + n_data_rows // 2, n_data_rows + 1}):
+                    for col in range(2, len(exp_header) + 1):
+                        cell = ws.cell(row=rr, column=col)
+                        if cell.value is not None and cell.number_format != NUMFMT:
+                            issues.append(f"{sn}: 行{rr} 列{col} 数字格式 {cell.number_format!r} != {NUMFMT!r}")
+                            bad_fmt = True
+                            break
+                    if bad_fmt:
+                        break
+        # 表面列不得为空（result4）
+        if require_surface_nonempty and surface_header is not None:
+            scol = len(exp_header)     # 表面列为最后一列
+            for i, r in enumerate(rows[1:]):
+                if r[scol - 1] is None:
+                    issues.append(f"{sn}: 行{i} 表面列为空（药材表面列不得留空）")
+                    break
         # 域内空值：无掩码文件（result1/2/3）任何数据单元格不得为空
         if mask is None:
             for i, r in enumerate(rows[1:]):

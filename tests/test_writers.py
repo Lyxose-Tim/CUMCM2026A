@@ -139,3 +139,23 @@ def test_cross_file_detects_coverage_gap(tmp_path):
     W.write_result34(tmp_path / "result3.xlsx", t3, C3, COLS21, A1, sheet_name="Sheet1")
     res = W.cross_file_check(tmp_path / "result2.xlsx", tmp_path / "result3.xlsx")
     assert not res["ok"] and res["n_missing_coverage"] >= 1
+
+
+def test_full_format_check_catches_bad_row(tmp_path):
+    """full_format_check：非抽查行的格式错误也应被捕获。"""
+    import numpy as _np
+    import openpyxl
+    p = tmp_path / "r.xlsx"
+    t = _np.arange(60, 60 * 11, 60)          # 10 行
+    grid = _np.full((10, 21), 0.3)
+    W.write_result34(p, t, grid, COLS21, A1, sheet_name="Sheet1")
+    # 破坏第 7 行（非首/中/末抽查点）的格式
+    wb = openpyxl.load_workbook(p)
+    wb["Sheet1"].cell(row=8, column=3).number_format = "General"
+    wb.save(p)
+    r_chunk = W.verify_workbook(p, expected_sheets=["Sheet1"], a1_text=A1, expected_cols=COLS21,
+                                n_data_rows=10, t_start=60, t_step=60, full_format_check=False)
+    r_full = W.verify_workbook(p, expected_sheets=["Sheet1"], a1_text=A1, expected_cols=COLS21,
+                               n_data_rows=10, t_start=60, t_step=60, full_format_check=True)
+    assert r_chunk["ok"]        # 抽查漏检
+    assert not r_full["ok"]     # 全量检出

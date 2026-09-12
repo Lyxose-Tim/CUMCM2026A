@@ -327,8 +327,49 @@ def run_production(cfg):
         return False
     _log("生产模式：按已授权分问最终配置续算并导出官方 result1–4 + 表 1–6，并跑 V-8/V-9 终检")
     r = production.run_production(cfg)  # require_approved 默认 True
-    _log(f"导出完成：V-9 全部通过={all(v['ok'] for v in r['V9'].values())}，V-8 通过={r['V8']['ok']}")
+    if not r["ok"] and "V9" not in r:
+        _log(f"！生产失败（阻断）：{r.get('reason')}")
+        return False
+    v9_ok = all(v["ok"] for v in r["V9"].values())
+    _log(f"导出完成：V-9 全部通过={v9_ok}，V-8 通过={r['v8_ok']}，总体 ok={r['ok']}")
+    _write_receipt(cfg, r)
+    if not r["ok"]:
+        _log("！V-8/V-9 终检未过 → 生产报告失败，不标产物为验收通过")
     return bool(r["ok"])
+
+
+def _write_receipt(cfg, r):
+    """生产回执：配置、未舍入 t*、严格采样、续算、文件哈希、V-8/V-9 明细。"""
+    import subprocess
+    try:
+        commit = subprocess.check_output(["git", "rev-parse", "HEAD"],
+                                         cwd=str(cfgmod.PROJECT_ROOT)).decode().strip()
+    except Exception:
+        commit = "unknown"
+    q23, q4 = r["q23"], r["q4"]
+    L = ["# 生产回执（production receipt）\n",
+         f"生成时间：{time.strftime('%Y-%m-%d %H:%M:%S')}；代码提交 {commit}",
+         f"config_id：{cfg.raw['production'].get('config_id')}；approved={cfg.raw['production']['approved']}\n",
+         "## 实际生效分问配置\n", "| 问 | final_N | 界面/求积 | rtol/atol_C/atol_T |", "|---|---|---|---|"]
+    b = cfg.bdf
+    for q, fc in r["fc"].items():
+        L.append(f"| {q} | {fc['N']} | {fc['interface']}/{fc['npts']}点 | "
+                 f"{b['rtol']:.0e}/{b['atol_C']:.0e}/{b['atol_T_K']:.0e} |")
+    L.append("\n## 达标与采样（未舍入）\n")
+    L.append(f"- Q2/Q3：t* = {q23['t_star_s']:.6f} s（{q23['t_star_h']:.6f} h）；t_end_1s = {q23['t_end_1s']} s；"
+             f"t_sample = {q23['t_sample_s']} s；续算 post_max_cmax = {q23['post_max_cmax']:.9f}")
+    L.append(f"- Q4：t* = {q4['t_star_s']:.6f} s（{q4['t_star_h']:.6f} h）；"
+             f"t_sample = {q4['t_sample_s']} s；续算 post_max_cmax = {q4['post_max_cmax']:.9f}")
+    L.append("\n## 官方文件与哈希（SHA-256）\n")
+    for name, h in r["file_sha256"].items():
+        L.append(f"- `outputs/{name}`：`{h}`")
+    L.append("\n## V-8/V-9 终检\n")
+    for name, v in r["V9"].items():
+        L.append(f"- V-9 {name}：{'通过' if v['ok'] else '失败 ' + str(v['issues'][:3])}")
+    L.append(f"- V-8 跨文件：{'通过' if r['v8_ok'] else '失败'}（共同时刻 {r['V8']['n_common_times']}，"
+             f"不一致 {r['V8']['n_mismatch']}，覆盖缺口 {r['V8'].get('n_missing_coverage', 0)}）")
+    L.append(f"\n总体：{'✅ 生产验收通过' if r['ok'] else '❌ 生产失败（阻断）'}")
+    (REPORTS / "production_receipt.md").write_text("\n".join(L), encoding="utf-8")
 
 
 # --------------------------------------------------------------------------

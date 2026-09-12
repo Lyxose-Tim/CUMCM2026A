@@ -76,6 +76,17 @@ def _single_trajectory(cfg, question, fc, moving):
     return full, op, det
 
 
+def _sample_cols(full, ts, node_idx, n, chunk=8000):
+    """分块求值，仅提取输出列的 C、T（控制内存；避免全场 (len,2n) 巨阵）。"""
+    ts = np.asarray(ts, float)
+    Cc, Tc = [], []
+    for i in range(0, len(ts), chunk):
+        Y = full.eval(ts[i:i + chunk])
+        Cc.append(Y[:, node_idx].copy())
+        Tc.append(Y[:, node_idx + n].copy())
+    return np.vstack(Cc), np.vstack(Tc)
+
+
 def produce_q23(cfg, fc, outdir, *, result2_mode="until_dry_1s"):
     """Q2/Q3：result2（1 s，达标终点）、result3（60 s，至 t_sample）+ 表 3/4/5。同一轨迹。"""
     full, op, det = _single_trajectory(cfg, "q23", fc, moving=False)
@@ -84,10 +95,17 @@ def produce_q23(cfg, fc, outdir, *, result2_mode="until_dry_1s"):
     t_cross = det.t_cross
     t_sample = det.t_sample
 
+    # 失败阻断：续算回穿检查、严格合格末行
+    if not det.post_ok:
+        raise RuntimeError(f"Q23 生产失败：续算回穿检查未过（post_max_cmax={det.post_max_cmax}）")
+
     def ev(t):
         if t > full.t_end + 1e-6:
             raise ValueError(f"Q23 生产采样越界 t={t}")
         return full.eval([float(t)])[0]
+
+    if t_sample is None or CR.cmax(ev(float(t_sample))[:n]) >= thr:
+        raise RuntimeError(f"Q23 生产失败：严格合格末行 t_sample={t_sample} 实测 C_max≥{thr}")
 
     # t_end_1s（同一轨迹求值）
     t_end_1s = int(np.ceil(t_cross))
@@ -102,15 +120,14 @@ def produce_q23(cfg, fc, outdir, *, result2_mode="until_dry_1s"):
     t2_end = min(t2_end, int(full.t_end))
 
     node_idx = np.array([op.grid.output_index(rc) for rc in COLS21])
-    # result2（1 s）
+    # result2（1 s）——分块采样避免内存爆
     ts2 = np.arange(1, t2_end + 1)
-    Y2 = full.eval(ts2)
-    W.write_result12(outdir / "result2.xlsx", ts2, Y2[:, node_idx], Y2[:, node_idx + n] - KELVIN,
-                     COLS21, A1)
+    C2, T2 = _sample_cols(full, ts2, node_idx, n)
+    W.write_result12(outdir / "result2.xlsx", ts2, C2, T2 - KELVIN, COLS21, A1)
     # result3（60 s 至 t_sample）
     ts3 = np.arange(60, int(t_sample) + 1, 60)
-    Y3 = full.eval(ts3)
-    W.write_result34(outdir / "result3.xlsx", ts3, Y3[:, node_idx], COLS21, A1, sheet_name="Sheet1")
+    C3, _ = _sample_cols(full, ts3, node_idx, n)
+    W.write_result34(outdir / "result3.xlsx", ts3, C3, COLS21, A1, sheet_name="Sheet1")
 
     # 表 3/4/5
     t34 = np.arange(0.5, 3.01, 0.5) * 3600.0
@@ -123,14 +140,16 @@ def produce_q23(cfg, fc, outdir, *, result2_mode="until_dry_1s"):
     t5 = runners._dedup_hours_last(t_cross, 6.0)
     tbl5 = [[tt / 3600] + [float(ev(tt)[i]) for i in idx5] for tt in t5]
     _write_rows(outdir / "table5_moist.csv", ["t_h", "r0", "r0.5", "r1.0", "r1.5", "r2.0"], tbl5)
-    return {"N": op.N, "t_star_h": t_cross / 3600, "t_end_1s": t_end_1s,
-            "t_sample_s": int(t_sample), "result2_rows": len(ts2), "result3_rows": len(ts3)}
+    return {"N": op.N, "t_star_s": float(t_cross), "t_star_h": t_cross / 3600, "t_end_1s": t_end_1s,
+            "t_sample_s": int(t_sample), "post_max_cmax": float(det.post_max_cmax),
+            "result2_rows": len(ts2), "result3_rows": len(ts3)}
 
 
 def produce_q4(cfg, fc, outdir):
     """Q4：result4（60 s，20 列+表面，域外留空）+ 表 6 + 半径小表。同一轨迹。"""
     full, op, det = _single_trajectory(cfg, "q4", fc, moving=True)
     n = op.N + 1
+    thr = cfg.threshold
     t_cross = det.t_cross
     t_sample = det.t_sample
     radius = data_io.make_radius_function(cfg)
@@ -139,6 +158,11 @@ def produce_q4(cfg, fc, outdir):
         if t > full.t_end + 1e-6:
             raise ValueError(f"Q4 生产采样越界 t={t}")
         return full.eval([float(t)])[0]
+
+    if not det.post_ok:
+        raise RuntimeError(f"Q4 生产失败：续算回穿检查未过（post_max_cmax={det.post_max_cmax}）")
+    if t_sample is None or CR.cmax(ev(float(t_sample))[:n]) >= thr:
+        raise RuntimeError(f"Q4 生产失败：严格合格末行 t_sample={t_sample} 实测 C_max≥{thr}")
 
     ts4 = np.arange(60, int(t_sample) + 1, 60)
     grid_rows, surf_vals, mask = [], [], []
@@ -162,7 +186,8 @@ def produce_q4(cfg, fc, outdir):
         rad.append([tt / 3600, R_t * 100, int(radius.is_extrapolated(tt))])
     _write_rows(outdir / "table6_moist.csv", ["t_h", "r0", "r0.5", "r1.0", "surface"], tbl6)
     _write_rows(outdir / "table6_radius.csv", ["t_h", "R_cm", "extrapolated"], rad)
-    return {"N": op.N, "t_star_h": t_cross / 3600, "t_sample_s": int(t_sample),
+    return {"N": op.N, "t_star_s": float(t_cross), "t_star_h": t_cross / 3600,
+            "t_sample_s": int(t_sample), "post_max_cmax": float(det.post_max_cmax),
             "result4_rows": len(ts4), "mask": mask}
 
 
@@ -175,33 +200,51 @@ def run_production(cfg, *, outputs_dir=None, override=None, result2_mode="until_
     outdir = Path(outputs_dir) if outputs_dir else (cfgmod.PROJECT_ROOT / "outputs")
     outdir.mkdir(parents=True, exist_ok=True)
 
-    fc1 = _final_config(cfg, "q1", override)
-    fc23 = _final_config(cfg, "q23", override)
-    fc4 = _final_config(cfg, "q4", override)
+    fc = {"q1": _final_config(cfg, "q1", override),
+          "q23": _final_config(cfg, "q23", override),
+          "q4": _final_config(cfg, "q4", override)}
+    # 续算与导出（任一失败 → 阻断，返回 ok=False，不标产物为验收通过）
+    try:
+        r1 = produce_q1(cfg, fc["q1"], outdir)
+        r23 = produce_q23(cfg, fc["q23"], outdir, result2_mode=result2_mode)
+        r4 = produce_q4(cfg, fc["q4"], outdir)
+    except Exception as e:
+        return {"ok": False, "reason": f"生产续算/导出失败：{e}", "fc": fc}
 
-    r1 = produce_q1(cfg, fc1, outdir)
-    r23 = produce_q23(cfg, fc23, outdir, result2_mode=result2_mode)
-    r4 = produce_q4(cfg, fc4, outdir)
-
-    # V-9 工作簿结构
+    # V-9 工作簿结构（生产：全部数据行格式检查 full_format_check=True）
+    ff = True
     v9 = {}
     v9["result1"] = W.verify_workbook(outdir / "result1.xlsx", expected_sheets=["温度", "水分浓度"],
                                       a1_text=A1, expected_cols=COLS21, n_data_rows=r1["result1_rows"],
-                                      t_start=1, t_step=1)
+                                      t_start=1, t_step=1, full_format_check=ff)
     v9["result2"] = W.verify_workbook(outdir / "result2.xlsx", expected_sheets=["温度", "水分浓度"],
                                       a1_text=A1, expected_cols=COLS21, n_data_rows=r23["result2_rows"],
-                                      t_start=1, t_step=1)
+                                      t_start=1, t_step=1, full_format_check=ff)
     v9["result3"] = W.verify_workbook(outdir / "result3.xlsx", expected_sheets=["Sheet1"],
                                       a1_text=A1, expected_cols=COLS21, n_data_rows=r23["result3_rows"],
-                                      t_start=60, t_step=60)
+                                      t_start=60, t_step=60, full_format_check=ff)
     v9["result4"] = W.verify_workbook(outdir / "result4.xlsx", expected_sheets=["Sheet1"],
                                       a1_text=A1, expected_cols=COLS20, n_data_rows=r4["result4_rows"],
-                                      t_start=60, t_step=60, surface_header="药材表面", mask=r4["mask"])
-    # V-8 跨文件（result2 vs result3 共同 60 s 时刻）
+                                      t_start=60, t_step=60, surface_header="药材表面", mask=r4["mask"],
+                                      require_surface_nonempty=True, full_format_check=ff)
+    # V-8 跨文件（零共同时间不能判通过）
     v8 = W.cross_file_check(outdir / "result2.xlsx", outdir / "result3.xlsx")
+    v8_ok = v8["ok"] and v8["n_common_times"] > 0
 
-    ok = all(v["ok"] for v in v9.values()) and v8["ok"]
-    return {"ok": ok, "q1": r1, "q23": r23, "q4": r4, "V9": v9, "V8": v8, "outdir": str(outdir)}
+    ok = all(v["ok"] for v in v9.values()) and v8_ok
+    hashes = {name: _sha256_file(outdir / name) for name in
+              ("result1.xlsx", "result2.xlsx", "result3.xlsx", "result4.xlsx")}
+    return {"ok": ok, "q1": r1, "q23": r23, "q4": r4, "V9": v9, "V8": v8, "v8_ok": v8_ok,
+            "fc": fc, "file_sha256": hashes, "outdir": str(outdir)}
+
+
+def _sha256_file(path):
+    import hashlib
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for blk in iter(lambda: f.read(1 << 20), b""):
+            h.update(blk)
+    return h.hexdigest()
 
 
 # --------------------------------------------------------------------------
