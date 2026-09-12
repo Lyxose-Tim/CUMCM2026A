@@ -1,0 +1,58 @@
+\appendix
+\section{附录}
+
+\subsection{支撑材料清单}
+
+随论文提交的支撑材料包括原始数据、源程序、正式结果与检验报告，主要文件如下表。完整源程序附于本附录第~\ref{sec:code}~节，可在装有 Python 3 与 NumPy、SciPy、openpyxl、matplotlib 的环境下运行复现。
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{p{4.6cm}p{9.6cm}}
+\toprule
+文件 & 说明 \\
+\midrule
+\texttt{config/A题\_config.yaml} & 全部参数的唯一来源（几何、初值、物性、边界、数值与输出设置）。 \\
+\texttt{附件1.xlsx，附件2.xlsx} & 原始环境时序与半径数据（只读）。 \\
+\texttt{src/drymodel/*.py} & 源程序，模块见下。 \\
+\quad \texttt{config.py, config\_check.py} & 配置加载与合法性校验。 \\
+\quad \texttt{data\_io.py} & 附件读取、环境驱动与半径函数。 \\
+\quad \texttt{props.py} & 各附录的物性公式（具名函数，不用字符串求值）。 \\
+\quad \texttt{grid.py, operators.py} & 节点/控制体权重与有限体积算子（含界面系数）。 \\
+\quad \texttt{solver\_be.py, solver\_bdf.py} & 向后 Euler 与 BDF 时间积分。 \\
+\quad \texttt{criterion.py, postprocess.py} & 达标判据求根与场重构、采样。 \\
+\quad \texttt{runners.py, production.py, run\_all.py} & 各问求解、正式结果生成与总编排。 \\
+\quad \texttt{verify.py} & 解析对照、收敛、守恒、包络、端面等检验。 \\
+\quad \texttt{writers.py} & 结果写盘与工作簿检查。 \\
+\quad \texttt{paper\_figs.py} & 论文插图重绘入口（只读官方结果）。 \\
+\texttt{outputs/result1--4.xlsx} & 四问正式结果。 \\
+\texttt{outputs/table*.csv} & 表~1--6 的同源数据（论文表格由此生成）。 \\
+\texttt{reports/*.md} & 检验与灵敏度报告。 \\
+\texttt{tests/*.py} & 单元测试。 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{结果与图表的复现}
+正式结果由统一程序在既定配置下生成；论文的表~1--6 由 \texttt{outputs/} 下的同源 CSV 生成，插图由 \texttt{paper\_figs.py} 读取官方结果重绘。因此，重新排版或修改插图不需要重跑生产计算。若需从头复现，在项目根目录执行：
+
+\begin{center}\small\ttfamily
+python -m drymodel.run\_all\qquad\#\ 求解并生成结果与报告\\
+python -m drymodel.paper\_figs\qquad\#\ 由官方结果重绘论文插图
+\end{center}
+
+\subsection{核心源程序}\label{sec:code}
+
+以下按调用关系给出核心求解链的源程序；其余模块见支撑材料。
+
+\lstinputlisting[caption={config.py：配置加载与访问},label={lst:config}]{code/config.py}
+\lstinputlisting[caption={props.py：各附录物性公式},label={lst:props}]{code/props.py}
+\lstinputlisting[caption={data\_io.py：附件读取与环境/半径驱动},label={lst:dataio}]{code/data_io.py}
+\lstinputlisting[caption={grid.py：节点与控制体权重},label={lst:grid}]{code/grid.py}
+\lstinputlisting[caption={operators.py：有限体积算子与界面系数},label={lst:operators}]{code/operators.py}
+\lstinputlisting[caption={solver\_be.py：向后 Euler 时间积分},label={lst:be}]{code/solver_be.py}
+\lstinputlisting[caption={solver\_bdf.py：BDF 自适应时间积分},label={lst:bdf}]{code/solver_bdf.py}
+\lstinputlisting[caption={criterion.py：达标判据求根},label={lst:crit}]{code/criterion.py}
+\lstinputlisting[caption={postprocess.py：场重构与采样},label={lst:post}]{code/postprocess.py}
+\lstinputlisting[caption={runners.py：各问求解},label={lst:runners}]{code/runners.py}
+\lstinputlisting[caption={production.py：正式结果生成},label={lst:prod}]{code/production.py}
+\lstinputlisting[caption={run\_all.py：总编排},label={lst:runall}]{code/run_all.py}

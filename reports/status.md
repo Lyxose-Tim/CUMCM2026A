@@ -26,16 +26,16 @@
 | 正式 result1–4 官方导出 | 已生成（磁盘存在） | 由 outputs/ 磁盘实际存在判定（非 approved） |
 | 生产编排 run_production | 已实现（--produce 门控，见 test_production 缩比测试） | run_all.run_production |
 | V-8/V-9 官方文件终检 | 已实现（导出后执行，非 D12 前置） | writers.verify_workbook/cross_file_check |
-| 端面校核 V-15 | 仍未执行 | — |
+| 端面校核 V-15 | 已实测通过 | reports/V15_end_effect.md（max|ΔT|=9.10e-4 °C@1.5h、max|ΔC|=1.13e-5@42h） |
 | 论文数值/文本、AI 使用详情 | 待人工核验 | — |
 
-## 候选数值（探索性，非正式答案）
+## 正式答案（已授权生产、官方结果）
 
-| 量 | 值（生效配置） |
+| 量 | 值 |
 |---|---|
-| Q2/Q3 候选 t* | 57.4740 h（N=800, integral） |
-| Q4 候选 t* | 51.0920 h（N=800, integral） |
+| Q2/Q3 达标时长 t* | 57.4740 h（N=800, integral） |
+| Q4 达标时长 t* | 51.0920 h（N=800, integral） |
 | S10 ②附录4/R0 t* | 129.8487 h |
 
-> 候选数值须经 D12 生产配置授权、实际续算后方为正式答案；不得预填、不得记为已核验。
+> 上表为已授权生产配置下的正式结果（config_id D12-20260912-N1600.800.800-integral8pt-bdf1e-8），与 outputs/result1–4、论文表 1–6 同源。
 > 配置快照见 exports/config_snapshot.json。
