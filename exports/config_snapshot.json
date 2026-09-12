@@ -1,0 +1,148 @@
+{
+  "config_version": "1.2",
+  "config_path": "E:\\Lyxose\\Documents\\数模国赛\\2026CUMCM\\config\\A题_config.yaml",
+  "config_sha256": "73dc8fb3f70de52b2db1a23f33ceab9455ae3f882a554408d35fc05de7ca4820",
+  "production_approved": false,
+  "default_interface": "harmonic",
+  "breakpoints_s": [
+    14400
+  ],
+  "resolved": {
+    "q1": {
+      "question": "q1",
+      "stage": "candidate",
+      "interface": "integral",
+      "integral_npts": 8,
+      "N": 1600,
+      "candidate_N": [
+        200,
+        400,
+        800,
+        1600,
+        3200
+      ],
+      "final_N": null,
+      "applies_event": false,
+      "t_cap_h": 200.0,
+      "scenario": "base",
+      "bdf": {
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+      },
+      "picard": {
+        "tol_dC": 1e-09,
+        "tol_dT_K": 1e-07,
+        "tol_res_C_rel": 1e-10,
+        "tol_res_T_K_per_s": 1e-08,
+        "max_iter": 30
+      },
+      "retry": {
+        "halvings_max": 10,
+        "dt_min_s": 0.001,
+        "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+      },
+      "envelope_tol": {
+        "C": 1e-09,
+        "T_K": 1e-06
+      }
+    },
+    "q23": {
+      "question": "q23",
+      "stage": "candidate",
+      "interface": "integral",
+      "integral_npts": 8,
+      "N": 800,
+      "candidate_N": [
+        200,
+        400,
+        800,
+        1600
+      ],
+      "final_N": null,
+      "applies_event": true,
+      "t_cap_h": 90.0,
+      "scenario": "base",
+      "bdf": {
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+      },
+      "picard": {
+        "tol_dC": 1e-09,
+        "tol_dT_K": 1e-07,
+        "tol_res_C_rel": 1e-10,
+        "tol_res_T_K_per_s": 1e-08,
+        "max_iter": 30
+      },
+      "retry": {
+        "halvings_max": 10,
+        "dt_min_s": 0.001,
+        "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+      },
+      "envelope_tol": {
+        "C": 1e-09,
+        "T_K": 1e-06
+      }
+    },
+    "q4": {
+      "question": "q4",
+      "stage": "candidate",
+      "interface": "integral",
+      "integral_npts": 8,
+      "N": 800,
+      "candidate_N": [
+        200,
+        400,
+        800,
+        1600
+      ],
+      "final_N": null,
+      "applies_event": true,
+      "t_cap_h": 200.0,
+      "scenario": "base",
+      "bdf": {
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+      },
+      "picard": {
+        "tol_dC": 1e-09,
+        "tol_dT_K": 1e-07,
+        "tol_res_C_rel": 1e-10,
+        "tol_res_T_K_per_s": 1e-08,
+        "max_iter": 30
+      },
+      "retry": {
+        "halvings_max": 10,
+        "dt_min_s": 0.001,
+        "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+      },
+      "envelope_tol": {
+        "C": 1e-09,
+        "T_K": 1e-06
+      }
+    }
+  },
+  "python": "3.13.9",
+  "libs": {
+    "numpy": "2.3.5",
+    "scipy": "1.16.3",
+    "openpyxl": "3.1.5"
+  }
+}

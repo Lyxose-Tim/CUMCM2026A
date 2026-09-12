@@ -68,8 +68,8 @@ def plot_radius(cfg):
                header="t_s,R_cm", comments="")
 
 
-def plot_convergence(study_table):
-    """图 8：t* vs N（harmonic vs integral 界面收敛对照）。"""
+def plot_convergence(study_table, *, cfg=None):
+    """图 8：Q2/Q3 t* vs N（harmonic vs integral 界面收敛对照）+ 相邻差表。"""
     fig, ax = plt.subplots(figsize=(7, 4))
     rows = []
     for interface, byN in study_table.items():
@@ -79,8 +79,18 @@ def plot_convergence(study_table):
         for N in Ns:
             rows.append((interface, N, byN[N]))
     ax.set_xlabel("N"); ax.set_ylabel("t* (h)")
-    ax.set_title("图8 t* 网格收敛（界面系数对照）"); ax.legend()
+    npts = cfg.raw["numerics"]["quadrature"]["interface_points"] if cfg else 8
+    ax.set_title(f"图8 问题Q2/Q3 达标时长 t* 网格收敛\n候选设置：BDF rtol 1e-8, 积分界面 {npts} 点 Gauss（vs 调和平均）")
+    ax.legend()
     _save(fig, "fig8_convergence")
+    # 数值差表（相邻 N 的 t* 差）
+    with open(EXPORTS / "fig8_diff.csv", "w", encoding="utf-8") as f:
+        f.write("problem,interface,N,t_star_h,adjacent_diff_h\n")
+        for interface, byN in study_table.items():
+            Ns = sorted(byN.keys())
+            for i, N in enumerate(Ns):
+                dd = "" if i == 0 else f"{abs(byN[N]-byN[Ns[i-1]]):.6f}"
+                f.write(f"Q2Q3,{interface},{N},{byN[N]:.6f},{dd}\n")
     with open(EXPORTS / "convergence.csv", "w", encoding="utf-8") as f:
         f.write("interface,N,t_star_h\n")
         for r in rows:
@@ -88,7 +98,7 @@ def plot_convergence(study_table):
 
 
 def plot_s10(s10):
-    """图 10：附录 4 固定半径对照（物性 vs 几何效应）。"""
+    """图 10：Q4 附录 4 固定半径对照（物性 vs 几何效应）+ 三情形数值差表。"""
     fig, ax = plt.subplots(figsize=(7, 4))
     labels = {"case1_app3_R0": "①附录3/R0", "case2_app4_R0": "②附录4/R0",
               "case3_app4_Rt": "③附录4/R(t)"}
@@ -96,9 +106,14 @@ def plot_s10(s10):
         Ns = sorted(s10[key].keys())
         ax.plot(Ns, [s10[key][N] for N in Ns], "s-", label=lab)
     ax.set_xlabel("N"); ax.set_ylabel("t* (h)")
-    ax.set_title("图10 附录4 固定半径对照：分离物性与几何效应")
+    ax.set_title("图10 问题Q4 附录4 固定半径对照：分离物性与几何效应\n候选设置：积分界面 8 点, BDF rtol 1e-8")
     ax.legend()
     _save(fig, "fig10_s10")
+    with open(EXPORTS / "fig10_diff.csv", "w", encoding="utf-8") as f:
+        f.write("problem,case,N,t_star_h\n")
+        for key, lab in labels.items():
+            for N in sorted(s10[key]):
+                f.write(f"Q4,{lab},{N},{s10[key][N]:.6f}\n")
 
 
 def plot_q1_profiles(q1):
@@ -137,7 +152,7 @@ def all_candidate_figs(cfg, *, study_table=None, s10=None, q1=None, q4=None):
     plot_env(cfg)
     plot_radius(cfg)
     if study_table is not None:
-        plot_convergence(study_table)
+        plot_convergence(study_table, cfg=cfg)
     if s10 is not None:
         plot_s10(s10)
     if q1 is not None:
