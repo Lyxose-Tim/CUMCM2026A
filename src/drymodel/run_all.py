@@ -22,8 +22,10 @@ from . import verify as V
 
 REPORTS = cfgmod.PROJECT_ROOT / "reports"
 EXPORTS = cfgmod.PROJECT_ROOT / "exports"
+OUTPUTS = cfgmod.PROJECT_ROOT / "outputs"
 REPORTS.mkdir(exist_ok=True)
 EXPORTS.mkdir(exist_ok=True)
+OUTPUTS.mkdir(exist_ok=True)
 
 
 def _log(msg):
@@ -242,41 +244,61 @@ def write_status(cfg, data, sens):
     """状态汇总（W5：由实测数据判定；状态词严格分四类；不以 approved 判定文件已生成）。"""
     approved = cfg.raw["production"]["approved"]
     v3, d = data["v3"], data
-    # 由实测阈值判定 已修复并实测通过 / 仍失败
+    acc = cfg.raw["acceptance"]
+    tol_be = float(acc["flux_integral"]["be"]["tol_rel"])          # 1e-4
+    tol_bdf = float(acc["flux_integral"]["bdf"]["tol_rel_factor_of_rtol"]) * float(cfg.bdf["rtol"])  # 10×rtol
+    tol_v4a = float(acc["discrete_balance_rel"])                   # 1e-12
+    tol_erel = float(acc["energy_residual"]["rel"])                # 1e-8
+    tol_tstar = float(acc["t_star_h"])                             # 0.02 h
+
     def pf(ok):
         return "已修复并实测通过" if ok else "**仍失败**"
-    v4a_ok = d["v4_dt1"]["rel_v4a"] < 1e-12 and d["v4_dt025"]["rel_v4a"] < 1e-12
-    v4b_ok = d["v4b_bdf"]["rel"] < 5e-3
-    v4c_ok = d["v4c"]["rel"] < 1e-8
+
+    # 实测阈值判定（不用 pf(True)、不以 t*>0 判收敛）
+    v4a_ok = d["v4_dt1"]["rel_v4a"] < tol_v4a and d["v4_dt025"]["rel_v4a"] < tol_v4a
+    v4b_be_coarse_fail = d["v4_dt1"]["rel_v4b"] > tol_be           # 粗步(Δt=1)按 1e-4 门槛
+    v4b_be_fine_ok = d["v4_dt025"]["rel_v4b"] <= tol_be            # 细步(Δt=0.25)
+    v4b_bdf_ok = d["v4b_bdf"]["rel"] <= tol_bdf                    # 10×rtol
+    v4c_ok = d["v4c"]["rel"] < tol_erel
     v5_ok = d["v5_q23"]["ok"] and d["v5_q4"]["ok"]
     v10_ok = d["v10"]["rel_max"] < 1e-6
-    interf_ok = data["study"]["integral"][max(data["study"]["integral"])] > 0
+    # V-11：integral 界面网格收敛（N400→800 t* 差 < t_star_h）
+    ig = data["study"]["integral"]; Ns = sorted(ig)
+    interf_conv = abs(ig[Ns[-1]] - ig[Ns[-2]])
+    interf_ok = interf_conv < tol_tstar
+    # 正式文件由**磁盘实际存在**判定（不以 approved）
+    files_exist = all((OUTPUTS / f"result{k}.xlsx").exists() for k in (1, 2, 3, 4))
+    v4b_be_txt = (f"粗步 Δt=1 rel {d['v4_dt1']['rel_v4b']:.2e} {'>' if v4b_be_coarse_fail else '≤'} {tol_be:.0e}"
+                  f"（{'粗步未过' if v4b_be_coarse_fail else '过'}）；"
+                  f"细步 Δt=0.25 rel {d['v4_dt025']['rel_v4b']:.2e} {'≤' if v4b_be_fine_ok else '>'} {tol_be:.0e}"
+                  f"（{'细步通过' if v4b_be_fine_ok else '未过'}）")
 
     L = ["# 状态汇总（status.md）\n",
          f"生成时间：{time.strftime('%Y-%m-%d %H:%M:%S')}；软件：Python "
          f"{data.get('versions', sys.version.split()[0])}\n",
-         "> 状态词：已修复并实测通过 / 仍未执行 / 仍失败 / 待用户授权。**不以 approved 判定文件已生成。**\n",
+         "> 状态词：已修复并实测通过 / 仍未执行 / 仍失败 / 待用户授权。**由实测阈值判定，不用 pf(True)、"
+         "不以 t*>0 判收敛、不以 approved 判文件已生成。**\n",
          "## 阶段状态（实测）\n",
          "| 项 | 状态 | 实测证据 |", "|---|---|---|",
          "| 配置校验（拒八类变异+类型/有限性、-O 不失效、两检查器一致） | 已修复并实测通过 | test_checker_parity 15 例 |",
          "| V-1/V-2 空间二阶、时间一阶 | 已修复并实测通过 | reports/V1_V2.md |",
-         f"| V-3 分对象（早期表面/通量均量/t*空间与时间/Q4固定厘米含 r=1.2cm） | {pf(True)} | reports/V3_convergence.md；"
+         f"| V-3 分对象（早期表面/通量均量/t*空间与时间/Q4固定厘米含 r=1.2cm） | 已实测分对象登记（最终 N 见 D12 申请） | reports/V3_convergence.md；"
          f"Q4 r=1.2cm 相邻差 {v3['q4_profile']['r1_2cm_max_adjacent_diff']:.2e} |",
-         f"| V-4a 离散代数恒等式（非时间精度） | {pf(v4a_ok)} | rel {d['v4_dt1']['rel_v4a']:.1e}/{d['v4_dt025']['rel_v4a']:.1e} |",
-         f"| V-4b BE 独立梯形（粗/细步 O(Δt)） | {pf(True)} | {d['v4_dt1']['rel_v4b']:.2e}(Δt=1)/{d['v4_dt025']['rel_v4b']:.2e}(Δt=0.25) |",
-         f"| V-4b BDF 独立连续通量求积 | {pf(v4b_ok)} | rel {d['v4b_bdf']['rel']:.2e}, 加密 {d['v4b_bdf']['rel_refine']:.2e} |",
-         f"| V-4c 有效热残差（W/m，细步安全） | {pf(v4c_ok)} | {d['v4c']['RE_W_per_m']:.1e} W/m |",
+         f"| V-4a 离散代数恒等式（非时间精度） | {pf(v4a_ok)} | rel {d['v4_dt1']['rel_v4a']:.1e}/{d['v4_dt025']['rel_v4a']:.1e}（<{tol_v4a:.0e}） |",
+         f"| V-4b BE 独立梯形（粗步未过/细步通过，1e-4 门槛） | {pf(v4b_be_fine_ok)} | {v4b_be_txt} |",
+         f"| V-4b BDF 独立连续自适应求积（10×rtol） | {pf(v4b_bdf_ok)} | rel {d['v4b_bdf']['rel']:.2e} ≤ {tol_bdf:.0e} |",
+         f"| V-4c 有效热残差（W/m，细步安全） | {pf(v4c_ok)} | rel {d['v4c']['rel']:.1e}（<{tol_erel:.0e}） |",
          f"| V-5 物理界限包络（H17/H18，接受解） | {pf(v5_ok)} | 固定域/动域均无越界 |",
          f"| V-10 静态极限 | {pf(v10_ok)} | rel {d['v10']['rel_max']:.1e} |",
-         f"| V-11 界面×网格收敛 | {pf(interf_ok)} | reports/V3_convergence.md |",
+         f"| V-11 integral 界面网格收敛 | {pf(interf_ok)} | N{Ns[-2]}→{Ns[-1]} t* 差 {interf_conv:.2e} h（<{tol_tstar} h） |",
          "| V-6 判据合成回归 | 已修复并实测通过 | test_criterion 0.5 s 真根 |",
-         "| S10 附录4 固定半径对照 | 已修复并实测通过 | reports/verification.md |",
-         f"| 灵敏度 S1–S6 | {'已修复并实测通过' if sens else '仍未执行（本次跳过）'} | reports/sensitivity.md |",
+         "| S10 附录4 固定半径对照 | 已实测（三情形登记） | reports/verification.md |",
+         f"| 灵敏度 S1–S6 | {'已实测（见报告）' if sens else '仍未执行（本次跳过）'} | reports/sensitivity.md |",
          "| V-13 Q4 守恒（1/R 收支恒等式） | 已修复并实测通过 | test_balances 增广态 |",
          f"| **D12 生产配置授权** | {'已授权' if approved else '**待用户授权**'} | production.approved={approved} |",
-         f"| 正式 result1–4 官方导出 | {'已生成' if approved else '**仍未执行（待 D12）**'} | 与 approved 无关，须实际续算导出 |",
-         "| 生产编排 run_production | **仍未实现**（占位，避免误产出） | NotImplementedError |",
-         "| V-8/V-9 官方文件终检 | 仍未执行（导出后执行，非 D12 前置） | writers.verify_workbook/cross_file_check 已就绪 |",
+         f"| 正式 result1–4 官方导出 | {'已生成（磁盘存在）' if files_exist else '**仍未执行**'} | 由 outputs/ 磁盘实际存在判定（非 approved） |",
+         "| 生产编排 run_production | 已实现（--produce 门控，见 test_production 缩比测试） | run_all.run_production |",
+         "| V-8/V-9 官方文件终检 | 已实现（导出后执行，非 D12 前置） | writers.verify_workbook/cross_file_check |",
          "| 端面校核 V-15 | 仍未执行 | — |",
          "| 论文数值/文本、AI 使用详情 | 待人工核验 | — |",
          "\n## 候选数值（探索性，非正式答案）\n",
@@ -293,13 +315,15 @@ def write_status(cfg, data, sens):
 # 生产（步 4–5）：D12 门控
 # --------------------------------------------------------------------------
 def run_production(cfg):
+    from . import production
     if not cfg.raw["production"]["approved"]:
-        _log("！生产未授权：production.approved=false。请在 D12 授权后设 approved=true + config_id，"
-             "再以 --produce 运行。本次不生成官方 result1–4。")
+        _log("！生产未授权：production.approved=false。请在 D12 授权后设 approved=true + config_id + "
+             "per_question.final_N，再以 --produce 运行。本次不生成官方 result1–4。")
         return False
-    _log("生产模式：将按已授权配置续算并导出官方 result1–4（此处按 config 生产配置执行）")
-    # 说明：授权后在此调用 writers 生成 outputs/result1-4.xlsx，并跑 V-8/V-9 终检。
-    raise NotImplementedError("生产续算与官方导出需在 D12 授权后按选定配置实现（占位，避免误产出）")
+    _log("生产模式：按已授权分问最终配置续算并导出官方 result1–4 + 表 1–6，并跑 V-8/V-9 终检")
+    r = production.run_production(cfg)  # require_approved 默认 True
+    _log(f"导出完成：V-9 全部通过={all(v['ok'] for v in r['V9'].values())}，V-8 通过={r['V8']['ok']}")
+    return bool(r["ok"])
 
 
 # --------------------------------------------------------------------------

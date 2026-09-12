@@ -39,9 +39,9 @@ def test_v4a_uses_real_substep_cumflux(cfg):
 
 
 def test_v4b_bdf_independent_quadrature(cfg):
-    """V-4b(BDF)：独立连续通量求积与 −ΔC̄ 一致，加密收敛。"""
-    r = V.flux_integral_bdf(cfg, question="q23", N=200, t_end_s=3600.0)
-    assert r["rel"] < 5e-3 and r["rel_refine"] < r["rel"] + 1e-12
+    """V-4b(BDF)：独立连续自适应求积与 −ΔC̄ 一致，达 10×rtol 判据。"""
+    r = V.flux_integral_bdf(cfg, question="q23", N=200, t_end_s=10800.0)
+    assert r["ok"] and r["rel"] <= r["tol_10x_rtol"]
 
 
 def test_v4c_fine_step_no_key_collision(cfg):

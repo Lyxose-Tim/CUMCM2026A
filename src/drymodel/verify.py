@@ -268,12 +268,14 @@ def mass_balance_bdf(cfg, *, question="q23", N=200, interface="integral",
 
 
 def flux_integral_bdf(cfg, *, question="q23", N=200, interface="integral",
-                      t_end_s=3600.0, moving=False, n_sample=201):
-    """V-4b（BDF）：**独立连续通量求积**（非同一 RHS 恒等式）。
+                      t_end_s=3600.0, moving=False):
+    """V-4b（BDF）：**独立连续通量自适应求积**（非同一 RHS 恒等式）。
 
-    对连续解在积分区间内独立采样 f(t)=(2h_m/R)(C_N−C_env)，梯形求积 I_quad vs −ΔC̄；
-    并以 2× 采样点加密看相对一致性。与 mass_balance_bdf（代数恒等式）互补。
+    对连续解独立求积 ∫f dt（f=(2h_m/R)(C_N−C_env)），scipy.integrate.quad 自适应，
+    在断点处分段（points），与 −ΔC̄ 比较，判据 10×rtol（不静默放宽）；rel_refine 为
+    进一步收紧 epsrel 后的复核差。与 mass_balance_bdf（代数恒等式）互补。
     """
+    from scipy.integrate import quad
     from . import data_io
     env = data_io.make_env_functions(cfg, "base")
     props = cfg.props("q4") if moving else cfg.props(question)
@@ -290,21 +292,34 @@ def flux_integral_bdf(cfg, *, question="q23", N=200, interface="integral",
     if not res.ok:
         raise RuntimeError(res.message)
     cbar0 = op.grid.cbar(y0[:n])
-    cbarN = op.grid.cbar(res.eval([t_end_s])[0][:n])
-    dCbar = cbarN - cbar0
+    dCbar = op.grid.cbar(res.eval([t_end_s])[0][:n]) - cbar0
 
-    def I_quad(m):
-        ts = np.linspace(0.0, t_end_s, m)
-        f = np.array([op.flux_cbar(t, res.eval([t])[0][:n]) for t in ts])
-        return float(np.trapezoid(f, ts))
+    def fval(t):
+        return op.flux_cbar(t, res.eval([t])[0][:n])
 
-    Iq = I_quad(n_sample)
-    Iq2 = I_quad(2 * n_sample - 1)
+    def I_adaptive(epsrel):
+        import warnings
+        from scipy.integrate import IntegrationWarning
+        # 断点 14400 s 在区间内则分段积分（早期陡变段单独自适应）
+        bpts = [14400.0] if 0.0 < 14400.0 < t_end_s else []
+        edges = [0.0] + bpts + [t_end_s]
+        tot = 0.0
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", IntegrationWarning)
+            for a, b in zip(edges[:-1], edges[1:]):
+                val, _ = quad(fval, a, b, epsabs=1e-12, epsrel=epsrel, limit=200)
+                tot += val
+        return tot
+
+    Iq = I_adaptive(1e-9)
+    Iq2 = I_adaptive(1e-11)                       # 收紧 epsrel 复核（提高求积精度）
     rel = abs(Iq - (-dCbar)) / max(abs(dCbar), 1e-300)
     rel_refine = abs(Iq2 - Iq) / max(abs(dCbar), 1e-300)
-    return {"rel": float(rel), "rel_refine": float(rel_refine),
-            "I_quad": float(Iq), "dCbar": float(dCbar), "moving": moving, "N": N,
-            "note": "独立连续通量求积（非同一 RHS 恒等式）；加密相对一致性 rel_refine"}
+    tol = 10.0 * float(cfg.bdf["rtol"])           # 10×rtol
+    return {"rel": float(rel), "rel_refine": float(rel_refine), "tol_10x_rtol": float(tol),
+            "ok": bool(rel <= tol), "I_quad": float(Iq), "dCbar": float(dCbar),
+            "moving": moving, "N": N,
+            "note": "独立连续通量自适应求积（非同一 RHS 恒等式）；判据 10×rtol"}
 
 
 def energy_residual_be(op, y0, t_probe, dt, cfg):

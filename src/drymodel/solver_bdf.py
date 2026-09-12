@@ -27,7 +27,7 @@ class BDFResult:
     message: str = ""
 
     def eval(self, t):
-        """在已积分区间内用稠密输出求值（分段）。t 可为标量或数组。"""
+        """在已积分区间内用稠密输出求值（分段）。**区间外显式报错，不静默外插**。"""
         t = np.atleast_1d(np.asarray(t, dtype=np.float64))
         out = np.empty((t.size, self.segments[0].y.shape[0]))
         for k, ti in enumerate(t):
@@ -35,12 +35,17 @@ class BDFResult:
             out[k] = seg.sol(ti)
         return out
 
-    def _find_segment(self, ti):
+    @property
+    def t_start(self) -> float:
+        return float(self.segments[0].t[0])
+
+    def _find_segment(self, ti, tol=1e-6):
         for seg in self.segments:
-            if seg.t[0] - 1e-9 <= ti <= seg.t[-1] + 1e-9:
+            if seg.t[0] - tol <= ti <= seg.t[-1] + tol:
                 return seg
-        # 落在末段之后：用末段外插（不推荐；调用方应保证在区间内）
-        return self.segments[-1]
+        # 区间外：显式报错（禁止稠密输出越界外插）
+        raise ValueError(
+            f"稠密输出求值越界：t={ti:.6f}s 不在已积分区间 [{self.t_start:.6f}, {self.t_end:.6f}]s")
 
 
 def _atol_vector(op, bdf):
@@ -105,3 +110,15 @@ def continue_bdf(op, y0, t0, extra_s, bdf, *, air_data_end=14400.0):
     """从 t0 续算 extra_s（用于事件后 600 s 异常检查）。返回 BDFResult（无事件）。"""
     return integrate_bdf(op, y0, t0, t0 + extra_s, bdf, breakpoints=(), threshold=None,
                          air_data_end=air_data_end)
+
+
+def merge_bdf(res, cont):
+    """把事件轨迹 res（到 t_cross）与其续算 cont（从 y_cross 起）拼成**同一条连续轨迹**。
+
+    用于事件、严格合格采样、续算检查、表值共用一条轨迹（禁区间外外插）。
+    """
+    merged = BDFResult(segments=list(res.segments) + list(cont.segments),
+                       t_end=cont.t_end, y_end=cont.y_end,
+                       t_cross=res.t_cross, y_cross=res.y_cross, ok=res.ok and cont.ok,
+                       message=(res.message + cont.message))
+    return merged
