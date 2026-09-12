@@ -108,9 +108,8 @@ def analytic_cylinder_robin(eta, Fo, Bi: float, nterms: int = 80) -> np.ndarray:
 def hi_precision_reference(op, y0, t_eval, rtol=1e-11, atol=1e-13):
     """紧容差 BDF 积分半离散 ODE，返回在 t_eval 处的状态（形状 (len(t_eval), 2(N+1))）。"""
     t_eval = np.atleast_1d(np.asarray(t_eval, float))
-    n = op.N + 1
-    atol_vec = np.full(2 * n, atol)
-    S = jac_sparsity(op.N)
+    atol_vec = np.full(op.n_state, atol)
+    S = jac_sparsity(op.N, getattr(op, "augmented", False))
     sol = solve_ivp(op.rhs, (0.0, float(t_eval[-1])), y0, method="BDF",
                     rtol=rtol, atol=atol_vec, jac_sparsity=S, dense_output=True,
                     max_step=np.inf)
@@ -224,6 +223,39 @@ def mass_balances_be(op, y0, t_end, dt, cfg):
         "rel_v4b": float(rel_v4b), "diff_v4b": float(diff_v4b),
         "theory_v4b": float(theory_v4b), "f0": float(f[0]), "fN": float(f[-1]),
     }
+
+
+def mass_balance_bdf(cfg, *, question="q23", N=200, interface="integral",
+                     t_end_s=3600.0, moving=False):
+    """V-4a（BDF）：用累计通量增广态 I 检验归一化收支 C̄(t)−C̄(0)+I(t)≈0。
+
+    y=[C..,T..,I]，I(0)=0，İ=(2 h_m/R)(C_N−C_env)。固定域 R=R0；moving=True 用 Q4 动域 R(t)。
+    """
+    from . import data_io
+    env = data_io.make_env_functions(cfg, "base")
+    props = cfg.props("q4") if moving else cfg.props(question)
+    if moving:
+        grid = RefGrid(N)
+        radius = data_io.make_radius_function(cfg)
+        op = FVMOperator(grid, props, env, h=cfg.h, hm=cfg.hm, R0=cfg.R0,
+                         interface=interface, integral_npts=8, radius_fn=radius, augmented=True)
+    else:
+        grid = RadialGrid(N, cfg.R0)
+        op = FVMOperator(grid, props, env, h=cfg.h, hm=cfg.hm, R0=cfg.R0,
+                         interface=interface, integral_npts=8, augmented=True)
+    n = N + 1
+    y0 = np.concatenate([np.full(n, cfg.C0), np.full(n, cfg.T0_K), [0.0]])
+    res = _SBDF.integrate_bdf(op, y0, 0.0, t_end_s, cfg.bdf, breakpoints=(14400.0,))
+    if not res.ok:
+        raise RuntimeError(res.message)
+    cbar0 = op.grid.cbar(y0[:n])
+    worst = 0.0
+    for t in np.linspace(0.0, t_end_s, 13)[1:]:
+        y = res.eval([t])[0]
+        resid = op.grid.cbar(y[:n]) - cbar0 + y[-1]      # 归一化收支，应 ~0
+        worst = max(worst, abs(resid))
+    return {"max_abs_resid": float(worst), "rel": float(worst / max(abs(cbar0), 1e-300)),
+            "cbar0": float(cbar0), "moving": moving, "N": N}
 
 
 def energy_residual_be(op, y0, t_probe, dt, cfg):

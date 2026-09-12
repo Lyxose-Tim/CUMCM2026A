@@ -72,8 +72,8 @@ def run_q1(cfg, *, N=1600, interface="integral", t_end=1800.0, save=True):
     C_grid = Y[:, node_idx]                           # (1800, 21)
     T_grid = Y[:, np.array(node_idx) + n] - 273.15    # °C
 
-    # 表 1/2：t=100..1800（每 100 s），r=0,0.5,1,1.5,2 cm
-    table_ts = np.arange(100, 1801, 100)
+    # 表 1/2：7 个时刻（PATCH-08，明确非"100…1800"）× r=0,0.5,1,1.5,2 cm
+    table_ts = np.array([100, 300, 600, 900, 1200, 1500, 1800])
     table_cm = [0.0, 0.5, 1.0, 1.5, 2.0]
     table_idx = np.array([op.grid.output_index(rc) for rc in table_cm])
     Yt = res.eval(table_ts)

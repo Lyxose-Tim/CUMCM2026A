@@ -1,8 +1,11 @@
-# A 题「药材的烘干问题」集中配置 v1.1（可由标准 YAML 解析器加载；由 config_check.py 校验）
-# 约定：每个数值参数带 value / unit / source；source 取 "题面Q1" "附录2" "附录3" "附录4" "附件1" "附件2" "D0x"（决策编号）"B0x" "H0x"
-# 公式字符串仅作说明；运行时由 props.py 映射到明确函数，不使用 eval。
-version: "1.1"
-status_note: "配置解析通过不等于模型验证通过；生产配置须经 V-3/V-11 验收后由 production.approved=true 标记（当前 false）"
+# A 题「药材的烘干问题」集中配置 v1.2（定点返修，2026-09-12；可由标准 YAML 解析器加载；由 config_check.py 校验）
+# 参数分类（PATCH-01/04）：
+#   - 题给物理参数：带 {value, unit, source}，source ∈ {"题面Q1","附录2","附录3","附录4","附件1","附件2"} 或 "D0x/B0x/H0x"（决策/约定编号）。
+#   - 主线假设 / 数值控制参数 / 情景扰动：允许简洁字段（单位明确即可，不强制三标签）。
+# 公式字符串仅作说明；运行时由 props.py 映射到明确函数，不使用 eval；说明式与当前附录函数的对应由 config_check 校验。
+version: "1.2"
+revision: "定点返修 2026-09-12"
+status_note: "配置解析通过 ≠ 模型验证通过，更 ≠ 公式—配置一致；D12 生产配置由适用于该问的数值检验选定并登记，V-8/V-9 属导出后文件验收（非 D12 前置）；生产须经验收后由 production.approved=true 标记（当前 false）"
 
 geometry:
   R0: {value: 0.02, unit: "m", source: "题面Q1"}
@@ -63,11 +66,32 @@ props:
 numerics:
   scheme_baseline: "backward_euler"     # 验证基线（B06）
   scheme_production_candidate: "BDF"    # 经验证后可用于长时生产/情景
-  interface: "harmonic"                 # 当前默认（B11）；优先待验收候选 "integral"（8 点 Gauss，16 点对照）
-  N_default: 200
+  interface: "harmonic"                 # 当前默认（B11）；优先待验收候选 "integral"（积分界面）
+  quadrature:                           # 积分界面 Gauss–Legendre 求积（PATCH-04）
+    interface_points: 8                 # 生产求值点数
+    interface_points_check: 16          # 对照点数（独立数值键，非提高精度用）
+  N_default: 200                        # 仅验证基线；非无条件物理要求
   N_verify: [100, 200, 400, 800]
   dt_be_s: 1.0
   dt_be_verify_s: [1.0, 0.5, 0.25]
+  # 分问数值配置（PATCH-03/04）：最终网格由各问自身输出误差检查登记；不把 N≥800/Q1 N≥1600
+  # 写成无条件要求；final_N/config_id 未通过正式验收前保持 null，不填历史探针值。
+  per_question:
+    q1:
+      candidate_N: [200, 400, 800, 1600, 3200]   # 附录2 早期表面层探针指向更细网格（候选集合）
+      final_N: null                              # 待 result1 早期行 5e-4 误差检查登记
+      applies_event: false                       # Q1 仅解到 1800 s，不求 0.15 达标事件、不续算 600 s
+      checks: ["V-1", "V-2", "V-3(1/10/100 s 表面)"]
+    q23:
+      candidate_N: [200, 400, 800, 1600]
+      final_N: null                              # 待长时 t* + 早期表面 5e-4 登记
+      applies_event: true
+      checks: ["V-3(长时表点/表面通量/t*)", "V-4a/b/c", "V-6", "V-11"]
+    q4:
+      candidate_N: [200, 400, 800, 1600]
+      final_N: null                              # 须独立通过自身精度检查，不因与 q23 同配置而豁免
+      applies_event: true
+      checks: ["V-3(晚期剖面/固定厘米重构)", "V-4a/b/c(含 1/R)", "V-10", "V-13"]
   picard:
     tol_dC: 1.0e-9                      # 状态增量 ∞-范数，kg/kg
     tol_dT_K: 1.0e-7
@@ -82,10 +106,18 @@ numerics:
     rtol: 1.0e-8
     atol_C: 1.0e-11
     atol_T_K: 1.0e-8
+    atol_I: 1.0e-11                     # 累计通量辅助态 I 的绝对容差（PATCH-05）
     max_step_data_s: 60.0
     max_step_after_s: 600.0
     restart_at_breakpoints: true
-    jac_sparsity: "2x2 块三对角（含 T→D、C→b/k 交叉块）"
+    jac_sparsity: "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+  # BDF 累计通量辅助态（PATCH-05）：y=[C_0..C_N, T_0..T_N, I]，I(0)=0，İ=(2 h_m/R)(C_N−C_env)，
+  # 固定域 R=R0、Q4 取 R(t)；物理方程不依赖 I；事件只对 C 分量求极大；断点重启/检查点/续算保留 I 累计值；
+  # 归一化收支 Cbar(t)−Cbar(0)+I(t)（V-4a）。当前求解器已实现增广态（默认关闭，V-4a/BDF 时启用）。
+  augmented_flux_state:
+    enabled_for: ["V-4a(BDF)"]
+    init_I: 0.0
+    event_components: "C_only"
   envelope_tol:
     C: 1.0e-9
     T_K: 1.0e-6
@@ -97,19 +129,23 @@ q4:
   axial: "fixed_L"
 
 criterion:
+  applies_to: ["q23", "q4"]             # Q1 仅解到 1800 s，不适用达标事件/续算（PATCH-02）
   threshold: 0.15
   domain: "full_unrounded"              # 全节点（分段线性重构的全域最大值即节点最大值）
-  event: "continuous_root_on_reconstructed_field"   # g(t)=max_i[(1-a)C_i^n + a C_i^{n+1}] - 0.15
-  post_margin_s: 600
+  event: "continuous_root_on_reconstructed_field"   # g(t)=max_i[(1-a)C_i^n + a C_i^{n+1}] - 0.15；仅对 C 分量
+  post_margin_s: 600                    # 达标后续算 600 s 仅数值异常检查（C_max<=0.15+1e-9），非全未来不回穿的数学证明
   t_sample_rule: "首个 60 s 网格点使实测（未舍入）max C < 0.15"
-  t_safe_rule: "首个时刻使 max C < 0.15 - delta；delta 由生产配置与更精细对照估计（数值裕量，非认证）"
+  t_safe:                               # 可选数值裕量诊断（PATCH-06）：默认关闭；关闭时不作积分终点/表脚注/发布必需，续算上限不用 max(...,t_safe)
+    enabled: false
+    rule: "首个时刻使 max C < 0.15 - delta；delta 由生产配置与更精细对照估计（数值裕量，非认证）"
 
 output:
   decimals: 4
   number_format: "0.0000"
   excel_max_rows_including_header: 1048576
   result1: {t_s: "1..1800", cols_cm: "0..2.0 step 0.1", sheets: ["温度", "水分浓度"]}
-  result2: {t_end: "until_dry_1s", cols_cm: "0..2.0 step 0.1", sheets: ["温度", "水分浓度"]}   # 备选 "3h" "72h" 保留不用
+  result2: {t_end: "until_dry_1s", cols_cm: "0..2.0 step 0.1", sheets: ["温度", "水分浓度"]}   # 正式导出仅允许达标终点 until_dry_1s
+  result2_test_modes: ["3h", "72h"]     # 仅测试模式（PATCH-04），不得导出为正式 result2
   result3: {t_s: "60..t_sample step 60", cols_cm: "0..2.0 step 0.1", sheet: "Sheet1"}
   result4: {t_s: "60..t_sample step 60", cols_cm: "0..1.9 step 0.1", surface_col: "药材表面", outside_fill: "blank", sheet: "Sheet1"}
   a1_text: "时间\\到药材中心的距离"
@@ -120,14 +156,21 @@ acceptance:
   early_rows: {times_s: [1, 10, 100], rule: "同源轨迹，误差预算必须覆盖；不得自动豁免"}
   analytic_spatial: {rule: "半离散精确解对照，二阶收敛", tol_factor: 2.0e-4}
   analytic_temporal: {rule: "固定细网格，BE dt=1/0.5/0.25 s 一阶收敛"}
-  discrete_balance_rel: 1.0e-12                       # BE 代数收支（实际时间格式权重）
-  flux_integral: {method: "trapezoid_or_ode", refine_check: true, tol_rel: 1.0e-4}
-  energy_residual: {abs_W_per_m: 1.0e-6, rel: 1.0e-8, ref_scale: "2*pi*R*L*h*max(|T_air-T0|_max, 1 K)"}
+  discrete_balance_rel: 1.0e-12                       # V-4a：BE 离散代数收支（实际时间格式权重）；BDF 用累计通量辅助态 I，归一化 Cbar(t)-Cbar(0)+I(t)
+  # V-4b 按时间格式分栏（PATCH-05）：BE 用端点式 I_trap-I_BE=(Δt/2)(f0-fN) 且 O(Δt)；BDF 用独立通量求积 + 加密对照，不套 BE 一阶要求
+  flux_integral:
+    be: {method: "trapezoid_vs_cumulative", tol_rel: 1.0e-4, order: "O(dt)", note: "减步后用各子步实际步长权重，不用固定 1 s"}
+    bdf: {method: "independent_quadrature_refine", tol_rel_factor_of_rtol: 10.0}
+  # V-4c 有效热残差：单位长度 W/m 口径（PATCH-05，去 L）；参考尺度不含 L；若导数取自同一离散 RHS 则仅检离散代数平衡，时间精度由 V-3 独立核验
+  energy_residual: {unit: "W/m", abs_W_per_m: 1.0e-6, rel: 1.0e-8, ref_scale: "2*pi*R(t)*h*max(dT_ref, 1 K)"}
 
 production:
   approved: false
   config_id: null
-  note: "候选（N、interface、scheme）须经 V-1~V-13 验收后写入；配置变化后全部 result/表/图统一重生成"
+  # D12：依适用于该问的数值检验（Q1: V-1/2/3；Q23: V-3/4/6/11；Q4: V-3/4/10/13）选定并登记配置。
+  # V-8/V-9 是导出后的文件验收，非 D12 前置（PATCH-02）。改物性/边界/几何/网格/积分方法后，受影响的旧轨迹失效，
+  # 按新配置从原始初态重积分再验证与导出；仅改文件格式/文案可复用仍有效的未舍入轨迹。
+  note: "候选（N、interface、scheme）经各问数值检验选定后写入 config_id 并置 approved=true；未通过前保持 null/false，不填历史探针值"
 
 storage:
   full_field_cache: false

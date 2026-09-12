@@ -23,7 +23,7 @@ class FVMOperator:
 
     def __init__(self, grid, props, env, *, h: float, hm: float, R0: float,
                  interface: str = "harmonic", integral_npts: int = 8,
-                 radius_fn=None, decoupled: bool = False):
+                 radius_fn=None, decoupled: bool = False, augmented: bool = False):
         self.grid = grid
         self.props = props
         self.env = env
@@ -35,11 +35,23 @@ class FVMOperator:
         self.radius_fn = radius_fn
         self.is_reference = radius_fn is not None
         self.decoupled = bool(decoupled)
+        # 累计通量辅助态 I（PATCH-05）：启用时状态为 y=[C..,T..,I]，İ=(2 h_m/R)(C_N−C_env)。
+        self.augmented = bool(augmented)
 
         self.N = grid.N
         self.A_face = grid.A_face
         self.V = grid.V
         self.dspace = grid.dx if self.is_reference else grid.dr
+
+    @property
+    def n_state(self) -> int:
+        """状态维数：物理 2(N+1)；启用增广态时 2(N+1)+1。"""
+        return 2 * (self.N + 1) + (1 if self.augmented else 0)
+
+    def flux_cbar(self, t, C) -> float:
+        """归一化失水通量 f(t)=(2 h_m/R)(C_N−C_env)，满足 dC̄/dt=−f（固定域 R=R0，Q4 R(t)）。"""
+        R = float(self.radius_fn.R(t)) if self.is_reference else self.R0
+        return 2.0 * self.hm / R * (float(C[-1]) - float(self.env.C_env(t)))
 
     # ---- 时变几何因子 ----
     def _diff_scale(self, t: float) -> float:
@@ -78,14 +90,15 @@ class FVMOperator:
 
     # ---- 右端项（供 BDF/solve_ivp）----
     def split(self, y):
+        """返回物理分量 (C, T)；增广态的 I 分量（若有）不在此返回。"""
         n = self.N + 1
-        return y[:n], y[n:]
+        return y[:n], y[n:2 * n]
 
     def merge(self, C, T):
         return np.concatenate([C, T])
 
     def rhs(self, t, y):
-        """dy/dt = [Ċ; Ṫ]（半离散）。"""
+        """dy/dt = [Ċ; Ṫ]（; İ 当增广态）。物理方程不依赖 I。"""
         C, T = self.split(y)
         N = self.N
         Cenv = float(self.env.C_env(t))
@@ -114,6 +127,9 @@ class FVMOperator:
         dT[N] = (wT[N - 1] * (T[N - 1] - T[N]) - sT * (T[N] - Tair)) / (b[N] * self.V[N])
 
         _ = flux_in  # 保留可读性（未直接使用）
+        if self.augmented:
+            dI = self.flux_cbar(t, C)                 # İ = (2 h_m/R)(C_N − C_env)
+            return np.concatenate([dC, dT, [dI]])
         return self.merge(dC, dT)
 
     # ---- 后向 Euler 隐式装配（供 solver_be；系数在 Picard 迭代中冻结）----
@@ -197,11 +213,14 @@ def _to_banded(lower, diag, upper):
     return ab
 
 
-def jac_sparsity(N: int):
-    """BDF 稀疏雅可比模式：2×2 块三对角 + 交叉块（T→D，C→b/k）。"""
+def jac_sparsity(N: int, augmented: bool = False):
+    """BDF 稀疏雅可比模式：2×2 块三对角 + 交叉块（T→D，C→b/k）。
+
+    augmented=True 时扩到 2n+1：辅助行 İ 仅依赖表面 C 节点（列 N）；物理方程不依赖 I。
+    """
     from scipy.sparse import lil_matrix
     n = N + 1
-    m = 2 * n
+    m = 2 * n + (1 if augmented else 0)
     S = lil_matrix((m, m), dtype=np.int8)
     for i in range(n):
         for j in (i - 1, i, i + 1):
@@ -210,4 +229,7 @@ def jac_sparsity(N: int):
                 S[i, n + j] = 1       # C-T 交叉块（T→D）
                 S[n + i, n + j] = 1   # T-T 块
                 S[n + i, j] = 1       # T-C 交叉块（C→b/k）
+    if augmented:
+        S[2 * n, N] = 1               # İ 依赖表面 C 节点（数组索引 N）
+        S[2 * n, 2 * n] = 1           # 对角占位（∂İ/∂I=0，结构上包含无害）
     return S.tocsr()

@@ -81,6 +81,50 @@ def test_reject_8_q4_axial_shrinking(base_cfg):
         cc.check(bad)
 
 
+# --- 定点返修新增负例（PATCH-04/05）---
+def test_reject_energy_ref_scale_with_L(base_cfg):
+    bad = _mutate(base_cfg, "acceptance.energy_residual.ref_scale", "2*pi*R*L*h*max(dT,1K)")
+    with pytest.raises(cc.ConfigError):
+        cc.check(bad)
+
+
+def test_reject_q1_applies_event(base_cfg):
+    bad = _mutate(base_cfg, "numerics.per_question.q1.applies_event", True)
+    with pytest.raises(cc.ConfigError):
+        cc.check(bad)
+
+
+def test_reject_unauthorized_final_N(base_cfg):
+    bad = _mutate(base_cfg, "numerics.per_question.q23.final_N", 800)
+    with pytest.raises(cc.ConfigError):
+        cc.check(bad)
+
+
+def test_reject_quadrature_points_zero(base_cfg):
+    bad = _mutate(base_cfg, "numerics.quadrature.interface_points", 0)
+    with pytest.raises(cc.ConfigError):
+        cc.check(bad)
+
+
+def test_reject_bool_as_integer_mesh(base_cfg):
+    """布尔不能冒充整数网格数。"""
+    bad = _mutate(base_cfg, "numerics.N_default", True)
+    with pytest.raises(cc.ConfigError):
+        cc.check(bad)
+
+
+def test_reject_nan_tolerance(base_cfg):
+    bad = _mutate(base_cfg, "numerics.bdf.rtol", float("nan"))
+    with pytest.raises(cc.ConfigError):
+        cc.check(bad)
+
+
+def test_reject_result2_test_mode_as_official(base_cfg):
+    bad = _mutate(base_cfg, "output.result2.t_end", "72h")
+    with pytest.raises(cc.ConfigError):
+        cc.check(bad)
+
+
 def test_load_config_validates():
     c = cfgmod.load_config()
     assert c.R0 == 0.02 and c.L == 0.25

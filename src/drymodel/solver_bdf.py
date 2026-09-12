@@ -45,8 +45,10 @@ class BDFResult:
 
 def _atol_vector(op, bdf):
     n = op.N + 1
-    return np.concatenate([np.full(n, float(bdf["atol_C"])),
-                           np.full(n, float(bdf["atol_T_K"]))])
+    parts = [np.full(n, float(bdf["atol_C"])), np.full(n, float(bdf["atol_T_K"]))]
+    if getattr(op, "augmented", False):
+        parts.append(np.array([float(bdf.get("atol_I", bdf["atol_C"]))]))  # 累计通量 I 绝对容差
+    return np.concatenate(parts)
 
 
 def _cmax_event(op, threshold):
@@ -66,7 +68,7 @@ def integrate_bdf(op, y0, t0, t_end, bdf, *, breakpoints=(14400.0,),
     atol = _atol_vector(op, bdf)
     max_step_data = float(bdf["max_step_data_s"])
     max_step_after = float(bdf["max_step_after_s"])
-    S = jac_sparsity(op.N)
+    S = jac_sparsity(op.N, getattr(op, "augmented", False))
 
     # 段边界：t0、区间内断点、t_end
     bpts = sorted(b for b in breakpoints if t0 < b < t_end)

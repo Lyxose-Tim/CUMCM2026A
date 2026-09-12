@@ -194,7 +194,62 @@ def check(cfg: dict) -> bool:
     require(prod.get("approved") is False or prod.get("config_id"),
             "production.approved=True 时须给 config_id")
 
+    # ---- 定点返修新增字段（PATCH-04/05）----
+    _check_returrepair_fields(cfg)
     return True
+
+
+def _check_returrepair_fields(cfg: dict) -> None:
+    """校验定点返修新增字段：分问数值配置、8/16 点求积、W/m 参考尺度、result2 测试模式。"""
+    n = cfg["numerics"]
+
+    # 8/16 点求积（独立数值键）
+    q = n.get("quadrature", {})
+    ip = q.get("interface_points")
+    ipc = q.get("interface_points_check")
+    require(isinstance(ip, int) and not isinstance(ip, bool) and ip > 0,
+            "numerics.quadrature.interface_points 须为正整数")
+    require(isinstance(ipc, int) and not isinstance(ipc, bool) and ipc > ip,
+            "numerics.quadrature.interface_points_check 须为大于生产点数的正整数（如 16）")
+
+    # 分问数值配置
+    pq = n.get("per_question", {})
+    for qkey, expect_event in (("q1", False), ("q23", True), ("q4", True)):
+        require(qkey in pq, f"numerics.per_question 缺少 {qkey}")
+        blk = pq[qkey]
+        cand = blk.get("candidate_N")
+        require(isinstance(cand, list) and len(cand) > 0
+                and all(isinstance(x, int) and not isinstance(x, bool) and x > 0 for x in cand),
+                f"per_question.{qkey}.candidate_N 须为正整数列表")
+        fn = blk.get("final_N", None)
+        require(fn is None or (isinstance(fn, int) and not isinstance(fn, bool) and fn > 0),
+                f"per_question.{qkey}.final_N 须为 null（待定）或正整数，不得填历史探针值")
+        require(blk.get("applies_event") is expect_event,
+                f"per_question.{qkey}.applies_event 应为 {expect_event}（Q1 不适用达标事件）")
+
+    # 未授权时最终网格保持待定（不填探针值）
+    if cfg["production"].get("approved") is False:
+        for qkey in ("q1", "q23", "q4"):
+            require(pq[qkey].get("final_N") is None,
+                    f"未授权（approved=false）时 per_question.{qkey}.final_N 须为 null")
+
+    # 达标事件仅 Q23/Q4
+    require(cfg["criterion"].get("applies_to") == ["q23", "q4"],
+            "criterion.applies_to 应为 ['q23','q4']（Q1 不适用达标事件）")
+
+    # 能量残差 W/m 口径，参考尺度不含 L
+    er = cfg["acceptance"]["energy_residual"]
+    require(er.get("unit") == "W/m", "acceptance.energy_residual.unit 应为 W/m")
+    ref = str(er.get("ref_scale", ""))
+    require("L" not in ref, f"能量残差参考尺度不得含长度 L（W/m 口径）：{ref!r}")
+    require("abs_W_per_m" in er, "acceptance.energy_residual 须给 abs_W_per_m（W/m 口径）")
+
+    # result2 正式终点仅达标；3h/72h 仅测试模式
+    require(cfg["output"]["result2"].get("t_end") == "until_dry_1s",
+            "output.result2.t_end 正式导出仅允许 until_dry_1s")
+    tm = cfg["output"].get("result2_test_modes", [])
+    require(isinstance(tm, list) and set(tm) <= {"3h", "72h"},
+            "output.result2_test_modes 仅可含 '3h'/'72h'（测试模式，不导出正式）")
 
 
 def check_props_against_formulas(rel_tol: float = 1e-12) -> bool:

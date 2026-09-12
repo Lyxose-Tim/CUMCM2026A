@@ -34,3 +34,26 @@ def test_v4c_energy_residual_small(cfg):
     y0 = runners.initial_state(cfg, 200)
     re = V.energy_residual_be(op, y0, 100.0, 1.0, cfg)
     assert re["RE_W_per_m"] < 1e-6 and re["rel"] < 1e-8
+
+
+def test_v4a_bdf_augmented_fixed(cfg):
+    """V-4a（BDF 增广态）：C̄(t)−C̄(0)+I(t)≈0（固定域）。"""
+    r = V.mass_balance_bdf(cfg, question="q23", N=200, interface="integral", t_end_s=3600.0)
+    assert r["max_abs_resid"] < 1e-10
+
+
+def test_v4a_bdf_augmented_moving(cfg):
+    """V-4a（BDF 增广态）：Q4 动域 R(t) 含 1/R 因子。"""
+    r = V.mass_balance_bdf(cfg, N=200, interface="integral", t_end_s=3600.0, moving=True)
+    assert r["max_abs_resid"] < 1e-10
+
+
+def test_augmented_jac_sparsity_dim():
+    """增广态雅可比稀疏模式维数 2n+1，辅助行依赖表面 C。"""
+    from drymodel.operators import jac_sparsity
+    N = 30
+    S = jac_sparsity(N, augmented=True)
+    assert S.shape == (2 * (N + 1) + 1, 2 * (N + 1) + 1)
+    n = N + 1
+    assert S[2 * n, N] == 1          # İ 依赖表面 C 节点
+    assert S[2 * n, n] == 0          # 不依赖 T
