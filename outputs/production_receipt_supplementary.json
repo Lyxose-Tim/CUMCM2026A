@@ -1,6 +1,6 @@
 {
   "record_type": "supplementary_review",
-  "note": "对既有官方产出的后续复核补充记录：原生产记录见 reports/production_receipt.md（生产时 HEAD 4ab08be），本补充由既有 outputs/ 文件重算哈希并转录已授权生产的达标/采样结果，非重新生产。",
+  "note": "对既有官方产出的后续复核补充记录：原生产记录见 reports/production_receipt.md（生产时 HEAD 4ab08be），本补充由既有 outputs/ 文件重算哈希并转录已授权生产的达标/采样结果，非重新生产。 严格合格采样 Cmax(未舍入) 由既有配置重积分核验(非重新导出)。",
   "reviewed_at_commit": "7f9cc9388185e90d2ee4a93a15012175570667c3",
   "config_id": "D12-20260912-N1600.800.800-integral8pt-bdf1e-8",
   "config_sha256": "ee73bc0aff14273f71fc832fd1c361ad33f507add199a9ad57a88646bebfee73",
@@ -31,13 +31,15 @@
       "t_end_1s": 206907,
       "t_sample_s": 206940,
       "post_max_cmax": 0.15,
-      "Cmax_at_tsample_lt_0.15": true
+      "Cmax_at_tsample_lt_0.15": true,
+      "cmax_at_tsample_unrounded": 0.14999024303469236
     },
     "q4": {
       "t_star_s": 183931.302883,
       "t_sample_s": 183960,
       "post_max_cmax": 0.15,
-      "Cmax_at_tsample_lt_0.15": true
+      "Cmax_at_tsample_lt_0.15": true,
+      "cmax_at_tsample_unrounded": 0.1499852674507048
     }
   },
   "file_sha256": {

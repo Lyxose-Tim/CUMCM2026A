@@ -177,16 +177,22 @@ def _write_evidence(cfg, r):
     L = ["# D12 可追溯证据（本轮代码实测复跑）\n",
          "> **本轮自执行结果**，与外部独立复核摘要分列（不将外部摘要标为本轮实测）。",
          f"> 配置 sha256 `{sha[:16]}…`；BDF rtol {cfg.bdf['rtol']:.0e}；门槛 ΔC={q1['tolC']:.0e}、ΔT={q1['tolT']:.0e} °C。\n",
+         "## 各问验证覆盖范围（如实）\n",
+         "| 问 | 验证场量 | 位置 | 时间范围 |", "|---|---|---|---|",
+         f"| Q1 | **温度 与 水分浓度**（result1 两工作表） | r=0–2.0 cm（21 列） | 全 1 s 行 1–1800 s |",
+         f"| Q2/Q3 | **温度 与 水分浓度**（result2 两工作表） | r=0–2.0 cm（21 列） | 全逐秒行 1–t_end,1s |",
+         f"| Q4 | **仅水分浓度**（result4；温度求解参与 D(C,T) 耦合但不写入 result4，未作输出场验证） | 固定 0–1.9 cm+表面（域外留空） | 全 60 s 行 60–t_sample,4 |",
+         "\n> 注：跨文件 result3 覆盖至 t_sample,3=206940 s（末行 = 严格合格采样时刻）；表 5/6 末行对应事件行 t*。\n",
          "## 逐项对照（全部正式采样场点；每项 pass/fail）\n"]
     for q, lab, rows in ((q1, "Q1(附录2)", q1["n_rows"]), (q23, "Q2/Q3(附录3)", q23["n_rows"])):
-        L.append(f"### {lab}：final_N={q['N_final']}，覆盖 {rows} 行\n")
+        L.append(f"### {lab}：final_N={q['N_final']}，覆盖 {rows} 行（**C 与 T** 场点）\n")
         L.append("| 对照 | max|ΔC|·位置 | max|ΔT|(°C)·位置 | 判定 |")
         L.append("|---|---|---|---|")
         for key, o in q["items"].items():
             ok = o["maxC"][0] <= q["tolC"] and o["maxT"][0] <= q["tolT"]
             L.append(f"| {o['vs']} | {_fmt(o['maxC'])} | {_fmt(o['maxT'])} | {'✅过' if ok else '❌超差'} |")
         L.append(f"\n{lab} 总判定：{'✅ 通过' if q['pass'] else '❌ 失败'}\n")
-    L.append(f"### Q4(附录4)：final_N={q4['N_final']}，覆盖 {q4['n_rows']} 行（固定厘米+表面，域外 NaN）\n")
+    L.append(f"### Q4(附录4)：final_N={q4['N_final']}，覆盖 {q4['n_rows']} 行（**仅水分浓度**：固定厘米+表面，域外 NaN）\n")
     L.append("| 对照 | max|Δ|·位置 | r=1.2cm max|Δ| | 判定 |")
     L.append("|---|---|---|---|")
     for key, o in q4["items"].items():

@@ -27,3 +27,19 @@ def test_v15_passes_criteria(cfg):
     assert r["worstT"]["dT"] < 0.1
     assert r["worstC"]["dC"] < 0.005
     assert r["pass"]
+
+
+def test_v15_covers_q2_and_reproduces_external(cfg):
+    """覆盖 Q2 表点：热最大在 1.5 h ≈9.1013e-4 °C；质最大在 42 h ≈1.1281e-5（外部复核值）。"""
+    r = V.v15_end_effect(cfg, nterms=120)
+    assert r["worstT"]["t_h"] == pytest.approx(1.5, abs=1e-6)
+    assert r["worstT"]["dT"] == pytest.approx(9.1013e-4, rel=1e-3)
+    assert r["worstC"]["t_h"] == pytest.approx(42.0, abs=1e-6)
+    assert r["worstC"]["dC"] == pytest.approx(1.1281e-5, rel=1e-3)
+
+
+def test_v15_truncation_converges(cfg):
+    """max|ΔC| 随 nterms 收敛（60 截断底噪 → 120/200 稳定物理值）。"""
+    c120 = V.v15_end_effect(cfg, nterms=120)["worstC"]["dC"]
+    c200 = V.v15_end_effect(cfg, nterms=200)["worstC"]["dC"]
+    assert c120 == pytest.approx(c200, abs=1e-6)     # 已收敛，非截断底噪

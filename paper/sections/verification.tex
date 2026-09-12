@@ -1,0 +1,51 @@
+\section{模型检验与灵敏度分析}\label{sec:ver}
+\label{sec:verification}
+
+全部检验由统一代码实测生成，判据与验证一律用未舍入值。
+
+\paragraph{解析解对照（V-1/V-2）.}
+以常物性、恒环境构造圆柱第三类边界瞬态级数解 $\theta=\sum_n c_nJ_0(\lambda_n\eta)e^{-\lambda_n^2Fo}$
+（特征方程 $\lambda_nJ_1(\lambda_n)=Bi\,J_0(\lambda_n)$）。\textbf{分离空间阶与时间阶}：半离散（紧容差 BDF）
+vs 级数解，$N=200/400/800$ 表面点热误差 $7.57/1.89/0.47\times10^{-5}\,\si{\celsius}$（\textbf{二阶}）；
+固定细网格 BE $\Delta t=1/0.5/0.25\,\si{s}$ 一阶。
+
+\paragraph{网格与界面收敛（V-3/V-11）.}
+界面系数对照见图 \ref{fig:conv}：调和平均 $N=200/400/800$ 得
+$\tstar=58.96/57.69/57.51\,\si{h}$（$N{=}200{\to}400$ 差 \SI{1.27}{h}），
+积分界面 $57.4745/57.4741/57.4740\,\si{h}$（收敛显著更优），故生产采用积分界面。
+按\textbf{各问实际场点误差}（生产 $N$ vs 更细 $N$，同 rtol）选定最终网格：问题一 $N{=}1600$（vs $3200$，
+全 1800 行最大 $|\Delta C|=\num{4.69e-5}$、$|\Delta T|=\SI{2.23e-4}{\celsius}$）；问题二/三 $N{=}800$
+（vs $1600$，全 \num{206907} 逐秒行 $|\Delta C|=\num{1.55e-4}$）；问题四 $N{=}800$（vs $1600$，全 \num{3066}
+分钟行 $|\Delta|=\num{2.19e-4}$，最差恰在 $r=\SI{1.2}{cm}$，独立登记，不以 $\tstar$ 收敛替代场点验收）。
+均低于门槛 $\Delta C{<}\num{5e-4}$、$\Delta T{<}\SI{1e-2}{\celsius}$。独立时间加密（rtol $10^{-8}$ vs $10^{-10}$）
+$\Delta\tstar<\num{1e-7}\,\si{h}$；8 vs 16 点界面求积 $\Delta\tstar<\num{7e-7}\,\si{h}$。
+
+\begin{figure}[H]\centering
+\includegraphics[width=0.72\textwidth]{fig8_convergence.png}
+\caption{问题二/三达标时长 $\tstar$ 网格收敛：积分界面（平坦）vs 调和平均。}
+\label{fig:conv}
+\end{figure}
+
+\paragraph{守恒与物理界限（V-4/V-5/V-10）.}
+BE 离散代数收支 $|\Cbar_N-\Cbar_0+I_{BE}|/|\Delta\Cbar|\approx\num{1.5e-14}$（\emph{恒等式，非时间精度}）；
+独立连续通量梯形求积与理论差 $\tfrac{\Delta t}{2}(f_0-f_N)$ 逐位一致，粗步 $\Delta t{=}\SI{1}{s}$ 相对差
+$\num{1.64e-4}$（$>10^{-4}$ 门槛，粗步未过）、细步 $\Delta t{=}\SI{0.25}{s}$ $\num{4.11e-5}$（细步通过）；
+BDF 独立自适应求积相对差 $\num{9.3e-9}\le10\,\mathrm{rtol}$。有效热残差（\si{W/m} 口径）$\num{3.2e-10}$。
+物理界限包络（接受解落在历史 $[C_{lo},C_{hi}]$、$[T_{lo},T_{hi}]$）无越界。静态极限（$R\equiv R_0$ 动域 vs
+固定域求解器）相对差 $\num{3.6e-8}$。
+
+\paragraph{附录 4 固定半径对照（S10）.}
+为分离物性与几何效应，增设「附录 4 $+$ 固定 $R_0$」对照，与「附录 3/$R_0$」「附录 4/$R(t)$」构成三情形
+（图 \ref{fig:s10}）：$\tstar$ 分别约 $57.47/129.85/51.09\,\si{h}$。物性变化（$\text{①}\to\text{②}$，时长升）
+与尺寸收缩（$\text{②}\to\text{③}$，时长降）方向相反，故\textbf{不可把问题三到四的差异全部归为收缩}。
+
+\begin{figure}[H]\centering
+\includegraphics[width=0.7\textwidth]{fig10_s10.png}
+\caption{附录 4 固定半径对照：分离物性与几何效应（三情形 $\tstar$ vs $N$）。}
+\label{fig:s10}
+\end{figure}
+
+\paragraph{灵敏度分析（S1--S6）.}
+以问题二/三为基线，每情景重新积分。传质系数 $h_m\times0.5/2$ 使 $\tstar$ 变化 $+7.46/-2.80\,\si{h}$（影响最大）；
+换热系数 $h$ 影响小（$\pm0.04$--$0.08\,\si{h}$）；外推温度 $\pm\SI{0.39}{\celsius}$ 使 $\tstar$ 变 $\mp0.71\,\si{h}$；
+数据平滑 \texttt{smooth121} 变化 $<\SI{0.02}{h}$（未分辨）。数值误差小于所报情景差，结论可分辨。

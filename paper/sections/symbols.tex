@@ -1,0 +1,25 @@
+\section{符号说明}
+
+\begin{center}\small
+\begin{tabular}{cll}
+\toprule
+符号 & 含义 & 单位 \\
+\midrule
+$r,\ t$ & 径向坐标、时间 & \si{m},\ \si{s} \\
+$R_0,\ R(t)$ & 初始半径 \SI{0.02}{m}；问题四当前半径 & \si{m} \\
+$L$ & 长度 \SI{0.25}{m}（固定） & \si{m} \\
+$x=r/R(t)$ & 问题四参考坐标，$\in[0,1]$ & -- \\
+$T,\ C$ & 温度、干基含水率 & \si{K}（输出 \si{\celsius}），\si{kg/kg} \\
+$T_{\mathrm{air}}(t),\ C_{\mathrm{env}}(t)$ & 烘房温度、有效环境含水率 & \si{\celsius}$\to$\si{K},\ \si{kg/kg} \\
+$\rho(C),c_p(C),k(C)$ & 题给经验物性 & \si{kg/m^3},\si{J/(kg.K)},\si{W/(m.K)} \\
+$b(C)=\rho c_p$ & 有效体积热容 & \si{J/(m^3.K)} \\
+$D(C)/D(C,T)$ & 题给有效扩散系数 & \si{m^2/s} \\
+$h,\ h_m$ & 对流换热、传质系数 & \si{W/(m^2.K)},\ \si{m/s} \\
+$\Cbar$ & 干基质量加权平均含水率 & \si{kg/kg} \\
+$\Cmax(t)$ & 全域未舍入最大含水率（$=$ 节点最大值） & \si{kg/kg} \\
+$\tstar,\ t_{\mathrm{sample}}$ & 阈值穿越时间；严格合格采样时刻 & \si{s}（报告 \si{h}） \\
+$N,\ \Delta r,\ \Delta x$ & 网格区间数、步长 & -- \\
+$Bi_h=hR/k,\ Bi_m=h_mR/D$ & 传热/传质 Biot 数 & -- \\
+\bottomrule
+\end{tabular}
+\end{center}

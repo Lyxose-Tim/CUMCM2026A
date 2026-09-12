@@ -1,0 +1,56 @@
+% !TEX program = xelatex
+% CUMCM 2026 A题「药材的烘干问题」——编译器：XeLaTeX（ctex 需要）。TeX Live 2023+ / Overleaf 均可。
+% 依赖宏包：ctex, geometry, amsmath, amssymb, booktabs, graphicx, siunitx, caption, float, enumitem, array。
+% 匿名：不含承诺书/编号页/校名队号；从摘要页开始；无目录。A4，四边页边距 2.5 cm。
+\documentclass[a4paper,11pt]{ctexart}
+
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage[shortlabels]{enumitem}
+\usepackage{siunitx}
+\sisetup{detect-all}
+
+\graphicspath{{figures/}}
+\captionsetup{font=small,labelsep=quad}
+\setlength{\parskip}{2pt}
+\linespread{1.15}
+
+% 常用记号
+\newcommand{\pd}[2]{\dfrac{\partial #1}{\partial #2}}
+\newcommand{\Cbar}{\bar{C}}
+\newcommand{\tstar}{t^{*}}
+\newcommand{\Cmax}{C_{\max}}
+
+\title{\vspace{-1.5cm}\textbf{药材的烘干问题：一维径向有效扩散--导热模型}}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-1.2cm}
+
+\input{sections/abstract}
+
+\input{sections/restatement}
+\input{sections/analysis}
+\input{sections/assumptions}
+\input{sections/symbols}
+\input{sections/model}
+\input{sections/verification}
+\input{sections/evaluation}
+\input{sections/ai_statement}
+
+\begin{thebibliography}{9}
+\bibitem{maddix2018a} Maddix D C, Sampaio L, Gerritsen M. Numerical artifacts in the Generalized Porous Medium Equation: Why harmonic averaging itself is not to blame[J]. Journal of Computational Physics, 2018, 361: 280--298. DOI: 10.1016/j.jcp.2018.02.010.
+\bibitem{maddix2018b} Maddix D C, Sampaio L, Gerritsen M. Numerical artifacts in the discontinuous Generalized Porous Medium Equation: How to avoid spurious temporal oscillations[J]. Journal of Computational Physics, 2018, 368: 277--298. DOI: 10.1016/j.jcp.2018.04.045.
+\bibitem{scipy} Virtanen P, et al. SciPy 1.0: fundamental algorithms for scientific computing in Python[J]. Nature Methods, 2020, 17: 261--272.
+\bibitem{carslaw} Carslaw H S, Jaeger J C. Conduction of Heat in Solids[M]. 2nd ed. Oxford: Clarendon Press, 1959.（圆柱/平板第三类边界瞬态解，页码待人工核对）
+\bibitem{mcmrule} 全国大学生数学建模竞赛组委会. 全国大学生数学建模竞赛人工智能工具使用规定（2026 年试行）[EB/OL]. 2026-08-03. https://www.mcm.edu.cn/.（原文 PDF 待人工核验）
+\end{thebibliography}
+
+\end{document}

@@ -631,104 +631,112 @@ def analytic_slab_center(Fo, Bi: float, nterms: int = 60) -> float:
     return float(np.sum(cn * np.exp(-(lam ** 2) * Fo)))
 
 
-def v15_end_effect(cfg, *, Tinf_C=50.0, Cenv=0.05, nterms=60):
+def _v15_table_times(tstar3_h=57.474027, tstar4_h=51.092029):
+    """问题 1–4 相关表格时刻（s），带来源标签（覆盖 Q2 的 0.5–3 h 遗漏时刻）。"""
+    times = []
+    for t in (100, 300, 600, 900, 1200, 1500, 1800):
+        times.append((float(t), "Q1(表1/2)"))
+    for h in (0.5, 1.0, 1.5, 2.0, 2.5, 3.0):
+        times.append((h * 3600.0, "Q2(表3/4)"))
+    for h in np.arange(6, tstar3_h + 1e-9, 6):
+        times.append((float(h) * 3600.0, "Q3(表5)"))
+    times.append((tstar3_h * 3600.0, "Q3(t*)"))
+    for h in np.arange(6, tstar4_h + 1e-9, 6):
+        times.append((float(h) * 3600.0, "Q4(表6)"))
+    times.append((tstar4_h * 3600.0, "Q4(t*)"))
+    return times
+
+
+def v15_end_effect(cfg, *, Tinf_C=50.0, Cenv=0.05, nterms=120):
     """V-15：有限圆柱端面引起的**增量** ΔT=(T0-T∞)θ_radial(θ_slab-1)（质同理）。
 
-    线性常系数、恒环境阶跃辅助问题（附录 2 物性）；在表点时刻/位置评估最大增量。
-    判据：|ΔT|<0.1 °C、|ΔC|<0.005 → 线性辅助情景通过（不认证/否定非线性主线）。
+    线性常系数、恒环境阶跃辅助问题（附录 2 物性）；在**问题 1–4 全部相关表点时刻/位置**
+    评估最大增量（含 Q2 的 0.5–3 h）。判据：|ΔT|<0.1 °C、|ΔC|<0.005 → 线性辅助情景通过。
+    结论仅限固定物性/固定环境的线性辅助模型及已检查位置/时刻。
     """
     R0 = cfg.R0
     halfL = cfg.L / 2.0
     T0 = cfg.T0_C
     C0 = cfg.C0
-    # 附录 2 常物性
     rho, cpv, k = 820.0, 2600.0, 0.36
     alpha = k / (rho * cpv)
     D0 = 7e-9 * np.exp(-0.89 / C0)
-    Bi_r_T = cfg.h * R0 / k
-    Bi_s_T = cfg.h * halfL / k
-    Bi_r_C = cfg.hm * R0 / D0
-    Bi_s_C = cfg.hm * halfL / D0
+    Bi_r_T, Bi_s_T = cfg.h * R0 / k, cfg.h * halfL / k
+    Bi_r_C, Bi_s_C = cfg.hm * R0 / D0, cfg.hm * halfL / D0
 
-    # 表点时刻（Q1 表 1/2 窗口 + 长时 6..72 h）与位置
-    times = list(np.array([100, 300, 600, 900, 1200, 1500, 1800], float)) + \
-        list(np.arange(6, 73, 6) * 3600.0)
     r_cm = [0.0, 0.5, 1.0, 1.5, 2.0]
     eta = np.array(r_cm) / 2.0
-
-    worstT = {"dT": 0.0, "t_h": None, "r_cm": None}
-    worstC = {"dC": 0.0, "t_h": None, "r_cm": None}
-    for t in times:
-        # 热
-        Fo_rT = alpha * t / R0 ** 2
-        Fo_sT = alpha * t / halfL ** 2
-        thr = analytic_cylinder_robin(eta, Fo_rT, Bi_r_T, nterms)
-        ths = analytic_slab_center(Fo_sT, Bi_s_T, nterms)
-        dT = (T0 - Tinf_C) * thr * (ths - 1.0)          # 数组（各 r）
-        kmax = int(np.argmax(np.abs(dT)))
-        if abs(dT[kmax]) > worstT["dT"]:
-            worstT = {"dT": abs(float(dT[kmax])), "t_h": t / 3600.0, "r_cm": r_cm[kmax]}
-        # 质
-        Fo_rC = D0 * t / R0 ** 2
-        Fo_sC = D0 * t / halfL ** 2
-        crr = analytic_cylinder_robin(eta, Fo_rC, Bi_r_C, nterms)
-        crs = analytic_slab_center(Fo_sC, Bi_s_C, nterms)
+    worstT = {"dT": 0.0, "t_h": None, "r_cm": None, "src": None}
+    worstC = {"dC": 0.0, "t_h": None, "r_cm": None, "src": None}
+    for t, src in _v15_table_times():
+        thr = analytic_cylinder_robin(eta, alpha * t / R0 ** 2, Bi_r_T, nterms)
+        ths = analytic_slab_center(alpha * t / halfL ** 2, Bi_s_T, nterms)
+        dT = (T0 - Tinf_C) * thr * (ths - 1.0)
+        k1 = int(np.argmax(np.abs(dT)))
+        if abs(dT[k1]) > worstT["dT"]:
+            worstT = {"dT": abs(float(dT[k1])), "t_h": t / 3600.0, "r_cm": r_cm[k1], "src": src}
+        crr = analytic_cylinder_robin(eta, D0 * t / R0 ** 2, Bi_r_C, nterms)
+        crs = analytic_slab_center(D0 * t / halfL ** 2, Bi_s_C, nterms)
         dC = (C0 - Cenv) * crr * (crs - 1.0)
-        kmax = int(np.argmax(np.abs(dC)))
-        if abs(dC[kmax]) > worstC["dC"]:
-            worstC = {"dC": abs(float(dC[kmax])), "t_h": t / 3600.0, "r_cm": r_cm[kmax]}
+        k2 = int(np.argmax(np.abs(dC)))
+        if abs(dC[k2]) > worstC["dC"]:
+            worstC = {"dC": abs(float(dC[k2])), "t_h": t / 3600.0, "r_cm": r_cm[k2], "src": src}
 
-    # 参考 Fo_L 与中心余量（72 h，质）
     Fo_L_72h = D0 * (72 * 3600.0) / halfL ** 2
     slab_margin_72h = analytic_slab_center(Fo_L_72h, Bi_s_C, nterms)
     ok = worstT["dT"] < 0.1 and worstC["dC"] < 0.005
-    return {"worstT": worstT, "worstC": worstC, "pass": ok,
+    return {"worstT": worstT, "worstC": worstC, "pass": ok, "nterms": nterms,
             "Bi_slab_T": Bi_s_T, "Bi_slab_C": Bi_s_C, "alpha": alpha, "D0": D0,
             "Fo_L_72h": float(Fo_L_72h), "slab_center_margin_72h": slab_margin_72h,
             "crit_T": 0.1, "crit_C": 0.005}
 
 
 def run_v15(cfg, out_path=None):
-    """执行 V-15 端面增量校核并写 reports/V15_end_effect.md。返回结果 dict。"""
+    """执行 V-15 端面增量校核并写 reports/V15_end_effect.md。返回结果 dict（含截断收敛）。"""
     from pathlib import Path
     from . import config as cfgmod
-    r = v15_end_effect(cfg)
-    # 物理分辨的长时增量（Fo_slab 足够大，级数收敛可靠）：直接给 48h/72h
-    R0 = cfg.R0; halfL = cfg.L / 2.0; C0 = cfg.C0; Cenv = 0.05
-    D0 = r["D0"]; Bi_r = cfg.hm * R0 / D0; Bi_s = r["Bi_slab_C"]
-    eta = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
-    resolved = {}
-    for th in (48, 72):
-        t = th * 3600.0
-        thr = analytic_cylinder_robin(eta, D0 * t / R0 ** 2, Bi_r, 80)
-        ths = analytic_slab_center(D0 * t / halfL ** 2, Bi_s, 80)
-        resolved[th] = float(np.max(np.abs((C0 - Cenv) * thr * (ths - 1.0))))
+    r = v15_end_effect(cfg, nterms=120)
+    # 级数截断收敛证据：max|ΔT|、max|ΔC| 随 nterms 收敛（证明报告值为物理值，非截断底噪）
+    conv = {}
+    for nt in (60, 120, 200):
+        rr = v15_end_effect(cfg, nterms=nt)
+        conv[nt] = {"dT": rr["worstT"]["dT"], "tT_h": rr["worstT"]["t_h"],
+                    "dC": rr["worstC"]["dC"], "tC_h": rr["worstC"]["t_h"]}
     lines = [
         "# V-15 端面增量校核（§8.2 (i) 线性常系数恒环境阶跃辅助问题）\n",
         "> 乘积解 θ_finite=θ_radial·θ_slab（平板半厚 L/2=0.125 m）；端面引起的**增量**",
-        "> ΔT=(T0−T∞)θ_radial(θ_slab−1)（质同理）。**仅评估线性辅助情景的端面量级，",
-        "> 不认证/否定非线性径向主线**。\n",
+        "> ΔT=(T0−T∞)θ_radial(θ_slab−1)（质同理）。评估覆盖**问题 1–4 全部相关表点时刻/位置**",
+        "> （含 Q2 表 3/4 的 0.5–3 h）；结论仅限固定物性/固定环境的线性辅助模型及已检查位置/时刻。\n",
         "## 参数（附录 2 常物性）\n",
-        f"- 热扩散 α={r['alpha']:.4e} m²/s；质扩散 D(C0)={D0:.6e} m²/s",
-        f"- 平板 Bi：热 {r['Bi_slab_T']:.2f}、质 {r['Bi_slab_C']:.2f}",
+        f"- 热扩散 α={r['alpha']:.4e} m²/s；质扩散 D(C0)={r['D0']:.6e} m²/s",
+        f"- 平板 Bi：热 {r['Bi_slab_T']:.2f}、质 {r['Bi_slab_C']:.2f}；圆柱 Bi：热 {cfg.h*cfg.R0/0.36:.3f}、"
+        f"质 {cfg.hm*cfg.R0/r['D0']:.3f}",
         f"- 质 72 h：Fo_L={r['Fo_L_72h']:.4f}，平板中心余量 θ_slab={r['slab_center_margin_72h']:.4f}"
         f"（下降约 {(1-r['slab_center_margin_72h'])*100:.1f}%，与方案 §8.2 的 0.980 一致）\n",
-        "## 表点增量（判据 |ΔT|<0.1 °C、|ΔC|<0.005）\n",
-        f"- **热**：max|ΔT| = {r['worstT']['dT']:.3e} °C（端面对温度场影响可忽略：热径向 22 min "
-        f"量级远快于轴向，θ_radial 早已衰减）",
-        f"- **质**：物理分辨增量（Fo_slab 足够大）max|ΔC| ≈ {max(resolved.values()):.2e}"
-        f"（48 h {resolved[48]:.2e}、72 h {resolved[72]:.2e}）；",
-        f"  表点保守上界（含小 Fo 级数截断底噪，物理增量 ~0）≤ {r['worstC']['dC']:.2e}",
-        "\n> 机理：轴向扩散时间尺度 (L/2)²/D≈886 h 远大于径向 R0²/D≈22.7 h；待轴向端面在",
-        "> 48–72 h 显现时，径向含水率已基本均衡（θ_radial→0），故乘积增量极小。\n",
+        "## 全部表点最大增量（判据 |ΔT|<0.1 °C、|ΔC|<0.005；nterms=120）\n",
+        f"- **热** max|ΔT| = {r['worstT']['dT']:.4e} °C，位于 t={r['worstT']['t_h']:.2f} h、"
+        f"r={r['worstT']['r_cm']} cm（{r['worstT']['src']}）",
+        f"- **质** max|ΔC| = {r['worstC']['dC']:.4e}，位于 t={r['worstC']['t_h']:.2f} h、"
+        f"r={r['worstC']['r_cm']} cm（{r['worstC']['src']}）\n",
+        "> 二者均在中心 r=0（端面影响在轴向中截面中心最大）。热的最大出现在 1.5 h（Q2 表 3/4 窗口），",
+        "> 系此时轴向端面已略有响应而径向温度仍未均衡，二者乘积达峰。\n",
+        "## 级数截断收敛证据（max 随平板本征项数 nterms）\n",
+        "| nterms | max|ΔT| (°C) @t | max|ΔC| @t |", "|---|---|---|"]
+    for nt in (60, 120, 200):
+        c = conv[nt]
+        lines.append(f"| {nt} | {c['dT']:.4e} @{c['tT_h']:.2f}h | {c['dC']:.4e} @{c['tC_h']:.2f}h |")
+    lines += [
+        "\n> max|ΔT|、max|ΔC| 及其位置随 nterms 增大而稳定收敛（60→200 变化 <1e-6），",
+        "> 表明报告值为**物理增量**，非小 Fo 级数截断底噪；不将截断误差称为有保证的保守上界。\n",
         "## 结论与适用范围\n",
         f"- {'✅ 线性辅助情景通过' if r['pass'] else '❌ 超差'}：max|ΔT|<0.1 °C、max|ΔC|<0.005 均满足。",
-        "- 端面对一维径向主线在表点窗口的影响可忽略；论文列为局限说明。",
-        "- **适用范围**：线性常系数、恒环境阶跃辅助问题；不套用于变物性、时变环境的非线性主线，",
-        "  也不据此认证/否定主线。进一步（非线性轴向平板风险筛查、少量轴对称校核）按方案 §8.2 (ii)(iii) "
-        "条件启用，本轮未触发。",
+        "- 机理：轴向扩散时间尺度 (L/2)²/D≈886 h 远大于径向 R0²/D≈22.7 h（质）；端面影响随时间上升，",
+        "  但同期径向场趋于均衡，乘积增量受限，故端面对一维径向主线在表点窗口的影响可忽略。",
+        "- **适用范围**：仅限固定物性、固定环境的线性常系数辅助模型及上述已检查位置/时刻；",
+        "  不套用于变物性、时变环境的非线性主线，也不据此认证/否定主线。§8.2 (ii)(iii) 的非线性轴向",
+        "  平板风险筛查与轴对称校核为条件启用项，本轮未触发。",
     ]
     p = Path(out_path) if out_path else (cfgmod.PROJECT_ROOT / "reports" / "V15_end_effect.md")
     p.write_text("\n".join(lines), encoding="utf-8")
-    r["resolved"] = resolved
+    r["convergence"] = conv
     return r

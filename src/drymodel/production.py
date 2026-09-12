@@ -109,7 +109,8 @@ def produce_q23(cfg, fc, outdir, *, result2_mode="until_dry_1s"):
         return full.eval([float(t)])[0]
 
     # 失败阻断：续算回穿检查、严格合格末行
-    gate_production("Q23", det, CR.cmax(ev(float(t_sample))[:n]) if t_sample else thr, thr)
+    cmax_tsample = CR.cmax(ev(float(t_sample))[:n]) if t_sample else float("inf")
+    gate_production("Q23", det, cmax_tsample, thr)
 
     # t_end_1s（同一轨迹求值）
     t_end_1s = int(np.ceil(t_cross))
@@ -146,6 +147,7 @@ def produce_q23(cfg, fc, outdir, *, result2_mode="until_dry_1s"):
     _write_rows(outdir / "table5_moist.csv", ["t_h", "r0", "r0.5", "r1.0", "r1.5", "r2.0"], tbl5)
     return {"N": op.N, "t_star_s": float(t_cross), "t_star_h": t_cross / 3600, "t_end_1s": t_end_1s,
             "t_sample_s": int(t_sample), "post_max_cmax": float(det.post_max_cmax),
+            "cmax_at_tsample": float(cmax_tsample),
             "result2_rows": len(ts2), "result3_rows": len(ts3)}
 
 
@@ -163,7 +165,8 @@ def produce_q4(cfg, fc, outdir):
             raise ValueError(f"Q4 生产采样越界 t={t}")
         return full.eval([float(t)])[0]
 
-    gate_production("Q4", det, CR.cmax(ev(float(t_sample))[:n]) if t_sample else thr, thr)
+    cmax_tsample = CR.cmax(ev(float(t_sample))[:n]) if t_sample else float("inf")
+    gate_production("Q4", det, cmax_tsample, thr)
 
     ts4 = np.arange(60, int(t_sample) + 1, 60)
     grid_rows, surf_vals, mask = [], [], []
@@ -189,6 +192,7 @@ def produce_q4(cfg, fc, outdir):
     _write_rows(outdir / "table6_radius.csv", ["t_h", "R_cm", "extrapolated"], rad)
     return {"N": op.N, "t_star_s": float(t_cross), "t_star_h": t_cross / 3600,
             "t_sample_s": int(t_sample), "post_max_cmax": float(det.post_max_cmax),
+            "cmax_at_tsample": float(cmax_tsample),
             "result4_rows": len(ts4), "mask": mask}
 
 
@@ -214,29 +218,35 @@ def run_production(cfg, *, outputs_dir=None, override=None, result2_mode="until_
         _write_json_receipt(cfg, res, outdir)
         return res
 
-    # V-9 工作簿结构（生产：全部数据行格式检查 full_format_check=True）
-    ff = True
-    v9 = {}
-    v9["result1"] = W.verify_workbook(outdir / "result1.xlsx", expected_sheets=["温度", "水分浓度"],
-                                      a1_text=A1, expected_cols=COLS21, n_data_rows=r1["result1_rows"],
-                                      t_start=1, t_step=1, full_format_check=ff)
-    v9["result2"] = W.verify_workbook(outdir / "result2.xlsx", expected_sheets=["温度", "水分浓度"],
-                                      a1_text=A1, expected_cols=COLS21, n_data_rows=r23["result2_rows"],
-                                      t_start=1, t_step=1, full_format_check=ff)
-    v9["result3"] = W.verify_workbook(outdir / "result3.xlsx", expected_sheets=["Sheet1"],
-                                      a1_text=A1, expected_cols=COLS21, n_data_rows=r23["result3_rows"],
-                                      t_start=60, t_step=60, full_format_check=ff)
-    v9["result4"] = W.verify_workbook(outdir / "result4.xlsx", expected_sheets=["Sheet1"],
-                                      a1_text=A1, expected_cols=COLS20, n_data_rows=r4["result4_rows"],
-                                      t_start=60, t_step=60, surface_header="药材表面", mask=r4["mask"],
-                                      require_surface_nonempty=True, full_format_check=ff)
-    # V-8 跨文件（零共同时间不能判通过）
-    v8 = W.cross_file_check(outdir / "result2.xlsx", outdir / "result3.xlsx")
-    v8_ok = v8["ok"] and v8["n_common_times"] > 0
+    # 终检与哈希（任一阶段抛异常也阻断并写失败回执）
+    try:
+        ff = True
+        v9 = {}
+        v9["result1"] = W.verify_workbook(outdir / "result1.xlsx", expected_sheets=["温度", "水分浓度"],
+                                          a1_text=A1, expected_cols=COLS21, n_data_rows=r1["result1_rows"],
+                                          t_start=1, t_step=1, full_format_check=ff)
+        v9["result2"] = W.verify_workbook(outdir / "result2.xlsx", expected_sheets=["温度", "水分浓度"],
+                                          a1_text=A1, expected_cols=COLS21, n_data_rows=r23["result2_rows"],
+                                          t_start=1, t_step=1, full_format_check=ff)
+        v9["result3"] = W.verify_workbook(outdir / "result3.xlsx", expected_sheets=["Sheet1"],
+                                          a1_text=A1, expected_cols=COLS21, n_data_rows=r23["result3_rows"],
+                                          t_start=60, t_step=60, full_format_check=ff)
+        v9["result4"] = W.verify_workbook(outdir / "result4.xlsx", expected_sheets=["Sheet1"],
+                                          a1_text=A1, expected_cols=COLS20, n_data_rows=r4["result4_rows"],
+                                          t_start=60, t_step=60, surface_header="药材表面", mask=r4["mask"],
+                                          require_surface_nonempty=True, full_format_check=ff)
+        # V-8 跨文件（零共同时间不能判通过）
+        v8 = W.cross_file_check(outdir / "result2.xlsx", outdir / "result3.xlsx")
+        v8_ok = v8["ok"] and v8["n_common_times"] > 0
+        hashes = {name: _sha256_file(outdir / name) for name in
+                  ("result1.xlsx", "result2.xlsx", "result3.xlsx", "result4.xlsx")}
+    except Exception as e:
+        res = {"ok": False, "reason": f"终检/哈希阶段失败：{e}", "fc": fc,
+               "q23": r23, "q4": r4}
+        _write_json_receipt(cfg, res, outdir)
+        return res
 
     ok = all(v["ok"] for v in v9.values()) and v8_ok
-    hashes = {name: _sha256_file(outdir / name) for name in
-              ("result1.xlsx", "result2.xlsx", "result3.xlsx", "result4.xlsx")}
     res = {"ok": ok, "q1": r1, "q23": r23, "q4": r4, "V9": v9, "V8": v8, "v8_ok": v8_ok,
            "fc": fc, "file_sha256": hashes, "outdir": str(outdir)}
     _write_json_receipt(cfg, res, outdir)
@@ -281,9 +291,11 @@ def _write_json_receipt(cfg, res, outdir):
     if res["ok"]:
         rec["results"] = {
             "q23": {"t_star_s": res["q23"]["t_star_s"], "t_end_1s": res["q23"]["t_end_1s"],
-                    "t_sample_s": res["q23"]["t_sample_s"], "post_max_cmax": res["q23"]["post_max_cmax"]},
+                    "t_sample_s": res["q23"]["t_sample_s"], "post_max_cmax": res["q23"]["post_max_cmax"],
+                    "cmax_at_tsample": res["q23"]["cmax_at_tsample"]},
             "q4": {"t_star_s": res["q4"]["t_star_s"], "t_sample_s": res["q4"]["t_sample_s"],
-                   "post_max_cmax": res["q4"]["post_max_cmax"]},
+                   "post_max_cmax": res["q4"]["post_max_cmax"],
+                   "cmax_at_tsample": res["q4"]["cmax_at_tsample"]},
         }
         rec["file_sha256"] = res["file_sha256"]
         rec["V9"] = {k: {"ok": v["ok"], "issues": v["issues"][:5]} for k, v in res["V9"].items()}

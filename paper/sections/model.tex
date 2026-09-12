@@ -1,0 +1,141 @@
+\section{模型建立与求解}
+
+\subsection{共用控制方程与边界（散度形式）}
+
+固定域（问题一至三，$r\in[0,R_0]$）主方程为
+\begin{equation}
+\pd{C}{t}=\frac1r\pd{}{r}\!\left(rD(C,T)\pd{C}{r}\right),\qquad
+\rho(C)c_p(C)\pd{T}{t}=\frac1r\pd{}{r}\!\left(rk(C)\pd{T}{r}\right),
+\label{eq:gov}
+\end{equation}
+中心正则性 $\partial_r C|_0=\partial_r T|_0=0$，表面第三类边界
+\begin{equation}
+-D(C_s,T_s)\,\partial_r C|_{R_0}=h_m\big[C_s-C_{\mathrm{env}}(t)\big],\qquad
+-k(C_s)\,\partial_r T|_{R_0}=h\big[T_s-T_{\mathrm{air}}(t)\big].
+\label{eq:bc}
+\end{equation}
+其中 $D$ 中 $T$ 为药材\emph{局部绝对温度}（K）。当 $D,k$ 随状态变化时\textbf{保留散度形式，不得改写为
+$D\nabla^2C$}（否则遗漏系数空间变化项）。各问经验物性组按附录 2/3/4 原样采用（不重新拟合），
+环境驱动见 \S\ref{sec:env}。图 \ref{fig:env} 给出环境驱动与半径曲线。
+
+\begin{figure}[H]\centering
+\includegraphics[width=0.86\textwidth]{fig2_env.png}
+\caption{环境驱动：附件 1 温度/含水率 $0$--$\SI{14400}{s}$ 线性插值 $+$ 常值外推（红线为断点）。}
+\label{fig:env}
+\end{figure}
+
+\subsection{节点型径向有限体积离散}\label{sec:fvm}
+
+取节点 $r_i=i\Delta r$（$i=0,\dots,N$，$\Delta r=R_0/N$），面 $r_{i+1/2}=(i+\tfrac12)\Delta r$，
+面积 $A_{i+1/2}=r_{i+1/2}$，控制体 $V_0=\Delta r^2/8$、$V_i=r_i\Delta r$、$V_N=R_0\Delta r/2-\Delta r^2/8$，
+满足 $\sum_i V_i=R_0^2/2$。中心即节点 $0$、表面即节点 $N$，节点值即输出值，分段线性重构全域最大值等于节点最大值。
+面通量（外向为正）$F_{i+1/2}=-D_{i+1/2}(C_{i+1}-C_i)/\Delta r$，界面系数取两法之一：
+\emph{调和平均} $D_{i+1/2}=2D_iD_{i+1}/(D_i+D_{i+1})$；\emph{积分界面}
+$D^{I}_{i+1/2}=\int_0^1 D\big((1{-}\xi)C_i+\xi C_{i+1},\bar T\big)\,\mathrm d\xi$（8 点 Gauss--Legendre，
+近等值极限自动退化，无有效数字消去），后者长时收敛显著更优（见 \S\ref{sec:ver}）。半离散方程
+\begin{equation}
+V_i\dot C_i=A_{i-1/2}F_{i-1/2}-A_{i+1/2}F_{i+1/2}\ (1\le i\le N{-}1),\quad
+V_N\dot C_N=A_{N-1/2}F_{N-1/2}-R_0h_m(C_N-C_{\mathrm{env}}),
+\end{equation}
+温度方程同法（以 $b_iV_i$、$k$ 界面调和平均、表面项 $R_0h(T_N-T_{\mathrm{air}})$）。守恒量
+$\Cbar=\frac{2}{R_0^2}\sum_i V_iC_i$ 半离散精确满足 $\mathrm d\Cbar/\mathrm dt=-\frac{2h_m}{R_0}(C_N-C_{\mathrm{env}})$。
+
+\textbf{时间积分}：后向 Euler（Picard 迭代）为验证基线；经验证的 BDF（\texttt{scipy.solve\_ivp}，
+$\mathrm{rtol}=10^{-8}$，$\SI{14400}{s}$ 断点分段重启，稠密输出采样，$2{\times}2$ 块三对角稀疏雅可比含交叉块）
+为长时生产配置。正性防护：$C\le0\Rightarrow D:=0$ 并计数，指数下溢 $<-700$ 取 $0$，不裁剪状态。
+
+\subsection{环境驱动函数}\label{sec:env}
+
+$0$--$\SI{14400}{s}$ 取附件 1 原始节点分段线性插值（只读不改）；$t>\SI{14400}{s}$ 取
+$[10800,14400]\,\si{s}$ 内 61 个原始样本算术均值 $T_{\mathrm{air}}=\SI{49.9989344262}{\celsius}$、
+$C_{\mathrm{env}}=0.0499875409836$（运行时全精度计算）；$\SI{14400}{s}$ 取原始节点、右侧显式切换、登记为求解断点。
+
+\subsection{问题一：预热平衡阶段（$0$--$\SI{1800}{s}$，附录 2）}
+
+附录 2 下 $\rho{=}820,c_p{=}2600,k{=}0.36$ 常数、$D=7\times10^{-9}e^{-0.89/C}$ 只依赖 $C$，热质解耦；
+$Bi_h=1.39$、$Bi_m=3.24$。早期表面层厚度 $\sqrt{Dt}$ 小于粗网格 $\Delta r$，故按输出误差选定
+$N=1600$（见 \S\ref{sec:ver}）。图 \ref{fig:q1} 为不同时刻径向剖面，表 \ref{tab:t1}、\ref{tab:t2} 为表点值。
+
+\begin{figure}[H]\centering
+\includegraphics[width=0.9\textwidth]{fig4_q1_profiles.png}
+\caption{问题一不同时刻的径向温度与含水率剖面（附录 2）。}
+\label{fig:q1}
+\end{figure}
+
+\begin{table}[H]\centering\small
+\caption{问题一温度场 $T$（\si{\celsius}）}\label{tab:t1}
+\input{tables/table1}
+\end{table}
+\begin{table}[H]\centering\small
+\caption{问题一水分浓度 $C$（\si{kg/kg}，干基）}\label{tab:t2}
+\input{tables/table2}
+\end{table}
+
+\subsection{问题二、三：整个烘干过程与达标判据（附录 3）}\label{sec:q23}
+
+附录 3 变物性 $\rho=650+128C$、$c_p=1450+2736\frac{C}{C+1}$、$k=0.21+0.38\frac{C}{C+1}$、
+$D=2.4\times10^{-3}e^{-0.45/C}e^{-3850/T}$，$D(C,T)$ 双向耦合。三问复用二问同一未舍入轨迹。
+
+\textbf{达标判据}「各处 $C<0.15$」实现为\emph{未舍入全域重构场}上的连续事件求根：BDF 用同一连续解求
+$\max_i C_i(t)-0.15=0$ 的根（不先取端点极值再插值），得阈值穿越时间
+\[
+\tstar_3=\SI{57.4740}{h}\quad(\SI{206906.496833}{s}),
+\]
+极值位于中心节点。不回穿依据比较原理：无源主线在 $D>0,R>0,h_m>0$ 及 $C_{\mathrm{env}}<0.15$ 下，
+常数 $0.15$ 为上解，续算 \SI{600}{s} 复核 $\Cmax\le0.15+10^{-9}$。区分两个时刻：
+$\tstar$（阈值穿越 $=$ 严格达标集合下确界）与 \textbf{严格合格采样时刻} $t_{\mathrm{sample}}$
+（首个实测未舍入 $\Cmax<0.15$ 的 \SI{60}{s} 网格点，$t_{\mathrm{sample},3}=\SI{206940}{s}$，
+实测 $\Cmax=0.14999$），后者用于 result3 末行，$t_{\mathrm{sample}}\ge\tstar$，相差 $<\SI{60}{s}$。
+表 \ref{tab:t3}--\ref{tab:t5} 给出结果；\textbf{表 5 末行取 $\tstar_3$，中心未舍入含水率恰为 $0.15$，
+四位小数显示 $0.1500$——此非严格达标（严格 $<0.15$ 在 $\tstar$ 之后瞬间），判据一律以未舍入值为准。}
+
+\begin{table}[H]\centering\small
+\caption{问题二温度场 $T$（\si{\celsius}，$0.5$--$\SI{3}{h}$）}\label{tab:t3}
+\input{tables/table3}
+\end{table}
+\begin{table}[H]\centering\small
+\caption{问题二水分浓度 $C$（\si{kg/kg}）}\label{tab:t4}
+\input{tables/table4}
+\end{table}
+\begin{table}[H]\centering\small
+\caption{问题三水分浓度 $C$（每 \SI{6}{h}，末行 $=$ 烘干结束时间 $\tstar_3=\SI{57.4740}{h}$）}\label{tab:t5}
+\input{tables/table5}
+\end{table}
+
+\subsection{问题四：尺寸变化的动域模型（附录 4，附件 2）}
+
+半径 $2.000\to\SI{1.198}{cm}$（半程约 \SI{2.36}{h}）。附录 4 物性 $\rho=760+90c$、
+$c_p=1850+2150\frac{c}{c+1}$、$k=0.12+0.20\frac{c}{c+1}$、$D=4.2\times10^{-4}e^{-0.30/c}e^{-3850/\theta}$。
+在参考坐标 $x=r/R(t)\in[0,1]$ 上，仿射运动学（网格速度 $=$ 固体速度 $v_s=x\dot R$）使相对对流项恰好相消，
+方程只含 $R(t)$ 不含 $\dot R$：
+\begin{equation}
+\pd{c}{t}=\frac{1}{R^2x}\pd{}{x}\!\left(xD(c,\theta)\pd{c}{x}\right),\quad
+b(c)\pd{\theta}{t}=\frac{1}{R^2x}\pd{}{x}\!\left(xk(c)\pd{\theta}{x}\right),
+\end{equation}
+表面项 $-\frac{D}{R}\partial_x c|_1=h_m(c_N-C_{\mathrm{env}})$、$-\frac{k}{R}\partial_x\theta|_1=h(\theta_N-T_{\mathrm{air}})$；
+干物质均匀 $\rho_s(t)=\rho_{s0}(R_0/R)^2$，隐式步 $R$ 取步末值。得 $\tstar_4=\SI{51.0920}{h}$
+（\SI{183931.302883}{s}），达标时 $R(\tstar_4)=\SI{1.20}{cm}$（未超附件 2 的 \SI{72}{h} 范围）。
+
+\textbf{输出}：固定物理位置 $r_j=0.1j\,\si{cm}$ 映射到 $x_j(t)=r_j/R(t)$，域内由节点线性插值、
+$x_j=1$ 取表面 $c_N$，域外（$r_j>R(t)$，未舍入插值 $R$）\textbf{留空}；域内判定与掩码共用同一
+$\mathrm{inside}(r_j,R)$ 函数。温度场求解并参与 $D(C,T)$ 耦合，但不写入正式 result4。
+图 \ref{fig:q4} 与表 \ref{tab:t6}（配表 \ref{tab:t6r} 半径）给出结果。
+
+\begin{figure}[H]\centering
+\includegraphics[width=0.82\textwidth]{fig7_q4_history.png}
+\caption{问题四固定位置含水率时程（域外留空，虚线为阈值 $0.15$）。}
+\label{fig:q4}
+\end{figure}
+
+\begin{table}[H]\centering\small
+\begin{minipage}{0.62\textwidth}\centering
+\caption{问题四水分浓度（末行 $\tstar_4=\SI{51.0920}{h}$）}\label{tab:t6}
+\input{tables/table6}
+\end{minipage}\hfill
+\begin{minipage}{0.34\textwidth}\centering
+\caption{各行半径 $R(t)$}\label{tab:t6r}
+\input{tables/table6_radius}
+\end{minipage}
+\end{table}
+
+\noindent 表 6 中 $1.5$、$\SI{2.0}{cm}$ 列在 $t\ge\SI{6}{h}$ 全部位于收缩后药材表面之外（域外），故不列。
