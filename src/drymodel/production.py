@@ -76,6 +76,14 @@ def _single_trajectory(cfg, question, fc, moving):
     return full, op, det
 
 
+def gate_production(question, det, cmax_at_tsample, thr):
+    """生产失败阻断门（可单测）：续算回穿、严格合格末行。任一不满足抛 RuntimeError。"""
+    if not det.post_ok:
+        raise RuntimeError(f"{question} 生产失败：续算回穿检查未过（post_max_cmax={det.post_max_cmax}）")
+    if det.t_sample is None or cmax_at_tsample >= thr:
+        raise RuntimeError(f"{question} 生产失败：严格合格末行 t_sample={det.t_sample} 实测 C_max≥{thr}")
+
+
 def _sample_cols(full, ts, node_idx, n, chunk=8000):
     """分块求值，仅提取输出列的 C、T（控制内存；避免全场 (len,2n) 巨阵）。"""
     ts = np.asarray(ts, float)
@@ -95,17 +103,13 @@ def produce_q23(cfg, fc, outdir, *, result2_mode="until_dry_1s"):
     t_cross = det.t_cross
     t_sample = det.t_sample
 
-    # 失败阻断：续算回穿检查、严格合格末行
-    if not det.post_ok:
-        raise RuntimeError(f"Q23 生产失败：续算回穿检查未过（post_max_cmax={det.post_max_cmax}）")
-
     def ev(t):
         if t > full.t_end + 1e-6:
             raise ValueError(f"Q23 生产采样越界 t={t}")
         return full.eval([float(t)])[0]
 
-    if t_sample is None or CR.cmax(ev(float(t_sample))[:n]) >= thr:
-        raise RuntimeError(f"Q23 生产失败：严格合格末行 t_sample={t_sample} 实测 C_max≥{thr}")
+    # 失败阻断：续算回穿检查、严格合格末行
+    gate_production("Q23", det, CR.cmax(ev(float(t_sample))[:n]) if t_sample else thr, thr)
 
     # t_end_1s（同一轨迹求值）
     t_end_1s = int(np.ceil(t_cross))
@@ -159,10 +163,7 @@ def produce_q4(cfg, fc, outdir):
             raise ValueError(f"Q4 生产采样越界 t={t}")
         return full.eval([float(t)])[0]
 
-    if not det.post_ok:
-        raise RuntimeError(f"Q4 生产失败：续算回穿检查未过（post_max_cmax={det.post_max_cmax}）")
-    if t_sample is None or CR.cmax(ev(float(t_sample))[:n]) >= thr:
-        raise RuntimeError(f"Q4 生产失败：严格合格末行 t_sample={t_sample} 实测 C_max≥{thr}")
+    gate_production("Q4", det, CR.cmax(ev(float(t_sample))[:n]) if t_sample else thr, thr)
 
     ts4 = np.arange(60, int(t_sample) + 1, 60)
     grid_rows, surf_vals, mask = [], [], []
@@ -203,13 +204,15 @@ def run_production(cfg, *, outputs_dir=None, override=None, result2_mode="until_
     fc = {"q1": _final_config(cfg, "q1", override),
           "q23": _final_config(cfg, "q23", override),
           "q4": _final_config(cfg, "q4", override)}
-    # 续算与导出（任一失败 → 阻断，返回 ok=False，不标产物为验收通过）
+    # 续算与导出（任一失败 → 阻断，返回 ok=False，不标产物为验收通过；失败也写回执）
     try:
         r1 = produce_q1(cfg, fc["q1"], outdir)
         r23 = produce_q23(cfg, fc["q23"], outdir, result2_mode=result2_mode)
         r4 = produce_q4(cfg, fc["q4"], outdir)
     except Exception as e:
-        return {"ok": False, "reason": f"生产续算/导出失败：{e}", "fc": fc}
+        res = {"ok": False, "reason": f"生产续算/导出失败：{e}", "fc": fc}
+        _write_json_receipt(cfg, res, outdir)
+        return res
 
     # V-9 工作簿结构（生产：全部数据行格式检查 full_format_check=True）
     ff = True
@@ -234,8 +237,10 @@ def run_production(cfg, *, outputs_dir=None, override=None, result2_mode="until_
     ok = all(v["ok"] for v in v9.values()) and v8_ok
     hashes = {name: _sha256_file(outdir / name) for name in
               ("result1.xlsx", "result2.xlsx", "result3.xlsx", "result4.xlsx")}
-    return {"ok": ok, "q1": r1, "q23": r23, "q4": r4, "V9": v9, "V8": v8, "v8_ok": v8_ok,
-            "fc": fc, "file_sha256": hashes, "outdir": str(outdir)}
+    res = {"ok": ok, "q1": r1, "q23": r23, "q4": r4, "V9": v9, "V8": v8, "v8_ok": v8_ok,
+           "fc": fc, "file_sha256": hashes, "outdir": str(outdir)}
+    _write_json_receipt(cfg, res, outdir)
+    return res
 
 
 def _sha256_file(path):
@@ -245,6 +250,53 @@ def _sha256_file(path):
         for blk in iter(lambda: f.read(1 << 20), b""):
             h.update(blk)
     return h.hexdigest()
+
+
+def _write_json_receipt(cfg, res, outdir):
+    """机器可读回执（成功/失败均写）：配置+哈希、代码/软件版本、命令、未格式化 t*、
+    严格采样+Cmax、续算、输出哈希、V-8/V-9 明细。"""
+    import hashlib, json, platform, subprocess, sys, time as _t
+    try:
+        commit = subprocess.check_output(["git", "rev-parse", "HEAD"],
+                                         cwd=str(cfgmod.PROJECT_ROOT)).decode().strip()
+    except Exception:
+        commit = "unknown"
+    cfg_sha = hashlib.sha256((cfgmod.PROJECT_ROOT / "config" / "A题_config.yaml").read_bytes()).hexdigest()
+    libs = {}
+    for m in ("numpy", "scipy", "openpyxl"):
+        try:
+            libs[m] = __import__(m).__version__
+        except Exception:
+            pass
+    rec = {
+        "timestamp": _t.strftime("%Y-%m-%dT%H:%M:%S"),
+        "ok": res["ok"], "reason": res.get("reason"),
+        "code_commit": commit, "config_id": cfg.raw["production"].get("config_id"),
+        "config_sha256": cfg_sha, "config_approved": cfg.raw["production"]["approved"],
+        "run_command": "python -m drymodel.run_all --produce",
+        "software": {"python": platform.python_version(), **libs},
+        "effective_config": res.get("fc"),
+        "bdf": dict(cfg.bdf),
+    }
+    if res["ok"]:
+        rec["results"] = {
+            "q23": {"t_star_s": res["q23"]["t_star_s"], "t_end_1s": res["q23"]["t_end_1s"],
+                    "t_sample_s": res["q23"]["t_sample_s"], "post_max_cmax": res["q23"]["post_max_cmax"]},
+            "q4": {"t_star_s": res["q4"]["t_star_s"], "t_sample_s": res["q4"]["t_sample_s"],
+                   "post_max_cmax": res["q4"]["post_max_cmax"]},
+        }
+        rec["file_sha256"] = res["file_sha256"]
+        rec["V9"] = {k: {"ok": v["ok"], "issues": v["issues"][:5]} for k, v in res["V9"].items()}
+        rec["V8"] = {"ok": res["v8_ok"], "n_common_times": res["V8"]["n_common_times"],
+                     "n_mismatch": res["V8"]["n_mismatch"],
+                     "n_missing_coverage": res["V8"].get("n_missing_coverage", 0)}
+    (outdir / "production_receipt.json").write_text(
+        json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+    # 失败尝试追加到失败日志（不覆盖历史）
+    if not res["ok"]:
+        log = outdir / "production_failures.log"
+        with open(log, "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
 
 # --------------------------------------------------------------------------

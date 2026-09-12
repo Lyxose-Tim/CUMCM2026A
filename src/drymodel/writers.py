@@ -199,6 +199,9 @@ def cross_file_check(result2_path, result3_path, *, decimals=4):
     missing = sorted(t for t in d3 if t % 60 == 0 and t <= t2_max and t not in d2)
     if missing:
         issues.append(f"跨文件缺口：result3 的 60 s 时刻 {missing[:5]}… 在 result2 范围内却未被覆盖")
+    # 零共同时刻不能判通过（预期应有共同时间）
+    if len(common) == 0:
+        issues.append("跨文件零共同时刻：result2 与 result3 无 60 s 公共采样时刻（应有共同时间，不判通过）")
     ncol = min(len(next(iter(d2.values()))), len(next(iter(d3.values()))))
     mism = 0
     for t in common:
@@ -210,5 +213,6 @@ def cross_file_check(result2_path, result3_path, *, decimals=4):
                 mism += 1
                 if len(issues) < 10:
                     issues.append(f"t={t}s 列{j}: result2={v2} != result3={v3}")
-    return {"ok": mism == 0 and not missing, "n_common_times": len(common),
+    ok = (mism == 0) and (not missing) and (len(common) > 0)
+    return {"ok": ok, "n_common_times": len(common),
             "n_mismatch": mism, "n_missing_coverage": len(missing), "issues": issues}
