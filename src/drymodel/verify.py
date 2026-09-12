@@ -15,9 +15,12 @@ from scipy.integrate import solve_ivp
 from scipy.optimize import brentq
 from scipy.special import jv
 
-from .grid import RadialGrid
+from dataclasses import dataclass as _dataclass
+
+from .grid import RadialGrid, RefGrid
 from .operators import FVMOperator, jac_sparsity
 from . import solver_be
+from . import solver_bdf as _SBDF
 
 
 # --------------------------------------------------------------------------
@@ -252,3 +255,45 @@ def energy_residual_be(op, y0, t_probe, dt, cfg):
     ref_scale = 2.0 * np.pi * R0 * op.h * max(abs(Tair - (cfg.T0_K)), 1.0)
     return {"RE_W_per_m": float(RE), "rel": float(abs(RE) / max(ref_scale, 1e-300)),
             "ref_scale": float(ref_scale)}
+
+
+# --------------------------------------------------------------------------
+# V-10：静态极限（Q4 动域求解器 R≡R0 vs 固定域求解器）
+# --------------------------------------------------------------------------
+@_dataclass(frozen=True)
+class _ConstRadius:
+    R0: float
+
+    def R(self, t):
+        t = np.asarray(t, float)
+        out = np.full_like(t, self.R0)
+        return out if out.shape else float(out)
+
+    def is_extrapolated(self, t):
+        return False
+
+
+def static_limit_q4(cfg, *, N=200, interface="integral", t_probe=3600.0):
+    """R≡R0、附录 4、同一初边值：动域求解器 vs 固定域求解器逐点比较（V-10）。"""
+    from . import data_io
+    env = data_io.make_env_functions(cfg, "base")
+    props = cfg.props("q4")
+    R0 = cfg.R0
+
+    # 动域（参考坐标），R≡R0
+    op_mov = FVMOperator(RefGrid(N), props, env, h=cfg.h, hm=cfg.hm, R0=R0,
+                         interface=interface, integral_npts=8,
+                         radius_fn=_ConstRadius(R0))
+    # 固定域
+    op_fix = FVMOperator(RadialGrid(N, R0), props, env, h=cfg.h, hm=cfg.hm, R0=R0,
+                         interface=interface, integral_npts=8)
+
+    y0 = np.concatenate([np.full(N + 1, cfg.C0), np.full(N + 1, cfg.T0_K)])
+    rm = _SBDF.integrate_bdf(op_mov, y0, 0.0, t_probe, cfg.bdf, breakpoints=(14400.0,))
+    rf = _SBDF.integrate_bdf(op_fix, y0, 0.0, t_probe, cfg.bdf, breakpoints=(14400.0,))
+    ym = rm.eval([t_probe])[0]
+    yf = rf.eval([t_probe])[0]
+    denom = np.maximum(np.abs(yf), 1e-12)
+    rel = float(np.max(np.abs(ym - yf) / denom))
+    absdiff = float(np.max(np.abs(ym - yf)))
+    return {"rel_max": rel, "abs_max": absdiff, "t_probe": t_probe, "N": N}
