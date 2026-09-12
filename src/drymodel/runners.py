@@ -27,21 +27,22 @@ RESULT_COLS_CM = [round(0.1 * j, 4) for j in range(21)]   # 0.0, 0.1, ..., 2.0
 # 装配
 # --------------------------------------------------------------------------
 def build_fixed_operator(cfg, question, N, *, interface="integral", scenario="base",
-                         decoupled=False):
+                         decoupled=False, h_mult=1.0, hm_mult=1.0):
     grid = RadialGrid(N, cfg.R0)
     props = cfg.props(question)
     env = data_io.make_env_functions(cfg, scenario)
-    op = FVMOperator(grid, props, env, h=cfg.h, hm=cfg.hm, R0=cfg.R0,
+    op = FVMOperator(grid, props, env, h=cfg.h * h_mult, hm=cfg.hm * hm_mult, R0=cfg.R0,
                      interface=interface, integral_npts=8, decoupled=decoupled)
     return op, env
 
 
-def build_ref_operator(cfg, question, N, *, interface="integral", scenario="base"):
+def build_ref_operator(cfg, question, N, *, interface="integral", scenario="base",
+                       h_mult=1.0, hm_mult=1.0):
     grid = RefGrid(N)
     props = cfg.props(question)
     env = data_io.make_env_functions(cfg, scenario)
     radius = data_io.make_radius_function(cfg)
-    op = FVMOperator(grid, props, env, h=cfg.h, hm=cfg.hm, R0=cfg.R0,
+    op = FVMOperator(grid, props, env, h=cfg.h * h_mult, hm=cfg.hm * hm_mult, R0=cfg.R0,
                      interface=interface, integral_npts=8, radius_fn=radius,
                      decoupled=False)
     return op, env, radius
@@ -118,12 +119,14 @@ def _cmax_fn_from(res, n):
 
 
 def q23_detect(cfg, *, N=400, interface="integral", scenario="base",
-               t_cap_h=90.0, post_s=None, question="q23", moving=None):
+               t_cap_h=90.0, post_s=None, question="q23", moving=None,
+               h_mult=1.0, hm_mult=1.0):
     """达标检测：积分至 C_max 下穿 0.15，续算 post_s 检查回穿。
 
     - question 决定物性组（q23=附录3；q4=附录4）。
     - moving=None 时由 question=='q4' 推断动域；显式给 moving=False 可在固定 R0 上
       运行附录 4 物性（S10 情形②，分离几何效应）。
+    - h_mult/hm_mult：灵敏度倍率（S1/S2），只在 scenario 层改，不改基础题给值。
     返回 (Detection, res, cont, op)。
     """
     thr = cfg.threshold
@@ -131,10 +134,12 @@ def q23_detect(cfg, *, N=400, interface="integral", scenario="base",
     if moving is None:
         moving = (question == "q4")
     if moving:
-        op, env, _ = build_ref_operator(cfg, "q4", N, interface=interface, scenario=scenario)
+        op, env, _ = build_ref_operator(cfg, "q4", N, interface=interface,
+                                        scenario=scenario, h_mult=h_mult, hm_mult=hm_mult)
     else:
         op, env = build_fixed_operator(cfg, question, N, interface=interface,
-                                       scenario=scenario, decoupled=False)
+                                       scenario=scenario, decoupled=False,
+                                       h_mult=h_mult, hm_mult=hm_mult)
     n = N + 1
     y0 = initial_state(cfg, N)
     res = SBDF.integrate_bdf(op, y0, 0.0, t_cap_h * 3600.0, cfg.bdf,

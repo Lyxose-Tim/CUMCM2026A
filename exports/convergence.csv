@@ -1,0 +1,7 @@
+interface,N,t_star_h
+harmonic,200,58.960263
+harmonic,400,57.689254
+harmonic,800,57.514061
+integral,200,57.474458
+integral,400,57.474115
+integral,800,57.474027

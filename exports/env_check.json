@@ -1,0 +1,21 @@
+{
+  "air_points": 241,
+  "window_s": [
+    10800,
+    14400
+  ],
+  "window_points": 61,
+  "T_air_const_C": 49.998934426229496,
+  "C_env_const": 0.049987540983606554,
+  "breakpoints_s": [
+    14400
+  ],
+  "R0_m": 0.02,
+  "L_m": 0.25,
+  "T0_K": 301.15,
+  "C0": 2.55,
+  "h": 25.0,
+  "hm": 8e-07,
+  "interface": "harmonic",
+  "production_approved": false
+}
