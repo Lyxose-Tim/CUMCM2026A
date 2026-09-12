@@ -110,3 +110,32 @@ def test_cross_file_check_detects_mismatch(tmp_path):
     W.write_result34(r3, t3, C3, COLS21, A1, sheet_name="Sheet1")
     res = W.cross_file_check(r2, r3)
     assert not res["ok"] and res["n_mismatch"] > 0
+
+
+def test_verify_rejects_indomain_empty(tmp_path):
+    """无掩码文件（result3）域内空值应被拒。"""
+    import numpy as _np
+    t = _np.array([60, 120, 180])
+    grid = [[0.3] * 21, [0.3] * 20 + [None], [0.3] * 21]   # 第 1 行有空值
+    W.write_result34(tmp_path / "r.xlsx", t, grid, COLS21, A1, sheet_name="Sheet1")
+    res = W.verify_workbook(tmp_path / "r.xlsx", expected_sheets=["Sheet1"], a1_text=A1,
+                            expected_cols=COLS21, n_data_rows=3, t_start=60, t_step=60)
+    assert not res["ok"] and any("域内空值" in s for s in res["issues"])
+
+
+def test_cross_file_detects_coverage_gap(tmp_path):
+    """result3 有 60s 时刻在 result2 范围内却未覆盖 → 缺口。"""
+    import numpy as _np
+    t2 = _np.arange(1, 121)               # result2 到 120 s
+    C2 = _np.full((len(t2), 21), 0.3)
+    T2 = _np.full((len(t2), 21), 40.0)
+    W.write_result12(tmp_path / "result2.xlsx", t2, C2, T2, COLS21, A1)
+    t3 = _np.array([60, 120, 180])        # result3 有 180s（>result2 末），60/120 在范围内
+    # 制造缺口：result2 只到 120，但把 result3 的 60 从 result2 抽掉不可行；改为 result2 缺 60
+    t2b = _np.array([x for x in range(1, 121) if x != 60])
+    C2b = _np.full((len(t2b), 21), 0.3); T2b = _np.full((len(t2b), 21), 40.0)
+    W.write_result12(tmp_path / "result2.xlsx", t2b, C2b, T2b, COLS21, A1)
+    C3 = _np.full((3, 21), 0.3)
+    W.write_result34(tmp_path / "result3.xlsx", t3, C3, COLS21, A1, sheet_name="Sheet1")
+    res = W.cross_file_check(tmp_path / "result2.xlsx", tmp_path / "result3.xlsx")
+    assert not res["ok"] and res["n_missing_coverage"] >= 1

@@ -82,9 +82,12 @@ def verify_workbook(path, *, expected_sheets, a1_text, expected_cols, n_data_row
         issues.append(f"工作表名 {wb.sheetnames} != {expected_sheets}")
     exp_header = [a1_text] + [float(c) for c in expected_cols] + \
                  ([surface_header] if surface_header else [])
+    width = len(exp_header)
     for sn in wb.sheetnames:
         ws = wb[sn]
-        rows = list(ws.iter_rows(values_only=True))
+        # openpyxl write_only 会丢弃行尾 None（域外单元格），读回时补齐到表头宽度
+        rows = [tuple(list(r) + [None] * (width - len(r))) if len(r) < width else r
+                for r in ws.iter_rows(values_only=True)]
         header = list(rows[0])
         # 逐项表头（A1 + 数值列顺序 + 表面列）
         if header[0] != a1_text:
@@ -115,20 +118,30 @@ def verify_workbook(path, *, expected_sheets, a1_text, expected_cols, n_data_row
                 if v is not None and not (isinstance(v, (int, float)) and not isinstance(v, bool)):
                     issues.append(f"{sn}: 行{i} 列{j} 非数值型 {v!r}")
                     break
-        # 数字格式 0.0000（抽首个数据行）
+        # 数字格式 0.0000：抽查首/中/末数据行（拒绝后续行格式错误）
         if n_data_rows > 0:
-            for col in range(2, len(exp_header) + 1):
-                cell = ws.cell(row=2, column=col)
-                if cell.value is not None and cell.number_format != NUMFMT:
-                    issues.append(f"{sn}: 行2 列{col} 数字格式 {cell.number_format!r} != {NUMFMT!r}")
-                    break
+            sample_rows = sorted({2, 2 + n_data_rows // 2, n_data_rows + 1})
+            for rr in sample_rows:
+                for col in range(2, len(exp_header) + 1):
+                    cell = ws.cell(row=rr, column=col)
+                    if cell.value is not None and cell.number_format != NUMFMT:
+                        issues.append(f"{sn}: 行{rr} 列{col} 数字格式 {cell.number_format!r} != {NUMFMT!r}")
+                        break
+        # 域内空值：无掩码文件（result1/2/3）任何数据单元格不得为空
+        if mask is None:
+            for i, r in enumerate(rows[1:]):
+                for j, v in enumerate(r[1:1 + len(expected_cols)]):
+                    if v is None:
+                        issues.append(f"{sn}: 行{i} 列{j} 域内空值（无掩码文件不得留空）")
+                        break
         # 掩码一致性（result4）：域内非空、域外空 ⇔ inside()
         if mask is not None:
             for i, r in enumerate(rows[1:]):
                 data = r[1:1 + len(expected_cols)]
                 for j, v in enumerate(data):
                     if bool(mask[i][j]) == (v is None):
-                        issues.append(f"{sn}: 行{i} 列{j} 掩码不一致 (inside={bool(mask[i][j])}, empty={v is None})")
+                        kind = "域内空值" if mask[i][j] else "域外非空"
+                        issues.append(f"{sn}: 行{i} 列{j} 掩码不一致（{kind}）")
                         break
     wb.close()
     return {"ok": len(issues) == 0, "issues": issues}
@@ -154,6 +167,11 @@ def cross_file_check(result2_path, result3_path, *, decimals=4):
         pass
     common = sorted(set(d2) & set(d3))
     common = [t for t in common if t % 60 == 0]
+    # 覆盖缺口：result3 的 60 s 时刻若 ≤ result2 末时刻却不在 result2 → 应有共同时间未覆盖
+    t2_max = max(d2)
+    missing = sorted(t for t in d3 if t % 60 == 0 and t <= t2_max and t not in d2)
+    if missing:
+        issues.append(f"跨文件缺口：result3 的 60 s 时刻 {missing[:5]}… 在 result2 范围内却未被覆盖")
     ncol = min(len(next(iter(d2.values()))), len(next(iter(d3.values()))))
     mism = 0
     for t in common:
@@ -165,5 +183,5 @@ def cross_file_check(result2_path, result3_path, *, decimals=4):
                 mism += 1
                 if len(issues) < 10:
                     issues.append(f"t={t}s 列{j}: result2={v2} != result3={v3}")
-    return {"ok": mism == 0, "n_common_times": len(common), "n_mismatch": mism,
-            "issues": issues}
+    return {"ok": mism == 0 and not missing, "n_common_times": len(common),
+            "n_mismatch": mism, "n_missing_coverage": len(missing), "issues": issues}
