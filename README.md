@@ -38,10 +38,14 @@ pip install -e .        # 或 pip install -r requirements.txt 后设 PYTHONPATH=
 
 ```bash
 python -m pytest tests/ -q                      # 单元测试
-python -m drymodel.config_check config/A题_config.yaml   # 配置校验（含拒绝八类非法变异）
-python -m drymodel.run_all                      # 候选计算 + 验证（步 0–3）
-python -m drymodel.run_all --produce            # 生产续算与正式导出（需 D12 授权：production.approved=true）
+python -m drymodel.config_check config/A题_config.yaml   # 配置校验（八类变异+类型/有限性，-O 不失效）
+python -m drymodel.run_all                      # 候选计算 + 验证（配置驱动），出 reports/ 与 exports/config_snapshot.json
+python -m drymodel.run_all --produce            # 生产续算与正式导出（需 D12 授权；生产编排仍待实现，当前为占位）
 ```
+
+> `run_all` 候选模式实测生成 `reports/{V1_V2,V3_convergence,verification,sensitivity,status}.md`
+> 与 `exports/config_snapshot.json`（生效配置快照）；**正式 result1–4 与生产编排待 D12 授权后实现**。
+> N/界面/求积点/容差/情景由 `config/A题_config.yaml` 的 `numerics.candidate` 与 `per_question` 解析生效。
 
 ## 建模要点（摘）
 
