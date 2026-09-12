@@ -162,6 +162,32 @@ def check(cfg):
         require(blk.get("applies_event") is expect_event,
                 f"per_question.{qkey}.applies_event 应为 {expect_event}")
 
+    # 候选阶段生效配置（配置真正接入运行）
+    cand = n.get("candidate")
+    if cand is not None:
+        require(cand.get("interface") in ("harmonic", "integral"),
+                "numerics.candidate.interface 应为 harmonic/integral")
+        require(is_int(cand.get("integral_npts")) and cand["integral_npts"] > 0,
+                "numerics.candidate.integral_npts 须为正整数")
+        sN = cand.get("stage_N", {})
+        for qkey in ("q1", "q23", "q4"):
+            require(qkey in sN and is_int(sN[qkey]) and sN[qkey] in pq[qkey]["candidate_N"],
+                    f"numerics.candidate.stage_N.{qkey} 须为该问 candidate_N 中的整数")
+        tc = cand.get("t_cap_h", {})
+        for qkey in ("q23", "q4"):
+            require(is_finite_number(tc.get(qkey)) and tc[qkey] > 0,
+                    f"numerics.candidate.t_cap_h.{qkey} 须为正有限数")
+
+    # 包络容差 / 空气情景扰动（有限性·正范围）
+    et = n.get("envelope_tol", {})
+    require(is_finite_number(et.get("C")) and et["C"] > 0
+            and is_finite_number(et.get("T_K")) and et["T_K"] > 0,
+            "numerics.envelope_tol.C / T_K 须为正有限数")
+    sens = cfg["air"].get("sensitivity", {})
+    for key in ("dT_degC", "dC"):
+        require(is_finite_number(sens.get(key)) and sens[key] > 0,
+                f"air.sensitivity.{key} 须为正有限数")
+
     # Q4 运动学（拒绝变异 8）
     qc = cfg["q4"]
     require(qc.get("kinematics") == "affine" and qc.get("frame") == "reference_x"

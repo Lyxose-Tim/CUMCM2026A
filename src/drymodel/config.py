@@ -150,6 +150,53 @@ class Config:
         p = self.props(question)
         return float(p.rho(self.C0)) / (1.0 + self.C0)
 
+    # ---- 生效数值配置解析（本轮：配置真正接入运行）----
+    def resolved(self, question: str, stage: str = "candidate") -> dict:
+        """解析某问在某阶段（candidate/default）的实际生效数值配置。
+
+        runners/verify 应从这里取 interface/N/npts/tol/step/情景，而非写死默认。
+        """
+        n = self.raw["numerics"]
+        pq = n["per_question"][question]
+        cand = n.get("candidate", {})
+        if stage == "candidate":
+            interface = cand.get("interface", n["interface"])
+            npts = int(cand.get("integral_npts", n["quadrature"]["interface_points"]))
+            N = int(cand.get("stage_N", {}).get(question, pq["candidate_N"][-1]))
+            t_cap_h = float(cand.get("t_cap_h", {}).get(question, 200.0))
+        else:  # default / baseline
+            interface = n["interface"]
+            npts = int(n["quadrature"]["interface_points"])
+            N = int(n["N_default"])
+            t_cap_h = 200.0
+        return {
+            "question": question, "stage": stage,
+            "interface": interface, "integral_npts": npts, "N": N,
+            "candidate_N": list(pq["candidate_N"]), "final_N": pq["final_N"],
+            "applies_event": bool(pq["applies_event"]), "t_cap_h": t_cap_h,
+            "scenario": "base",
+            "bdf": dict(self.bdf), "picard": dict(self.picard), "retry": dict(self.retry),
+            "envelope_tol": dict(self.envelope_tol),
+        }
+
+    def snapshot(self) -> dict:
+        """可追溯配置快照：版本、内容 sha256、各问生效参数、断点、软件版本。"""
+        import hashlib
+        import platform
+        raw_bytes = self.source_path.read_bytes() if self.source_path else b""
+        sha = hashlib.sha256(raw_bytes).hexdigest() if raw_bytes else None
+        return {
+            "config_version": self.raw.get("version"),
+            "config_path": str(self.source_path) if self.source_path else None,
+            "config_sha256": sha,
+            "production_approved": self.raw["production"]["approved"],
+            "default_interface": self.interface,
+            "breakpoints_s": self.breakpoints_s,
+            "resolved": {q: self.resolved(q, "candidate")
+                         for q in ("q1", "q23", "q4")},
+            "python": platform.python_version(),
+        }
+
 
 def load_config(path: str | Path | None = None, *, validate: bool = True) -> Config:
     """加载 YAML 并（默认）校验，返回 Config。"""

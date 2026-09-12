@@ -251,6 +251,43 @@ def _check_returrepair_fields(cfg: dict) -> None:
     require(isinstance(tm, list) and set(tm) <= {"3h", "72h"},
             "output.result2_test_modes 仅可含 '3h'/'72h'（测试模式，不导出正式）")
 
+    # 候选阶段生效配置（本轮：配置真正接入运行）
+    cand = n.get("candidate")
+    if cand is not None:
+        require(cand.get("interface") in ("harmonic", "integral"),
+                "numerics.candidate.interface 应为 harmonic/integral")
+        cnp = cand.get("integral_npts")
+        require(isinstance(cnp, int) and not isinstance(cnp, bool) and cnp > 0,
+                "numerics.candidate.integral_npts 须为正整数")
+        sN = cand.get("stage_N", {})
+        for qkey in ("q1", "q23", "q4"):
+            require(qkey in sN and isinstance(sN[qkey], int) and not isinstance(sN[qkey], bool)
+                    and sN[qkey] in pq[qkey]["candidate_N"],
+                    f"numerics.candidate.stage_N.{qkey} 须为该问 candidate_N 中的整数")
+        tc = cand.get("t_cap_h", {})
+        for qkey in ("q23", "q4"):
+            require(_pos_finite(tc.get(qkey)), f"numerics.candidate.t_cap_h.{qkey} 须为正有限数")
+
+    # 补齐：picard / retry / bdf.max_step / envelope_tol / air.sensitivity 的有限性·类型·正范围
+    pic = n["picard"]
+    for key in ("tol_dC", "tol_dT_K", "tol_res_C_rel", "tol_res_T_K_per_s"):
+        require(_pos_finite(pic.get(key)), f"numerics.picard.{key} 须为正有限数")
+    require(_pos_finite(n["retry"].get("halvings_max")) and int(n["retry"]["halvings_max"]) >= 1,
+            "numerics.retry.halvings_max 须为正整数")
+    for key in ("max_step_data_s", "max_step_after_s", "atol_I"):
+        if key in n["bdf"]:
+            require(_pos_finite(n["bdf"][key]), f"numerics.bdf.{key} 须为正有限数")
+    et = n["envelope_tol"]
+    require(_pos_finite(et.get("C")) and _pos_finite(et.get("T_K")),
+            "numerics.envelope_tol.C / T_K 须为正有限数")
+    sens = cfg["air"].get("sensitivity", {})
+    for key in ("dT_degC", "dC"):
+        require(_pos_finite(sens.get(key)), f"air.sensitivity.{key} 须为正有限数")
+
+
+def _pos_finite(x) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x) and x > 0
+
 
 def check_props_against_formulas(rel_tol: float = 1e-12) -> bool:
     """核对 props.py 具名函数在若干 (C, T_K) 点复现题面公式（不使用 eval）。"""

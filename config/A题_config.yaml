@@ -92,6 +92,14 @@ numerics:
       final_N: null                              # 须独立通过自身精度检查，不因与 q23 同配置而豁免
       applies_event: true
       checks: ["V-3(晚期剖面/固定厘米重构)", "V-4a/b/c(含 1/R)", "V-10", "V-13"]
+  # 候选阶段实际生效配置（本轮：配置真正接入运行）。与上面默认 interface=harmonic 明确区分：
+  # 候选运行用积分界面；stage_N 为候选阶段各问所用网格（取自 candidate_N，非无条件最终要求，
+  # final_N 仍待正式验收登记）。runners/verify 从此解析取值，不再写死默认。
+  candidate:
+    interface: "integral"
+    integral_npts: 8
+    stage_N: {q1: 1600, q23: 800, q4: 800}
+    t_cap_h: {q23: 90.0, q4: 200.0}
   picard:
     tol_dC: 1.0e-9                      # 状态增量 ∞-范数，kg/kg
     tol_dT_K: 1.0e-7
