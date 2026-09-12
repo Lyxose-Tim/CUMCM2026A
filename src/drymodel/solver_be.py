@@ -24,6 +24,7 @@ class BEResult:
     message: str = ""
     total_steps: int = 0
     total_halvings: int = 0
+    cum_flux: float = 0.0               # 真实子步累计通量 I_BE=Σ Δt_sub·f(step-end)（W4）
     diagnostics: dict = field(default_factory=dict)
 
 
@@ -70,11 +71,14 @@ def step_be(op, y_old, t_old, dt, *, C0_ref, picard):
 
 
 def integrate_be(op, y0, t_end, dt, *, C0_ref, picard, retry,
-                 record_times=None, breakpoints=(), scalar_recorder=None):
+                 record_times=None, breakpoints=(), scalar_recorder=None,
+                 flux_recorder=None):
     """从 t=0 积分到 t_end（含），基础步长 dt（通常 1 s）。
 
     record_times: 需保存整场状态的时刻集合（默认 = 每个整数秒到 t_end）。
-    scalar_recorder(t, C, T): 可选，用于记录标量诊断（Cmax、Cbar、表面等）。
+    scalar_recorder(t, C, T): 可选，记录标量诊断。
+    flux_recorder(t_end, dt_sub, f): 可选，每**实际(子)步**回调真实通量（W4）。
+    返回 BEResult；累计通量 cum_flux 用各实际子步步长（非固定 1 s）。失败 ok=False 显式传播。
     """
     dt = float(dt)
     if record_times is None:
@@ -87,6 +91,7 @@ def integrate_be(op, y0, t_end, dt, *, C0_ref, picard, retry,
     rec_t, rec_C, rec_T = [], [], []
     t = 0.0
     y = np.asarray(y0, dtype=np.float64).copy()
+    cum_flux = 0.0
 
     # 记录初值
     if 0 in record_times:
@@ -95,21 +100,31 @@ def integrate_be(op, y0, t_end, dt, *, C0_ref, picard, retry,
     if scalar_recorder is not None:
         C0v, T0v = op.split(y)
         scalar_recorder(0.0, C0v, T0v)
+    if flux_recorder is not None:
+        C0v, _ = op.split(y)
+        flux_recorder(0.0, 0.0, float(op.flux_cbar(0.0, C0v)))   # 初始通量点（dt_sub=0）
 
     total_steps = 0
     total_halvings = 0
     n_steps = int(round(t_end / dt))
     for _ in range(n_steps):
-        y, t, hv, ok = _advance_one_grid_step(
+        y, t, hv, ok, substeps = _advance_one_grid_step(
             op, y, t, dt, C0_ref=C0_ref, picard=picard,
             halvings_max=halvings_max, dt_min=dt_min)
         total_steps += 1
         total_halvings += hv
+        # 真实子步累计通量（W4：变步长权重）
+        for (t_sub, dt_sub, y_sub) in substeps:
+            C_sub, _ = op.split(y_sub)
+            f_sub = float(op.flux_cbar(t_sub, C_sub))
+            cum_flux += dt_sub * f_sub
+            if flux_recorder is not None:
+                flux_recorder(t_sub, dt_sub, f_sub)
         if not ok:
-            C_s, T_s = op.split(y)
             return BEResult(np.array(rec_t), np.array(rec_C), np.array(rec_T),
                             ok=False, message=f"步进失败于 t={t:.6f}s",
-                            total_steps=total_steps, total_halvings=total_halvings)
+                            total_steps=total_steps, total_halvings=total_halvings,
+                            cum_flux=cum_flux)
         ti = int(round(t))
         if ti in record_times and abs(t - ti) < 1e-9:
             C_s, T_s = op.split(y)
@@ -119,14 +134,19 @@ def integrate_be(op, y0, t_end, dt, *, C0_ref, picard, retry,
             scalar_recorder(t, C_s, T_s)
 
     return BEResult(np.array(rec_t), np.array(rec_C), np.array(rec_T),
-                    ok=True, total_steps=total_steps, total_halvings=total_halvings)
+                    ok=True, total_steps=total_steps, total_halvings=total_halvings,
+                    cum_flux=cum_flux)
 
 
 def _advance_one_grid_step(op, y, t, dt, *, C0_ref, picard, halvings_max, dt_min):
-    """推进一个基础网格步（整数秒）；失败则内部减步并再对齐到步末整数秒。"""
+    """推进一个基础网格步（整数秒）；失败则内部减步并再对齐到步末整数秒。
+
+    返回 (y_new, t_new, halvings, ok, substeps)；substeps 为**实际接受的子步**列表
+    [(t_end, dt_sub, y_end), ...]，供真实子步通量累计（W4）。
+    """
     y_new, conv, _, min_C = step_be(op, y, t, dt, C0_ref=C0_ref, picard=picard)
     if conv and min_C > 0.0:
-        return y_new, t + dt, 0, True
+        return y_new, t + dt, 0, True, [(t + dt, dt, y_new)]
 
     # 减步重试：把 [t, t+dt] 细分为 2^k 子步，子步终点仍落在整数秒边界
     total_hv = 0
@@ -138,13 +158,15 @@ def _advance_one_grid_step(op, y, t, dt, *, C0_ref, picard, halvings_max, dt_min
         yy = y.copy()
         tt = t
         good = True
+        substeps = []
         for _ in range(nsub):
             yy2, c2, _, mc2 = step_be(op, yy, tt, sub_dt, C0_ref=C0_ref, picard=picard)
             if not (c2 and mc2 > 0.0):
                 good = False
                 break
             yy, tt = yy2, tt + sub_dt
+            substeps.append((tt, sub_dt, yy))
         total_hv = k
         if good:
-            return yy, t + dt, total_hv, True
-    return y, t, total_hv, False
+            return yy, t + dt, total_hv, True, substeps
+    return y, t, total_hv, False, []

@@ -191,37 +191,45 @@ def order_from_errors(errs):
 # V-4a/b：离散代数收支 与 独立连续通量积分（BE，固定域）
 # --------------------------------------------------------------------------
 def mass_balances_be(op, y0, t_end, dt, cfg):
-    """V-4a：C̄_N-C̄_0 = -Δt Σ f_n（f 取步末）；V-4b：梯形积分 vs ΔC̄。
+    """BE 收支（**离散代数恒等式**，非独立时间精度证明；时间精度由 V-3 独立核验）。
 
-    f(t) = (2 h_m / R0)(C_N - C_env)。返回残差与理论差 (Δt/2)(f_0-f_N)。
+    V-4a：C̄_N−C̄_0 = −I_BE，I_BE=Σ Δt_sub·f(step-end)（真实子步权重，W4）。
+    V-4b：独立**实际步点**梯形求积 I_trap vs I_BE，变步长理论差 Σ Δt_k(f_{k-1}−f_k)/2。
+    f(t)=(2 h_m/R)(C_N−C_env)。求解失败显式抛错。
     """
-    recs = []
+    cbar0 = op.grid.cbar(op.split(y0)[0])
+    flux_pts = []                          # [(t, dt_sub, f), ...]（含初始点 dt=0）
 
-    def rec(t, C, T):
-        f = (2.0 * op.hm / op.R0) * (C[-1] - float(op.env.C_env(t)))
-        recs.append((float(t), op.grid.cbar(C), float(f)))
+    def frec(t, dt_sub, f):
+        flux_pts.append((float(t), float(dt_sub), float(f)))
 
-    solver_be.integrate_be(op, y0, t_end, dt, C0_ref=cfg.C0, picard=cfg.picard,
-                           retry=cfg.retry, record_times={int(t_end)}, scalar_recorder=rec)
-    ts = np.array([r[0] for r in recs])
-    cbar = np.array([r[1] for r in recs])
-    f = np.array([r[2] for r in recs])
+    res = solver_be.integrate_be(op, y0, t_end, dt, C0_ref=cfg.C0, picard=cfg.picard,
+                                 retry=cfg.retry, record_times={int(t_end)},
+                                 flux_recorder=frec)
+    if not res.ok:
+        raise RuntimeError(f"V-4 BE 积分失败：{res.message}")
 
-    dCbar = cbar[-1] - cbar[0]
-    f_steps = f[1:]                                    # f_n（步末，n=1..Nsteps）
-    balance_rhs = -dt * np.sum(f_steps)                # V-4a
-    res_v4a = abs(dCbar - balance_rhs)
-    rel_v4a = res_v4a / max(abs(dCbar), 1e-300)
+    cbarN = op.grid.cbar(res.C[-1])
+    dCbar = cbarN - cbar0
+    I_BE = res.cum_flux                    # = Σ Δt_sub·f(step-end)
 
-    I_trap = dt * (0.5 * f[0] + np.sum(f[1:-1]) + 0.5 * f[-1])
-    diff_v4b = I_trap - (-dCbar)
-    theory_v4b = 0.5 * dt * (f[0] - f[-1])             # (Δt/2)(f_0-f_N)
+    # V-4a：ΔC̄ = −I_BE（离散代数恒等式）
+    rel_v4a = abs(dCbar + I_BE) / max(abs(dCbar), 1e-300)
+
+    # V-4b：实际步点梯形（右端点=BE），变步长
+    tarr = np.array([p[0] for p in flux_pts])
+    dtarr = np.array([p[1] for p in flux_pts])          # dtarr[0]=0（初始点）
+    farr = np.array([p[2] for p in flux_pts])
+    I_trap = np.sum(dtarr[1:] * 0.5 * (farr[:-1] + farr[1:]))
+    theory_v4b = np.sum(dtarr[1:] * 0.5 * (farr[:-1] - farr[1:]))   # Σ Δt_k(f_{k-1}-f_k)/2
+    diff_v4b = I_trap - I_BE
     rel_v4b = abs(diff_v4b) / max(abs(dCbar), 1e-300)
 
     return {
-        "dCbar": float(dCbar), "rel_v4a": float(rel_v4a),
+        "dCbar": float(dCbar), "I_BE": float(I_BE), "rel_v4a": float(rel_v4a),
         "rel_v4b": float(rel_v4b), "diff_v4b": float(diff_v4b),
-        "theory_v4b": float(theory_v4b), "f0": float(f[0]), "fN": float(f[-1]),
+        "theory_v4b": float(theory_v4b), "f0": float(farr[0]), "fN": float(farr[-1]),
+        "n_flux_pts": int(len(flux_pts)), "total_halvings": int(res.total_halvings),
     }
 
 
@@ -255,38 +263,136 @@ def mass_balance_bdf(cfg, *, question="q23", N=200, interface="integral",
         resid = op.grid.cbar(y[:n]) - cbar0 + y[-1]      # 归一化收支，应 ~0
         worst = max(worst, abs(resid))
     return {"max_abs_resid": float(worst), "rel": float(worst / max(abs(cbar0), 1e-300)),
-            "cbar0": float(cbar0), "moving": moving, "N": N}
+            "cbar0": float(cbar0), "moving": moving, "N": N,
+            "note": "同一 RHS 的离散代数恒等式（C̄−C̄0+I=0），非独立时间精度证明；时间精度由 V-3 独立核验"}
+
+
+def flux_integral_bdf(cfg, *, question="q23", N=200, interface="integral",
+                      t_end_s=3600.0, moving=False, n_sample=201):
+    """V-4b（BDF）：**独立连续通量求积**（非同一 RHS 恒等式）。
+
+    对连续解在积分区间内独立采样 f(t)=(2h_m/R)(C_N−C_env)，梯形求积 I_quad vs −ΔC̄；
+    并以 2× 采样点加密看相对一致性。与 mass_balance_bdf（代数恒等式）互补。
+    """
+    from . import data_io
+    env = data_io.make_env_functions(cfg, "base")
+    props = cfg.props("q4") if moving else cfg.props(question)
+    if moving:
+        radius = data_io.make_radius_function(cfg)
+        op = FVMOperator(RefGrid(N), props, env, h=cfg.h, hm=cfg.hm, R0=cfg.R0,
+                         interface=interface, radius_fn=radius)
+    else:
+        op = FVMOperator(RadialGrid(N, cfg.R0), props, env, h=cfg.h, hm=cfg.hm, R0=cfg.R0,
+                         interface=interface)
+    n = N + 1
+    y0 = np.concatenate([np.full(n, cfg.C0), np.full(n, cfg.T0_K)])
+    res = _SBDF.integrate_bdf(op, y0, 0.0, t_end_s, cfg.bdf, breakpoints=(14400.0,))
+    if not res.ok:
+        raise RuntimeError(res.message)
+    cbar0 = op.grid.cbar(y0[:n])
+    cbarN = op.grid.cbar(res.eval([t_end_s])[0][:n])
+    dCbar = cbarN - cbar0
+
+    def I_quad(m):
+        ts = np.linspace(0.0, t_end_s, m)
+        f = np.array([op.flux_cbar(t, res.eval([t])[0][:n]) for t in ts])
+        return float(np.trapezoid(f, ts))
+
+    Iq = I_quad(n_sample)
+    Iq2 = I_quad(2 * n_sample - 1)
+    rel = abs(Iq - (-dCbar)) / max(abs(dCbar), 1e-300)
+    rel_refine = abs(Iq2 - Iq) / max(abs(dCbar), 1e-300)
+    return {"rel": float(rel), "rel_refine": float(rel_refine),
+            "I_quad": float(Iq), "dCbar": float(dCbar), "moving": moving, "N": N,
+            "note": "独立连续通量求积（非同一 RHS 恒等式）；加密相对一致性 rel_refine"}
 
 
 def energy_residual_be(op, y0, t_probe, dt, cfg):
     """V-4c（W/m 口径）：R_E^(ℓ)=2π∫_0^R b(C)∂_tT r dr − 2πR h[T_air−T_s]（固定域）。
 
-    用 BE 差商近似 ∂_tT；返回绝对/相对残差与参考尺度。
+    用 BE 实际相邻两步差商近似 ∂_tT（细步安全，键用实际 t）。**检离散代数平衡，
+    非独立时间精度**（时间精度由 V-3 独立核验）。
     """
-    recorded = {}
+    steps = []
 
     def rec(t, C, T):
-        recorded[round(t)] = (C.copy(), T.copy())
+        steps.append((float(t), C.copy(), T.copy()))
 
-    solver_be.integrate_be(op, y0, t_probe, dt, C0_ref=cfg.C0, picard=cfg.picard,
-                           retry=cfg.retry,
-                           record_times={int(t_probe), int(t_probe) - int(dt)},
-                           scalar_recorder=rec)
-    tp = int(round(t_probe))
-    C1, T1 = recorded[tp]
-    C0a, T0a = recorded[tp - int(dt)]
-    dTdt = (T1 - T0a) / dt
+    res = solver_be.integrate_be(op, y0, t_probe, dt, C0_ref=cfg.C0, picard=cfg.picard,
+                                 retry=cfg.retry, record_times={int(t_probe)},
+                                 scalar_recorder=rec)
+    if not res.ok:
+        raise RuntimeError(f"V-4c BE 积分失败：{res.message}")
+    # 实际相邻两步（bracket t_probe）
+    t1, C1, T1 = steps[-1]
+    t0, C0a, T0a = steps[-2]
+    dt_actual = t1 - t0
+    dTdt = (T1 - T0a) / dt_actual
 
     R0 = op.R0
     b = op.props.b(C1)
-    # 2π ∫ b ∂_tT r dr ≈ 2π Σ V_i b_i dTdt_i（V_i 已含 r 度量，单位长度弧度积分 → ×2π）
-    integral = 2.0 * np.pi * np.sum(op.V * b * dTdt)
-    Tair = float(op.env.T_air_K(t_probe))
+    integral = 2.0 * np.pi * np.sum(op.V * b * dTdt)   # 2π Σ V_i b_i dTdt_i（W/m）
+    Tair = float(op.env.T_air_K(t1))
     surface = 2.0 * np.pi * R0 * op.h * (Tair - T1[-1])
     RE = integral - surface
-    ref_scale = 2.0 * np.pi * R0 * op.h * max(abs(Tair - (cfg.T0_K)), 1.0)
+    ref_scale = 2.0 * np.pi * R0 * op.h * max(abs(Tair - cfg.T0_K), 1.0)   # W/m（无 L）
     return {"RE_W_per_m": float(RE), "rel": float(abs(RE) / max(ref_scale, 1e-300)),
-            "ref_scale": float(ref_scale)}
+            "ref_scale": float(ref_scale), "t_probe": float(t1), "dt_actual": float(dt_actual),
+            "note": "离散代数平衡（W/m），非独立时间精度证明"}
+
+
+def envelope_check(cfg, *, question="q23", N=200, interface="integral",
+                   t_end_s=None, moving=False, n_sample=25):
+    """V-5：接受解/重构值须落在历史包络内（H17/H18）。
+
+    C_lo(t)=min(C0, inf_{s≤t}C_env), C_hi(t)=max(C0, sup C_env)；T 同理用 T0/T_air。
+    容差取 numerics.envelope_tol；越界超容差→报告最大越界及其时空位置（不裁剪）。
+    """
+    from . import data_io
+    env = data_io.make_env_functions(cfg, "base")
+    props = cfg.props("q4") if moving else cfg.props(question)
+    if moving:
+        radius = data_io.make_radius_function(cfg)
+        op = FVMOperator(RefGrid(N), props, env, h=cfg.h, hm=cfg.hm, R0=cfg.R0,
+                         interface=interface, radius_fn=radius)
+    else:
+        op = FVMOperator(RadialGrid(N, cfg.R0), props, env, h=cfg.h, hm=cfg.hm, R0=cfg.R0,
+                         interface=interface)
+    n = N + 1
+    tol_C = float(cfg.envelope_tol["C"])
+    tol_T = float(cfg.envelope_tol["T_K"])
+    if t_end_s is None:
+        t_end_s = 20000.0 if not moving else 3600.0
+    y0 = np.concatenate([np.full(n, cfg.C0), np.full(n, cfg.T0_K)])
+    res = _SBDF.integrate_bdf(op, y0, 0.0, t_end_s, cfg.bdf, breakpoints=(14400.0,))
+    if not res.ok:
+        raise RuntimeError(res.message)
+
+    ts = np.linspace(0.0, t_end_s, n_sample)
+    # 历史包络（在密集网格上取 inf/sup 的边界历史）
+    dense = np.linspace(0.0, t_end_s, 4001)
+    Cenv_d = np.array([env.C_env(s) for s in dense])
+    Tair_d = np.array([env.T_air_K(s) for s in dense])
+    worst_C = {"exceed": 0.0, "t": None, "node": None}
+    worst_T = {"exceed": 0.0, "t": None, "node": None}
+    for t in ts:
+        mask = dense <= t + 1e-9
+        C_lo = min(cfg.C0, float(np.min(Cenv_d[mask])))
+        C_hi = max(cfg.C0, float(np.max(Cenv_d[mask])))
+        T_lo = min(cfg.T0_K, float(np.min(Tair_d[mask])))
+        T_hi = max(cfg.T0_K, float(np.max(Tair_d[mask])))
+        y = res.eval([t])[0]
+        C, T = y[:n], y[n:2 * n]
+        exC = np.maximum(C_lo - C, C - C_hi)          # >0 表示越界量
+        exT = np.maximum(T_lo - T, T - T_hi)
+        iC = int(np.argmax(exC)); iT = int(np.argmax(exT))
+        if exC[iC] - tol_C > worst_C["exceed"]:
+            worst_C = {"exceed": float(exC[iC] - tol_C), "t": float(t), "node": iC}
+        if exT[iT] - tol_T > worst_T["exceed"]:
+            worst_T = {"exceed": float(exT[iT] - tol_T), "t": float(t), "node": iT}
+    ok = worst_C["exceed"] <= 0.0 and worst_T["exceed"] <= 0.0
+    return {"ok": bool(ok), "worst_C_excess": worst_C, "worst_T_excess": worst_T,
+            "tol_C": tol_C, "tol_T_K": tol_T, "moving": moving, "N": N, "t_end_s": t_end_s}
 
 
 # --------------------------------------------------------------------------

@@ -17,7 +17,7 @@ def test_v4a_discrete_balance(cfg):
 
 
 def test_v4b_flux_integral_matches_theory(cfg):
-    """V-4b 与 (Δt/2)(f_0-f_N) 逐位一致，且 O(Δt) 下降。"""
+    """V-4b 与 Σ Δt_k(f_{k-1}-f_k)/2 逐位一致，且 O(Δt) 下降（对照 E19）。"""
     op, _ = runners.build_fixed_operator(cfg, "q1", 200, interface="harmonic", decoupled=True)
     y0 = runners.initial_state(cfg, 200)
     r1 = V.mass_balances_be(op, y0, 1800.0, 1.0, cfg)
@@ -27,6 +27,37 @@ def test_v4b_flux_integral_matches_theory(cfg):
     r2 = V.mass_balances_be(op2, y0, 1800.0, 0.25, cfg)
     # 一阶：dt 减 4 倍，相对差约减 4 倍
     assert r1["rel_v4b"] / r2["rel_v4b"] == pytest.approx(4.0, rel=0.05)
+
+
+def test_v4a_uses_real_substep_cumflux(cfg):
+    """V-4a 用真实子步累计通量：ΔC̄ = −I_BE，且 n_flux_pts>基础步数（若发生减步）。"""
+    op, _ = runners.build_fixed_operator(cfg, "q1", 200, interface="harmonic", decoupled=True)
+    y0 = runners.initial_state(cfg, 200)
+    r = V.mass_balances_be(op, y0, 1800.0, 1.0, cfg)
+    assert abs(r["dCbar"] + r["I_BE"]) / abs(r["dCbar"]) < 1e-12
+    assert r["n_flux_pts"] >= 1801           # 含初始点
+
+
+def test_v4b_bdf_independent_quadrature(cfg):
+    """V-4b(BDF)：独立连续通量求积与 −ΔC̄ 一致，加密收敛。"""
+    r = V.flux_integral_bdf(cfg, question="q23", N=200, t_end_s=3600.0)
+    assert r["rel"] < 5e-3 and r["rel_refine"] < r["rel"] + 1e-12
+
+
+def test_v4c_fine_step_no_key_collision(cfg):
+    """V-4c 细步 dt=0.25 不因 round(t) 键碰撞出错，残差小。"""
+    op, _ = runners.build_fixed_operator(cfg, "q23", 200, interface="integral")
+    y0 = runners.initial_state(cfg, 200)
+    re = V.energy_residual_be(op, y0, 100.0, 0.25, cfg)
+    assert re["dt_actual"] == pytest.approx(0.25) and re["rel"] < 1e-8
+
+
+def test_v5_envelope_fixed_and_moving(cfg):
+    """V-5：接受解落在历史包络内（固定域 Q23 + Q4 动域）。"""
+    ev = V.envelope_check(cfg, question="q23", N=200, t_end_s=8000.0)
+    assert ev["ok"] and ev["worst_C_excess"]["exceed"] == 0.0
+    ev4 = V.envelope_check(cfg, N=200, moving=True, t_end_s=3600.0)
+    assert ev4["ok"]
 
 
 def test_v4c_energy_residual_small(cfg):
