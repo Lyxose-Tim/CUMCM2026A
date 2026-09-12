@@ -5,7 +5,7 @@
 # 公式字符串仅作说明；运行时由 props.py 映射到明确函数，不使用 eval；说明式与当前附录函数的对应由 config_check 校验。
 version: "1.2"
 revision: "定点返修 2026-09-12"
-status_note: "配置解析通过 ≠ 模型验证通过，更 ≠ 公式—配置一致；D12 生产配置由适用于该问的数值检验选定并登记，V-8/V-9 属导出后文件验收（非 D12 前置）；生产须经验收后由 production.approved=true 标记（当前 false）"
+status_note: "配置解析通过 ≠ 模型验证通过，更 ≠ 公式—配置一致；D12 生产配置由适用于该问的数值检验选定并登记，V-8/V-9 属导出后文件验收（非 D12 前置）；生产经 D12 验收授权，production.approved=true（config_id 见 production；final_N 1600/800/800）"
 
 geometry:
   R0: {value: 0.02, unit: "m", source: "题面Q1"}
@@ -79,17 +79,17 @@ numerics:
   per_question:
     q1:
       candidate_N: [200, 400, 800, 1600, 3200]   # 附录2 早期表面层探针指向更细网格（候选集合）
-      final_N: null                              # 待 result1 早期行 5e-4 误差检查登记
+      final_N: 1600                              # D12 授权：1600 vs 3200 场点 max|ΔC|=4.69e-5<5e-4
       applies_event: false                       # Q1 仅解到 1800 s，不求 0.15 达标事件、不续算 600 s
       checks: ["V-1", "V-2", "V-3(1/10/100 s 表面)"]
     q23:
       candidate_N: [200, 400, 800, 1600]
-      final_N: null                              # 待长时 t* + 早期表面 5e-4 登记
+      final_N: 800                               # D12 授权：800 vs 1600 场点 max|ΔC|=1.55e-4<5e-4
       applies_event: true
       checks: ["V-3(长时表点/表面通量/t*)", "V-4a/b/c", "V-6", "V-11"]
     q4:
       candidate_N: [200, 400, 800, 1600]
-      final_N: null                              # 须独立通过自身精度检查，不因与 q23 同配置而豁免
+      final_N: 800                               # D12 授权：800 vs 1600 场点 max|Δ|=2.19e-4(r=1.2cm)<5e-4
       applies_event: true
       checks: ["V-3(晚期剖面/固定厘米重构)", "V-4a/b/c(含 1/R)", "V-10", "V-13"]
   # 候选阶段实际生效配置（本轮：配置真正接入运行）。与上面默认 interface=harmonic 明确区分：
@@ -173,12 +173,12 @@ acceptance:
   energy_residual: {unit: "W/m", abs_W_per_m: 1.0e-6, rel: 1.0e-8, ref_scale: "2*pi*R(t)*h*max(dT_ref, 1 K)"}
 
 production:
-  approved: false
-  config_id: null
+  approved: true
+  config_id: "D12-20260912-N1600.800.800-integral8pt-bdf1e-8"
   # D12：依适用于该问的数值检验（Q1: V-1/2/3；Q23: V-3/4/6/11；Q4: V-3/4/10/13）选定并登记配置。
   # V-8/V-9 是导出后的文件验收，非 D12 前置（PATCH-02）。改物性/边界/几何/网格/积分方法后，受影响的旧轨迹失效，
   # 按新配置从原始初态重积分再验证与导出；仅改文件格式/文案可复用仍有效的未舍入轨迹。
-  note: "候选（N、interface、scheme）经各问数值检验选定后写入 config_id 并置 approved=true；未通过前保持 null/false，不填历史探针值"
+  note: "D12 已授权：final_N 由各问场点误差选定（reports/D12_config_application.md、D12_evidence.md），config_id 唯一可追溯"
 
 storage:
   full_field_cache: false

@@ -31,6 +31,10 @@ def test_run_production_scaled(cfg, tmp_path):
 
 def test_run_production_refuses_unauthorized(cfg, tmp_path):
     """未授权（approved=false）且 require_approved=True → 拒绝，不生成文件。"""
-    r = production.run_production(cfg, outputs_dir=tmp_path, require_approved=True)
+    import copy
+    unauth = copy.deepcopy(cfg)
+    unauth.raw = copy.deepcopy(cfg.raw)
+    unauth.raw["production"]["approved"] = False        # 强制未授权
+    r = production.run_production(unauth, outputs_dir=tmp_path, require_approved=True)
     assert r["ok"] is False and "未授权" in r["reason"]
     assert not (tmp_path / "result1.xlsx").exists()

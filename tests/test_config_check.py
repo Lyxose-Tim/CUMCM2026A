@@ -95,7 +95,10 @@ def test_reject_q1_applies_event(base_cfg):
 
 
 def test_reject_unauthorized_final_N(base_cfg):
-    bad = _mutate(base_cfg, "numerics.per_question.q23.final_N", 800)
+    """approved=false 时 final_N 必须为 null（未授权不得填最终 N）。"""
+    bad = _mutate(base_cfg, "production.approved", False)   # 基线已授权→改回未授权
+    bad = _mutate(bad, "production.config_id", None)
+    # final_N 仍为 800（已授权配置）→ 未授权下应被拒
     with pytest.raises(cc.ConfigError):
         cc.check(bad)
 

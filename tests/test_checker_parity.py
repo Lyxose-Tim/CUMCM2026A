@@ -49,8 +49,13 @@ NEGATIVES = [
     ("numerics.quadrature.interface_points", 0),
     ("acceptance.energy_residual.ref_scale", "2*pi*R*L*h*max(dT,1K)"),  # 含 L
     ("numerics.per_question.q1.applies_event", True),
-    ("numerics.per_question.q23.final_N", 800),  # 未授权填 final_N
 ]
+
+
+# 两字段负例：approved=false 但 final_N 已填（未授权配置）→ 两检查器均应拒
+def _unauthorized_with_final_N(base):
+    d = _mutate(base, "production.approved", False)
+    return _mutate(d, "production.config_id", None)
 
 
 def _accepts(check_fn, cfg):
@@ -73,3 +78,9 @@ def test_negatives_rejected_by_both(base_cfg, path, value):
     std_ok = _accepts(std_cc.check, bad)
     assert src_ok == std_ok == False, (
         f"检查器不一致 {path}={value!r}: src_accepts={src_ok}, std_accepts={std_ok}")
+
+
+def test_unauthorized_final_N_rejected_by_both(base_cfg):
+    bad = _unauthorized_with_final_N(base_cfg)
+    assert _accepts(src_cc.check, bad) is False
+    assert _accepts(std_cc.check, bad) is False
