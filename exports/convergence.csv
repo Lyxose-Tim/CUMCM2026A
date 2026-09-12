@@ -1,7 +1,7 @@
-interface,N,t_star_h
-harmonic,200,58.960263
-harmonic,400,57.689254
-harmonic,800,57.514061
-integral,200,57.474458
-integral,400,57.474115
-integral,800,57.474027
+interface,N,t_star_h,adjacent_delta_h
+harmonic,200,58.960263002,
+harmonic,400,57.689253687,1.271009315
+harmonic,800,57.514060451,0.175193235
+integral,200,57.474457813,
+integral,400,57.474114582,0.000343230
+integral,800,57.474027262,0.000087320
