@@ -1,5 +1,8 @@
 """config_check 单元测试：正例通过 + 八类非法变异被拒。"""
 import copy
+import importlib.util
+import subprocess
+import sys
 
 import pytest
 import yaml
@@ -132,3 +135,118 @@ def test_load_config_validates():
     assert c.h == 25.0 and c.hm == 8e-7
     # rho_s0 = rho(2.55)/3.55（附录 3）
     assert c.rho_s0("q23") == pytest.approx((650 + 128 * 2.55) / 3.55)
+
+
+@pytest.mark.parametrize(("path", "value"), [
+    ("numerics.bdf.atol_I", -1.0),
+    ("numerics.bdf.atol_C", float("inf")),
+    ("numerics.bdf.atol_C", True),
+    ("numerics.bdf.atol_T_K", "1e-8"),
+    ("numerics.bdf.max_step_after_s", -1.0),
+    ("numerics.picard.max_iter", 1.5),
+    ("numerics.picard.tol_dC", -1.0),
+    ("numerics.retry.halvings_max", 1.5),
+    ("air.sensitivity.dT_degC", float("nan")),
+    ("output.result1.t_s", "1..100"),
+    ("numerics.interface", "harmonic"),
+])
+def test_reject_audit_schema_mutations(base_cfg, path, value):
+    with pytest.raises(cc.ConfigError):
+        cc.check(_mutate(base_cfg, path, value))
+
+
+def test_approved_config_requires_concrete_parameters_and_evidence(base_cfg):
+    bad = copy.deepcopy(base_cfg)
+    bad["production"].update(approved=True, config_id="candidate-x")
+    with pytest.raises(cc.ConfigError):
+        cc.check(bad)
+
+    complete = copy.deepcopy(bad)
+    complete["production"].update(
+        config_digest="0123456789abcdef",
+        verification_record="reports/verification.json",
+    )
+    for block in complete["numerics"]["per_question"].values():
+        block.update(
+            final_N=800,
+            final_interface="integral",
+            final_scheme="BDF",
+            final_quadrature_points=8,
+        )
+    assert cc.check(complete) is True
+
+    malformed_digest = copy.deepcopy(complete)
+    malformed_digest["production"]["config_digest"] = "not-a-digest"
+    with pytest.raises(cc.ConfigError):
+        cc.check(malformed_digest)
+
+    wrong_record = copy.deepcopy(complete)
+    wrong_record["production"]["verification_record"] = "somewhere/pass.txt"
+    with pytest.raises(cc.ConfigError):
+        cc.check(wrong_record)
+
+    unverified_grid = copy.deepcopy(complete)
+    unverified_grid["numerics"]["per_question"]["q1"]["final_N"] = 123
+    with pytest.raises(cc.ConfigError):
+        cc.check(unverified_grid)
+
+    unverified_quadrature = copy.deepcopy(complete)
+    unverified_quadrature["numerics"]["per_question"]["q4"][
+        "final_quadrature_points"
+    ] = 12
+    with pytest.raises(cc.ConfigError):
+        cc.check(unverified_quadrature)
+
+    final_run = cfgmod.Config(complete).resolve_run("q4", purpose="production")
+    assert final_run.N == 800
+    assert final_run.interface == "integral"
+    assert final_run.scheme == "BDF"
+    assert final_run.integral_npts == 8
+
+
+def test_plan_checker_is_thin_authoritative_entrypoint():
+    path = cfgmod.PROJECT_ROOT / "建模方案v1.1" / "config_check.py"
+    spec = importlib.util.spec_from_file_location("plan_config_check", path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    assert module.check is cc.check
+    assert module.ConfigError is cc.ConfigError
+
+
+def test_two_yaml_files_are_byte_identical():
+    plan = cfgmod.PROJECT_ROOT / "建模方案v1.1" / "A题_config.yaml"
+    assert cfgmod.DEFAULT_CONFIG_PATH.read_bytes() == plan.read_bytes()
+
+
+def test_invalid_config_is_rejected_under_python_optimized(base_cfg, tmp_path):
+    bad = _mutate(base_cfg, "numerics.bdf.atol_I", -1.0)
+    path = tmp_path / "bad.yaml"
+    path.write_text(yaml.safe_dump(bad, allow_unicode=True), encoding="utf-8")
+    checker = cfgmod.PROJECT_ROOT / "建模方案v1.1" / "config_check.py"
+    proc = subprocess.run(
+        [sys.executable, "-O", str(checker), str(path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode != 0
+    assert "atol_I" in (proc.stderr + proc.stdout)
+
+
+def test_effective_run_config_is_complete_and_stable():
+    cfg = cfgmod.load_config()
+    run = cfg.resolve_run("q23", N=800, purpose="candidate", augmented=True)
+    snap = run.snapshot()
+    assert snap["N"] == 800
+    assert snap["interface"] == "integral"
+    assert snap["integral_npts"] == 8
+    assert snap["scheme"] == "BDF"
+    assert snap["max_step_after_s"] == 600.0
+    assert snap["breakpoints_s"] == (14400.0,)
+    assert snap["air_data_end_s"] == 14400.0
+    assert snap["augmented"] is True
+    assert len(run.digest) == 16
+    assert run.digest == cfg.resolve_run("q23", N=800, augmented=True).derive(
+        purpose="candidate"
+    ).digest

@@ -96,10 +96,10 @@ SCENARIO_ENV_PARAMS: dict[str, dict] = {
     "base": {},
     "smooth121": {"interp": "smooth121"},
     "hold_last": {"extrapolation": "hold_last"},
-    "dT_air+": {"dT_extrap": +0.39},
-    "dT_air-": {"dT_extrap": -0.39},
-    "dC_env+": {"dC_extrap": +0.0011},
-    "dC_env-": {"dC_extrap": -0.0011},
+    "dT_air+": {"dT_sign": +1.0},
+    "dT_air-": {"dT_sign": -1.0},
+    "dC_env+": {"dC_sign": +1.0},
+    "dC_env-": {"dC_sign": -1.0},
 }
 
 
@@ -110,8 +110,9 @@ def make_env_functions(cfg, scenario: str = "base") -> EnvFunctions:
     params = SCENARIO_ENV_PARAMS[scenario]
     interp = params.get("interp", cfg.raw["air"].get("interp", "linear"))
     extrapolation = params.get("extrapolation", cfg.raw["air"].get("extrapolation", "hold_window_mean"))
-    dT_extrap = params.get("dT_extrap", 0.0)
-    dC_extrap = params.get("dC_extrap", 0.0)
+    sensitivity = cfg.raw["air"]["sensitivity"]
+    dT_extrap = params.get("dT_sign", 0.0) * float(sensitivity["dT_degC"])
+    dC_extrap = params.get("dC_sign", 0.0) * float(sensitivity["dC"])
 
     t, T_C, C = load_attachment1(cfg.air_file())
     t_switch = float(cfg.breakpoints_s[0])          # 14400 s

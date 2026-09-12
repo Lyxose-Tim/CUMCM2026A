@@ -67,8 +67,8 @@ class Detection:
     t_star: float
     t_sample: float | None            # 首个实测 <thr 的 60 s 点
     t_safe: float | None              # 首个 <thr-δ 的时刻（数值裕量）
-    delta: float                      # C 误差估计（数值裕量用）
-    dt_star: float                    # t* 误差估计
+    delta: float | None               # 实测 C 对照差；未运行时 None，禁止用 NaN/门槛代替
+    dt_star: float | None             # 实测 t* 对照差；未运行时 None
     argmax_node: int                  # 穿越时刻极值所在节点
     post_ok: bool                     # 续算 600 s 未回穿
     post_max_cmax: float              # 续算段最大 cmax

@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import math
+import re
 import sys
 from typing import Any
 
@@ -61,15 +62,42 @@ def _get(d: dict, path: str) -> Any:
     return v
 
 
+def is_number(value: Any) -> bool:
+    """严格数值谓词：拒绝 bool、字符串、NaN 与无穷。"""
+    return (isinstance(value, (int, float)) and not isinstance(value, bool)
+            and math.isfinite(value))
+
+
+def scalar_num(d: dict, path: str, *, positive: bool = False,
+               nonnegative: bool = False) -> float:
+    value = _get(d, path)
+    require(is_number(value), f"{path}: 须为有限数值且不得为 bool，得 {value!r}")
+    value = float(value)
+    if positive:
+        require(value > 0.0, f"{path}: 须为正，得 {value}")
+    if nonnegative:
+        require(value >= 0.0, f"{path}: 须为非负，得 {value}")
+    return value
+
+
+def integer(d: dict, path: str, *, positive: bool = False,
+            nonnegative: bool = False) -> int:
+    value = _get(d, path)
+    require(isinstance(value, int) and not isinstance(value, bool),
+            f"{path}: 须为整数且不得为 bool，得 {value!r}")
+    if positive:
+        require(value > 0, f"{path}: 须为正整数，得 {value}")
+    if nonnegative:
+        require(value >= 0, f"{path}: 须为非负整数，得 {value}")
+    return value
+
+
 def num(d: dict, path: str, unit: str | None = None, *, source: bool = True,
         positive: bool = False, finite: bool = True) -> float:
     v = _get(d, path)
-    require(isinstance(v, dict) and isinstance(v.get("value"), (int, float))
-            and not isinstance(v.get("value"), bool),
+    require(isinstance(v, dict) and is_number(v.get("value")),
             f"{path}: 需 {{value, unit, source}} 且 value 为数值")
     val = float(v["value"])
-    if finite:
-        require(math.isfinite(val), f"{path}: value 非有限")
     if positive:
         require(val > 0.0, f"{path}: value 须为正，得 {val}")
     if unit is not None:
@@ -115,8 +143,7 @@ def check(cfg: dict) -> bool:
     r = cfg["radius"]
     require(r.get("interp") == "linear", "radius.interp 应为 linear（B12a）")
     require(r.get("after_72h") == "hold_last", "radius.after_72h 应为 hold_last（B12b）")
-    inside_tol = float(r.get("inside_tol", -1))
-    require(math.isfinite(inside_tol) and inside_tol > 0, "radius.inside_tol 须为正有限值")
+    scalar_num(cfg, "radius.inside_tol", positive=True)
 
     # ---- 物性：常数正范围 + 公式字符串逐字一致（拒绝变异 1/2/3）----
     require(num(cfg, "props.q1.rho", "kg/m^3", positive=True) == 820.0,
@@ -134,27 +161,47 @@ def check(cfg: dict) -> bool:
     require(cfg["props"]["energy_form"] == "effective",
             f"props.energy_form 主线应为 effective（拒绝 enthalpy_advective），得 "
             f"{cfg['props'].get('energy_form')!r}")  # 变异 7
-    guards = cfg["props"].get("guards", {})
-    require(float(guards.get("exp_underflow_arg", 1)) < 0, "props.guards.exp_underflow_arg 应为负")
+    scalar_num(cfg, "props.guards.C_floor_for_exp", positive=True)
+    require(scalar_num(cfg, "props.guards.exp_underflow_arg") < 0,
+            "props.guards.exp_underflow_arg 应为负")
 
     # ---- 数值 ----
     n = cfg["numerics"]
-    require(n.get("interface") in ("harmonic", "integral"), "numerics.interface 应为 harmonic/integral")
+    require("interface" not in n,
+            "numerics.interface 已废弃；请使用 per_question.<问题>.candidate_interface")
     require(n.get("scheme_baseline") == "backward_euler", "numerics.scheme_baseline 应为 backward_euler")
-    Nd = n.get("N_default")
-    require(isinstance(Nd, int) and not isinstance(Nd, bool) and Nd > 0,
-            f"numerics.N_default 须为正整数（拒绝 −200），得 {Nd!r}")  # 变异 4
+    Nd = integer(cfg, "numerics.N_default", positive=True)  # 变异 4
     require(isinstance(n.get("N_verify"), list) and len(n["N_verify"]) > 0
             and all(isinstance(x, int) and not isinstance(x, bool) and x > 0 for x in n["N_verify"]),
             "numerics.N_verify 须为正整数列表")
-    rtol = n["bdf"].get("rtol")
-    require(isinstance(rtol, (int, float)) and math.isfinite(rtol) and rtol > 0 and rtol <= 1e-8,
+    rtol = scalar_num(cfg, "numerics.bdf.rtol", positive=True)
+    require(rtol <= 1e-8,
             f"numerics.bdf.rtol 须为 (0, 1e-8]（拒绝负值），得 {rtol!r}")  # 变异 5
-    require(float(n["bdf"].get("atol_C", -1)) > 0 and float(n["bdf"].get("atol_T_K", -1)) > 0,
-            "numerics.bdf.atol_C / atol_T_K 须为正")
-    require(int(n["picard"].get("max_iter", 0)) >= 1, "numerics.picard.max_iter 须 >=1")
-    require(float(n["retry"].get("dt_min_s", -1)) > 0, "numerics.retry.dt_min_s 须为正")
-    require(float(n["dt_be_s"]) > 0, "numerics.dt_be_s 须为正")
+    for key in ("atol_C", "atol_T_K", "atol_I", "max_step_data_s", "max_step_after_s"):
+        scalar_num(cfg, f"numerics.bdf.{key}", positive=True)
+    require(n["bdf"].get("restart_at_breakpoints") is True,
+            "numerics.bdf.restart_at_breakpoints 应为 True")
+    for key in ("rtol", "atol_C", "atol_T_K", "atol_I",
+                "max_step_data_s", "max_step_after_s"):
+        scalar_num(cfg, f"numerics.bdf_refined.{key}", positive=True)
+    require(n["bdf_refined"]["rtol"] < n["bdf"]["rtol"],
+            "numerics.bdf_refined.rtol 须严于候选值")
+    for key in ("tol_dC", "tol_dT_K", "tol_res_C_rel", "tol_res_T_K_per_s"):
+        scalar_num(cfg, f"numerics.picard.{key}", positive=True)
+    integer(cfg, "numerics.picard.max_iter", positive=True)
+    integer(cfg, "numerics.retry.halvings_max", nonnegative=True)
+    scalar_num(cfg, "numerics.retry.dt_min_s", positive=True)
+    scalar_num(cfg, "numerics.dt_be_s", positive=True)
+    dt_verify = n.get("dt_be_verify_s")
+    require(isinstance(dt_verify, list) and len(dt_verify) >= 2
+            and all(is_number(x) and x > 0 for x in dt_verify),
+            "numerics.dt_be_verify_s 须为至少两个正有限数")
+    require(all(dt_verify[i + 1] < dt_verify[i] for i in range(len(dt_verify) - 1)),
+            "numerics.dt_be_verify_s 须严格递减")
+    scalar_num(cfg, "numerics.envelope_tol.C", nonnegative=True)
+    scalar_num(cfg, "numerics.envelope_tol.T_K", nonnegative=True)
+    scalar_num(cfg, "air.sensitivity.dT_degC", positive=True)
+    scalar_num(cfg, "air.sensitivity.dC", positive=True)
 
     # ---- Q4 运动学（拒绝变异 8）----
     q = cfg["q4"]
@@ -170,12 +217,17 @@ def check(cfg: dict) -> bool:
     require(c.get("domain") == "full_unrounded", "criterion.domain 应为 full_unrounded")
     require(c.get("event") == "continuous_root_on_reconstructed_field",
             "criterion.event 应为 continuous_root_on_reconstructed_field")
-    require(float(c.get("post_margin_s", -1)) > 0, "criterion.post_margin_s 须为正")
+    scalar_num(cfg, "criterion.post_margin_s", positive=True)
+    require(c.get("t_sample_rule") == "首个 60 s 网格点使实测（未舍入）max C < 0.15",
+            "criterion.t_sample_rule 与正式分钟采样规则不一致")
+    require(isinstance(c.get("t_safe"), dict) and c["t_safe"].get("enabled") is False,
+            "criterion.t_safe.enabled 当前应为 False")
 
     # ---- 输出（单位/终点；拒绝变异 6）----
     o = cfg["output"]
-    require(o.get("decimals") == 4, "output.decimals 应为 4")
-    require(int(o.get("excel_max_rows_including_header", 0)) == 1048576,
+    require(integer(cfg, "output.decimals", nonnegative=True) == 4, "output.decimals 应为 4")
+    require(o.get("number_format") == "0.0000", "output.number_format 应为 '0.0000'")
+    require(integer(cfg, "output.excel_max_rows_including_header", positive=True) == 1048576,
             "output.excel_max_rows_including_header 应为 1048576")
     require(o["result4"].get("outside_fill") == "blank", "output.result4.outside_fill 应为 blank")
     require(o["result4"].get("surface_col") == "药材表面", "output.result4.surface_col 应为 药材表面")
@@ -183,16 +235,56 @@ def check(cfg: dict) -> bool:
     require(o["result2"].get("t_end") == "until_dry_1s",
             f"output.result2.t_end 应为 until_dry_1s（拒绝 3h/72h），得 "
             f"{o['result2'].get('t_end')!r}")  # 变异 6
+    expected_outputs = {
+        "result1": {"t_s": "1..1800", "cols_cm": "0..2.0 step 0.1",
+                    "sheets": ["温度", "水分浓度"]},
+        "result2": {"t_end": "until_dry_1s", "cols_cm": "0..2.0 step 0.1",
+                    "sheets": ["温度", "水分浓度"]},
+        "result3": {"t_s": "60..t_sample step 60", "cols_cm": "0..2.0 step 0.1",
+                    "sheet": "Sheet1"},
+        "result4": {"t_s": "60..t_sample step 60", "cols_cm": "0..1.9 step 0.1",
+                    "surface_col": "药材表面", "outside_fill": "blank", "sheet": "Sheet1"},
+    }
+    for name, expected in expected_outputs.items():
+        require(o.get(name) == expected,
+                f"output.{name} 必须逐项匹配正式输出规则，得 {o.get(name)!r}")
 
     # ---- 验收阈值 ----
     acc = cfg["acceptance"]
-    require(acc.get("t_star_h") == 0.02, "acceptance.t_star_h 应为 0.02")
-    require(float(acc["table_points"].get("dC")) == 5.0e-4, "acceptance.table_points.dC 应为 5e-4")
+    require(scalar_num(cfg, "acceptance.t_star_h", positive=True) == 0.02,
+            "acceptance.t_star_h 应为 0.02")
+    require(scalar_num(cfg, "acceptance.table_points.dC", positive=True) == 5.0e-4,
+            "acceptance.table_points.dC 应为 5e-4")
+    require(scalar_num(cfg, "acceptance.table_points.dT_degC", positive=True) == 0.01,
+            "acceptance.table_points.dT_degC 应为 0.01")
+    scalar_num(cfg, "acceptance.discrete_balance_rel", positive=True)
+    scalar_num(cfg, "acceptance.flux_integral.be.tol_rel", positive=True)
+    scalar_num(cfg, "acceptance.flux_integral.bdf.tol_rel_factor_of_rtol", positive=True)
+    scalar_num(cfg, "acceptance.energy_residual.abs_W_per_m", positive=True)
+    scalar_num(cfg, "acceptance.energy_residual.rel", positive=True)
+    scalar_num(cfg, "acceptance.static_limit_rel", positive=True)
 
     # ---- 生产配置门控 ----
     prod = cfg["production"]
-    require(prod.get("approved") is False or prod.get("config_id"),
-            "production.approved=True 时须给 config_id")
+    require(isinstance(prod.get("approved"), bool), "production.approved 须为布尔值")
+    if prod["approved"]:
+        config_id = prod.get("config_id")
+        config_digest = prod.get("config_digest")
+        verification_record = prod.get("verification_record")
+        require(
+            isinstance(config_id, str)
+            and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{2,63}", config_id) is not None,
+            "production.config_id 须为 3–64 位可追溯标识",
+        )
+        require(
+            isinstance(config_digest, str)
+            and re.fullmatch(r"[0-9a-f]{16}", config_digest) is not None,
+            "production.config_digest 须为 16 位小写十六进制摘要",
+        )
+        require(
+            verification_record == "reports/verification.json",
+            "production.verification_record 须指向 reports/verification.json",
+        )
 
     # ---- 定点返修新增字段（PATCH-04/05）----
     _check_returrepair_fields(cfg)
@@ -226,13 +318,38 @@ def _check_returrepair_fields(cfg: dict) -> None:
                 f"per_question.{qkey}.final_N 须为 null（待定）或正整数，不得填历史探针值")
         require(blk.get("applies_event") is expect_event,
                 f"per_question.{qkey}.applies_event 应为 {expect_event}（Q1 不适用达标事件）")
+        require(blk.get("candidate_interface") in ("harmonic", "integral"),
+                f"per_question.{qkey}.candidate_interface 非法")
+        require(blk.get("candidate_scheme") == "BDF",
+                f"per_question.{qkey}.candidate_scheme 当前应为 BDF")
+        final_fields = {
+            "final_N": blk.get("final_N"),
+            "final_interface": blk.get("final_interface"),
+            "final_scheme": blk.get("final_scheme"),
+            "final_quadrature_points": blk.get("final_quadrature_points"),
+        }
+        if cfg["production"].get("approved") is True:
+            require(isinstance(final_fields["final_N"], int)
+                    and not isinstance(final_fields["final_N"], bool)
+                    and final_fields["final_N"] > 0,
+                    f"已授权时 per_question.{qkey}.final_N 须为正整数")
+            require(final_fields["final_N"] in cand,
+                    f"已授权时 per_question.{qkey}.final_N 须来自已验证候选集合")
+            require(final_fields["final_interface"] in ("harmonic", "integral"),
+                    f"已授权时 per_question.{qkey}.final_interface 须具体")
+            require(final_fields["final_scheme"] in ("BDF", "backward_euler"),
+                    f"已授权时 per_question.{qkey}.final_scheme 须具体")
+            require(isinstance(final_fields["final_quadrature_points"], int)
+                    and not isinstance(final_fields["final_quadrature_points"], bool)
+                    and final_fields["final_quadrature_points"] > 0,
+                    f"已授权时 per_question.{qkey}.final_quadrature_points 须为正整数")
+            require(final_fields["final_quadrature_points"] in (ip, ipc),
+                    f"已授权时 per_question.{qkey}.final_quadrature_points 须为已验证求积点数")
+        else:
+            require(all(value is None for value in final_fields.values()),
+                    f"未授权时 per_question.{qkey} 的全部 final_* 字段须为 null")
 
     # 未授权时最终网格保持待定（不填探针值）
-    if cfg["production"].get("approved") is False:
-        for qkey in ("q1", "q23", "q4"):
-            require(pq[qkey].get("final_N") is None,
-                    f"未授权（approved=false）时 per_question.{qkey}.final_N 须为 null")
-
     # 达标事件仅 Q23/Q4
     require(cfg["criterion"].get("applies_to") == ["q23", "q4"],
             "criterion.applies_to 应为 ['q23','q4']（Q1 不适用达标事件）")
@@ -299,8 +416,12 @@ def main(argv: list[str]) -> int:
         cfg = yaml.safe_load(f)
     check(cfg)
     check_props_against_formulas()
-    print(f"config OK: {path} | version {cfg['version']} | interface "
-          f"{cfg['numerics']['interface']} | production.approved {cfg['production']['approved']}")
+    candidate_interfaces = ",".join(
+        f"{question}:{block['candidate_interface']}"
+        for question, block in cfg["numerics"]["per_question"].items()
+    )
+    print(f"config OK: {path} | version {cfg['version']} | candidates "
+          f"{candidate_interfaces} | production.approved {cfg['production']['approved']}")
     print("props consistency OK（附录 2/3/4 公式复现通过）")
     return 0
 

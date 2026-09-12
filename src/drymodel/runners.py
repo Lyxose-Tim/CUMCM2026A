@@ -26,43 +26,102 @@ RESULT_COLS_CM = [round(0.1 * j, 4) for j in range(21)]   # 0.0, 0.1, ..., 2.0
 # --------------------------------------------------------------------------
 # 装配
 # --------------------------------------------------------------------------
-def build_fixed_operator(cfg, question, N, *, interface="integral", scenario="base",
-                         decoupled=False, h_mult=1.0, hm_mult=1.0):
-    grid = RadialGrid(N, cfg.R0)
+def _resolve_run(cfg, question, N, *, purpose, interface, integral_npts, scenario,
+                 h_mult, hm_mult, augmented, bdf_overrides=None, run_config=None):
+    if run_config is not None:
+        if run_config.question != question or run_config.N != N:
+            raise ValueError(
+                f"运行配置与装配请求不一致：{run_config.question}/N={run_config.N} "
+                f"!= {question}/N={N}"
+            )
+        return run_config
+    return cfg.resolve_run(
+        question, purpose=purpose, N=N, interface=interface,
+        integral_npts=integral_npts, scenario=scenario,
+        h_mult=h_mult, hm_mult=hm_mult, augmented=augmented,
+        bdf_overrides=bdf_overrides,
+    )
+
+
+def build_fixed_operator(cfg, question, N, *, interface=None, integral_npts=None,
+                         scenario="base", decoupled=False, h_mult=1.0, hm_mult=1.0,
+                         augmented=False, purpose="candidate", bdf_overrides=None,
+                         run_config=None):
+    run = _resolve_run(
+        cfg, question, N, purpose=purpose, interface=interface,
+        integral_npts=integral_npts, scenario=scenario, h_mult=h_mult,
+        hm_mult=hm_mult, augmented=augmented, bdf_overrides=bdf_overrides,
+        run_config=run_config,
+    )
+    grid = RadialGrid(run.N, cfg.R0)
     props = cfg.props(question)
-    env = data_io.make_env_functions(cfg, scenario)
-    op = FVMOperator(grid, props, env, h=cfg.h * h_mult, hm=cfg.hm * hm_mult, R0=cfg.R0,
-                     interface=interface, integral_npts=8, decoupled=decoupled)
+    env = data_io.make_env_functions(cfg, run.scenario)
+    op = FVMOperator(
+        grid, props, env, h=cfg.h * run.h_mult, hm=cfg.hm * run.hm_mult, R0=cfg.R0,
+        interface=run.interface, integral_npts=run.integral_npts,
+        decoupled=decoupled, augmented=run.augmented,
+    )
+    op.run_config = run
     return op, env
 
 
-def build_ref_operator(cfg, question, N, *, interface="integral", scenario="base",
-                       h_mult=1.0, hm_mult=1.0):
-    grid = RefGrid(N)
+def build_ref_operator(cfg, question, N, *, interface=None, integral_npts=None,
+                       scenario="base", h_mult=1.0, hm_mult=1.0, augmented=False,
+                       purpose="candidate", bdf_overrides=None, run_config=None):
+    run = _resolve_run(
+        cfg, question, N, purpose=purpose, interface=interface,
+        integral_npts=integral_npts, scenario=scenario, h_mult=h_mult,
+        hm_mult=hm_mult, augmented=augmented, bdf_overrides=bdf_overrides,
+        run_config=run_config,
+    )
+    grid = RefGrid(run.N)
     props = cfg.props(question)
-    env = data_io.make_env_functions(cfg, scenario)
+    env = data_io.make_env_functions(cfg, run.scenario)
     radius = data_io.make_radius_function(cfg)
-    op = FVMOperator(grid, props, env, h=cfg.h * h_mult, hm=cfg.hm * hm_mult, R0=cfg.R0,
-                     interface=interface, integral_npts=8, radius_fn=radius,
-                     decoupled=False)
+    op = FVMOperator(
+        grid, props, env, h=cfg.h * run.h_mult, hm=cfg.hm * run.hm_mult, R0=cfg.R0,
+        interface=run.interface, integral_npts=run.integral_npts, radius_fn=radius,
+        decoupled=False, augmented=run.augmented,
+    )
+    op.run_config = run
     return op, env, radius
 
 
-def initial_state(cfg, N):
-    return np.concatenate([np.full(N + 1, cfg.C0), np.full(N + 1, cfg.T0_K)])
+def initial_state(cfg, N, *, augmented=False):
+    parts = [np.full(N + 1, cfg.C0), np.full(N + 1, cfg.T0_K)]
+    if augmented:
+        parts.append(np.array([0.0]))
+    return np.concatenate(parts)
+
+
+def _run_evidence(run):
+    """Return the complete effective configuration with its stable digest."""
+    return {"digest": run.digest, **run.snapshot()}
+
+
+def _run_breakpoints(run):
+    """Return the configured restart points only when restart is enabled."""
+    return run.breakpoints_s if run.restart_at_breakpoints else ()
 
 
 # --------------------------------------------------------------------------
 # Q1 候选：0–1800 s，附录 2，热质解耦
 # --------------------------------------------------------------------------
-def run_q1(cfg, *, N=1600, interface="integral", t_end=1800.0, save=True):
+def run_q1(cfg, *, N=800, interface=None, integral_npts=None, t_end=1800.0,
+           save=True, bdf_overrides=None, purpose="candidate"):
     """Q1 候选求解 + result1 网格采样 + 表 1/2 + V-3 早期行收敛。"""
-    op, env = build_fixed_operator(cfg, "q1", N, interface=interface, decoupled=True)
+    op, env = build_fixed_operator(
+        cfg, "q1", N, interface=interface, integral_npts=integral_npts,
+        decoupled=True, purpose=purpose, bdf_overrides=bdf_overrides,
+    )
+    run = op.run_config
     y0 = initial_state(cfg, N)
-    res = SBDF.integrate_bdf(op, y0, 0.0, t_end, cfg.bdf,
-                             breakpoints=(), threshold=None, air_data_end=14400.0)
-    if not res.ok:
-        raise RuntimeError(f"Q1 BDF 失败：{res.message}")
+    res = SBDF.integrate_bdf(
+        op, y0, 0.0, t_end, run.bdf,
+        breakpoints=_run_breakpoints(run), threshold=None,
+        air_data_end=run.air_data_end_s,
+    )
+    res.require_reached(t_end, label="Q1 BDF")
 
     # result1 采样：t=1..1800（整数秒），21 个固定位置（落在节点）
     ts = np.arange(1, int(t_end) + 1)
@@ -81,14 +140,20 @@ def run_q1(cfg, *, N=1600, interface="integral", t_end=1800.0, save=True):
     table_C = Yt[:, table_idx]
 
     out = {
-        "N": N, "interface": interface, "t_end": t_end,
+        "N": N, "interface": run.interface, "integral_npts": run.integral_npts,
+        "run_config": _run_evidence(run), "config_digest": run.digest,
+        "trajectory": res, "operator": op, "t_end": t_end,
         "cols_cm": np.array(RESULT_COLS_CM),
         "result1_t": ts, "result1_C": C_grid, "result1_T": T_grid,
         "table_ts": table_ts, "table_cm": np.array(table_cm),
         "table_T_C": table_T, "table_C": table_C,
     }
     if save:
-        np.savez_compressed(CACHE / "q1_candidate.npz", **out)
+        np.savez_compressed(
+            CACHE / "q1_candidate.npz",
+            **{k: v for k, v in out.items()
+               if isinstance(v, np.ndarray) or isinstance(v, (str, int, float, bool))},
+        )
     return out
 
 
@@ -118,9 +183,10 @@ def _cmax_fn_from(res, n):
     return f
 
 
-def q23_detect(cfg, *, N=400, interface="integral", scenario="base",
+def q23_detect(cfg, *, N=400, interface=None, integral_npts=None, scenario="base",
                t_cap_h=90.0, post_s=None, question="q23", moving=None,
-               h_mult=1.0, hm_mult=1.0):
+               h_mult=1.0, hm_mult=1.0, bdf_overrides=None,
+               purpose="candidate", augmented=True):
     """达标检测：积分至 C_max 下穿 0.15，续算 post_s 检查回穿。
 
     - question 决定物性组（q23=附录3；q4=附录4）。
@@ -134,39 +200,57 @@ def q23_detect(cfg, *, N=400, interface="integral", scenario="base",
     if moving is None:
         moving = (question == "q4")
     if moving:
-        op, env, _ = build_ref_operator(cfg, "q4", N, interface=interface,
-                                        scenario=scenario, h_mult=h_mult, hm_mult=hm_mult)
+        op, env, _ = build_ref_operator(
+            cfg, "q4", N, interface=interface, integral_npts=integral_npts,
+            scenario=scenario, h_mult=h_mult, hm_mult=hm_mult,
+            augmented=augmented, purpose=purpose, bdf_overrides=bdf_overrides,
+        )
     else:
-        op, env = build_fixed_operator(cfg, question, N, interface=interface,
-                                       scenario=scenario, decoupled=False,
-                                       h_mult=h_mult, hm_mult=hm_mult)
+        op, env = build_fixed_operator(
+            cfg, question, N, interface=interface, integral_npts=integral_npts,
+            scenario=scenario, decoupled=False, h_mult=h_mult, hm_mult=hm_mult,
+            augmented=augmented, purpose=purpose, bdf_overrides=bdf_overrides,
+        )
+    run = op.run_config
     n = N + 1
-    y0 = initial_state(cfg, N)
-    res = SBDF.integrate_bdf(op, y0, 0.0, t_cap_h * 3600.0, cfg.bdf,
-                             breakpoints=(14400.0,), threshold=thr)
+    y0 = initial_state(cfg, N, augmented=run.augmented)
+    res = SBDF.integrate_bdf(
+        op, y0, 0.0, t_cap_h * 3600.0, run.bdf,
+        breakpoints=_run_breakpoints(run), threshold=thr,
+        air_data_end=run.air_data_end_s,
+    )
     if not res.ok:
         raise RuntimeError(res.message)
     if res.t_cross is None:
-        raise RuntimeError(f"{question} 未在 {t_cap_h} h 内达标（N={N}, {interface}）")
+        raise RuntimeError(f"{question} 未在 {t_cap_h} h 内达标（N={N}, {run.interface}）")
 
     t_cross = res.t_cross
     argmax_node = int(np.argmax(res.y_cross[:n]))
-    cont = SBDF.continue_bdf(op, res.y_cross, t_cross, post_s, cfg.bdf)
-    cmax_cont = _cmax_fn_from(cont, n)
+    cont = SBDF.continue_bdf(
+        op, res.y_cross, t_cross, post_s, run.bdf,
+        air_data_end=run.air_data_end_s,
+    )
+    cont.require_reached(t_cross + post_s, label=f"{question} 事件后续算")
+    trajectory = res.concat(cont)
+    cmax_cont = _cmax_fn_from(trajectory, n)
 
     tt = np.linspace(t_cross, t_cross + post_s, 61)
     post_max = max(cmax_cont(t) for t in tt)
     post_ok = post_max <= thr + 1e-9
 
     t_sample = CR.first_sample_below(cmax_cont, t_cross, 60.0, thr, t_cross + post_s)
+    if t_sample is None:
+        raise RuntimeError(
+            f"{question} 在事件后 {post_s:g}s 内未找到严格合格的 60s 网格采样点"
+        )
 
     det = CR.Detection(
         t_cross=t_cross, t_star=t_cross, t_sample=t_sample, t_safe=None,
-        delta=float("nan"), dt_star=float("nan"),
+        delta=None, dt_star=None,
         argmax_node=argmax_node, post_ok=post_ok, post_max_cmax=post_max,
         threshold=thr,
     )
-    return det, res, cont, op
+    return det, trajectory, cont, op
 
 
 def q23_interface_grid_study(cfg, *, Ns=(200, 400, 800), interfaces=("harmonic", "integral"),
@@ -200,65 +284,82 @@ def s10_fixed_radius_study(cfg, *, Ns=(200, 400), interface="integral", t_cap_h=
     return out
 
 
-# --------------------------------------------------------------------------
-# 完整轨迹（无事件）与采样辅助
-# --------------------------------------------------------------------------
-def _integrate_full(op, y0, t_end, cfg):
-    return SBDF.integrate_bdf(op, y0, 0.0, t_end, cfg.bdf, breakpoints=(14400.0,),
-                              threshold=None)
+def _regular_plus_terminal(t_cross, *, step_h=6.0):
+    """常规整 ``step_h`` 小时行加 t* 末行；根恰落常规行时只保留一次。"""
+    step_s = float(step_h) * 3600.0
+    regular = list(np.arange(step_s, float(t_cross) + 1e-9, step_s))
+    tol = 1e-9 * max(1.0, abs(float(t_cross)))
+    if regular and abs(regular[-1] - float(t_cross)) <= tol:
+        regular[-1] = float(t_cross)
+        return regular
+    return [*regular, float(t_cross)]
 
 
-def q23_candidate(cfg, *, N=800, interface="integral", t_cap_h=90.0, save=True):
+def q23_candidate(cfg, *, N=800, interface=None, integral_npts=None,
+                  t_cap_h=90.0, save=True, bdf_overrides=None,
+                  purpose="candidate"):
     """Q2/Q3 候选：t*、t_sample、t_end_1s、表 3/4/5、result3 候选数据（60 s）。"""
-    det, res, cont, op = q23_detect(cfg, N=N, interface=interface, t_cap_h=t_cap_h)
+    det, trajectory, _, op = q23_detect(
+        cfg, N=N, interface=interface, integral_npts=integral_npts,
+        t_cap_h=t_cap_h, bdf_overrides=bdf_overrides, purpose=purpose,
+    )
+    run = op.run_config
     n = N + 1
     thr = cfg.threshold
     t_cross = det.t_cross
 
     def cmax_at(t):
-        y = res.eval([t])[0] if t <= t_cross + 1e-6 else cont.eval([t])[0]
-        return CR.cmax(y[:n])
+        return CR.cmax(trajectory.eval([t])[0][:n])
 
     # t_end_1s：首个整数秒使 C_max<0.15（由连续解求值）
-    t_end_1s = int(np.ceil(t_cross))
-    while cmax_at(float(t_end_1s)) >= thr:
-        t_end_1s += 1
+    t_end_1s = CR.first_sample_below(
+        cmax_at, t_cross, 1.0, thr, trajectory.t_end,
+    )
+    if t_end_1s is None:
+        raise RuntimeError("Q23 未在同源续算轨迹中找到严格合格的整数秒")
+    t_end_1s = int(t_end_1s)
 
     # 完整轨迹到 t_sample（供表/采样）
-    t_sample = det.t_sample if det.t_sample is not None else t_end_1s
-    full = _integrate_full(op, initial_state(cfg, N), t_sample + 120.0, cfg)
+    t_sample = det.t_sample
 
     node_idx = np.array([op.grid.output_index(rc) for rc in RESULT_COLS_CM])
 
     # result3 候选：60..t_sample（60 s）
     ts3 = np.arange(60, int(t_sample) + 1, 60)
-    Y3 = full.eval(ts3)
+    Y3 = trajectory.eval(ts3)
     C3 = Y3[:, node_idx]
 
     # 表 3/4：t=0.5..3.0 h（温度/水分），r=0,0.5,1,1.5,2 cm
     tbl_ts = np.arange(0.5, 3.01, 0.5) * 3600.0
     tbl_idx = np.array([op.grid.output_index(rc) for rc in (0.0, 0.5, 1.0, 1.5, 2.0)])
-    Yt = full.eval(tbl_ts)
+    Yt = trajectory.eval(tbl_ts)
     tbl_T = Yt[:, tbl_idx + n] - 273.15
     tbl_C = Yt[:, tbl_idx]
 
-    # 表 5：6,12,... h（≤t*）+ 末行 t*（水分中心/表面 + C_max）
-    hours = np.arange(6, t_cross / 3600.0 + 1e-9, 6)
-    tbl5_t = list(hours * 3600.0) + [t_cross]
+    # 表 5：6,12,... h（≤t*）+ 末行 t*，五个题定固定半径列；Cmax 单独诊断。
+    table5_cm = np.array([0.0, 0.5, 1.0, 1.5, 2.0])
+    table5_idx = np.array([op.grid.output_index(rc) for rc in table5_cm])
+    tbl5_t = _regular_plus_terminal(t_cross)
     tbl5 = []
+    tbl5_cmax = []
     for tt in tbl5_t:
-        y = full.eval([tt])[0] if tt <= t_sample + 120 else res.eval([tt])[0]
+        y = trajectory.eval([tt])[0]
         C = y[:n]
-        tbl5.append((tt / 3600.0, float(C[0]), float(C[-1]), CR.cmax(C)))
+        tbl5.append((tt / 3600.0, *[float(C[i]) for i in table5_idx]))
+        tbl5_cmax.append(CR.cmax(C))
 
     out = {
-        "N": N, "interface": interface,
+        "N": N, "interface": run.interface, "integral_npts": run.integral_npts,
+        "run_config": _run_evidence(run), "config_digest": run.digest,
+        "trajectory": trajectory, "operator": op,
         "t_star_h": t_cross / 3600.0, "t_sample_s": t_sample,
         "t_end_1s": t_end_1s, "post_ok": det.post_ok, "post_max_cmax": det.post_max_cmax,
         "argmax_node": det.argmax_node,
         "result3_t": ts3, "result3_C": C3, "cols_cm": np.array(RESULT_COLS_CM),
         "table34_ts_h": tbl_ts / 3600.0, "table3_T_C": tbl_T, "table4_C": tbl_C,
-        "table5": np.array(tbl5),
+        "table5_columns": np.array(["time_h", "r=0cm", "r=0.5cm", "r=1cm",
+                                    "r=1.5cm", "r=2cm"]),
+        "table5": np.array(tbl5), "table5_cmax": np.array(tbl5_cmax),
     }
     if save:
         np.savez_compressed(CACHE / "q23_candidate.npz",
@@ -269,15 +370,20 @@ def q23_candidate(cfg, *, N=800, interface="integral", t_cap_h=90.0, save=True):
     return out
 
 
-def q4_candidate(cfg, *, N=800, interface="integral", t_cap_h=200.0, save=True):
+def q4_candidate(cfg, *, N=800, interface=None, integral_npts=None,
+                 t_cap_h=200.0, save=True, bdf_overrides=None,
+                 purpose="candidate"):
     """Q4 候选：t*_4、result4 候选（60 s，域外留空）、表 6、半径小表。"""
-    det, res, cont, op = q23_detect(cfg, N=N, interface=interface, question="q4",
-                                    t_cap_h=t_cap_h)
+    det, trajectory, _, op = q23_detect(
+        cfg, N=N, interface=interface, integral_npts=integral_npts,
+        question="q4", t_cap_h=t_cap_h, bdf_overrides=bdf_overrides,
+        purpose=purpose,
+    )
+    run = op.run_config
     n = N + 1
     t_cross = det.t_cross
-    t_sample = det.t_sample if det.t_sample is not None else int(np.ceil(t_cross))
+    t_sample = det.t_sample
     radius = data_io.make_radius_function(cfg)
-    full = _integrate_full(op, initial_state(cfg, N), t_sample + 120.0, cfg)
 
     cols20 = [round(0.1 * j, 4) for j in range(20)]     # 0.0..1.9
 
@@ -286,7 +392,7 @@ def q4_candidate(cfg, *, N=800, interface="integral", t_cap_h=200.0, save=True):
     result4_rows = []
     radii_cm = []
     for t in ts4:
-        c = full.eval([float(t)])[0][:n]
+        c = trajectory.eval([float(t)])[0][:n]
         R_t = float(radius.R(float(t)))
         row = PP.sample_q4_row(c, op.grid, R_t, cols20)
         row.append(float(c[-1]))                        # 药材表面列
@@ -294,19 +400,20 @@ def q4_candidate(cfg, *, N=800, interface="integral", t_cap_h=200.0, save=True):
         radii_cm.append(R_t * 100.0)
 
     # 表 6：cols 0,0.5,1.0,表面；行 6,12,...(≤t*) + 末行 t*
-    hours = np.arange(6, t_cross / 3600.0 + 1e-9, 6)
-    tbl6_t = list(hours * 3600.0) + [t_cross]
+    tbl6_t = _regular_plus_terminal(t_cross)
     tbl6 = []
     radius_small = []
     for tt in tbl6_t:
-        c = full.eval([tt])[0][:n] if tt <= t_sample + 120 else res.eval([tt])[0][:n]
+        c = trajectory.eval([tt])[0][:n]
         R_t = float(radius.R(tt))
         r0 = PP.sample_q4_row(c, op.grid, R_t, [0.0, 0.5, 1.0])
         tbl6.append((tt / 3600.0, r0[0], r0[1], r0[2], float(c[-1])))
         radius_small.append((tt / 3600.0, R_t * 100.0, radius.is_extrapolated(tt)))
 
     out = {
-        "N": N, "interface": interface,
+        "N": N, "interface": run.interface, "integral_npts": run.integral_npts,
+        "run_config": _run_evidence(run), "config_digest": run.digest,
+        "trajectory": trajectory, "operator": op,
         "t_star_h": t_cross / 3600.0, "t_sample_s": t_sample,
         "post_ok": det.post_ok, "post_max_cmax": det.post_max_cmax,
         "argmax_node": det.argmax_node,

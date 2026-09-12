@@ -66,7 +66,6 @@ props:
 numerics:
   scheme_baseline: "backward_euler"     # 验证基线（B06）
   scheme_production_candidate: "BDF"    # 经验证后可用于长时生产/情景
-  interface: "harmonic"                 # 当前默认（B11）；优先待验收候选 "integral"（积分界面）
   quadrature:                           # 积分界面 Gauss–Legendre 求积（PATCH-04）
     interface_points: 8                 # 生产求值点数
     interface_points_check: 16          # 对照点数（独立数值键，非提高精度用）
@@ -79,17 +78,32 @@ numerics:
   per_question:
     q1:
       candidate_N: [200, 400, 800, 1600, 3200]   # 附录2 早期表面层探针指向更细网格（候选集合）
+      candidate_interface: "integral"
+      candidate_scheme: "BDF"
       final_N: null                              # 待 result1 早期行 5e-4 误差检查登记
+      final_interface: null
+      final_scheme: null
+      final_quadrature_points: null
       applies_event: false                       # Q1 仅解到 1800 s，不求 0.15 达标事件、不续算 600 s
       checks: ["V-1", "V-2", "V-3(1/10/100 s 表面)"]
     q23:
       candidate_N: [200, 400, 800, 1600]
+      candidate_interface: "integral"
+      candidate_scheme: "BDF"
       final_N: null                              # 待长时 t* + 早期表面 5e-4 登记
+      final_interface: null
+      final_scheme: null
+      final_quadrature_points: null
       applies_event: true
       checks: ["V-3(长时表点/表面通量/t*)", "V-4a/b/c", "V-6", "V-11"]
     q4:
       candidate_N: [200, 400, 800, 1600]
+      candidate_interface: "integral"
+      candidate_scheme: "BDF"
       final_N: null                              # 须独立通过自身精度检查，不因与 q23 同配置而豁免
+      final_interface: null
+      final_scheme: null
+      final_quadrature_points: null
       applies_event: true
       checks: ["V-3(晚期剖面/固定厘米重构)", "V-4a/b/c(含 1/R)", "V-10", "V-13"]
   picard:
@@ -111,6 +125,13 @@ numerics:
     max_step_after_s: 600.0
     restart_at_breakpoints: true
     jac_sparsity: "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+  bdf_refined:
+    rtol: 1.0e-10
+    atol_C: 1.0e-13
+    atol_T_K: 1.0e-10
+    atol_I: 1.0e-13
+    max_step_data_s: 15.0
+    max_step_after_s: 150.0
   # BDF 累计通量辅助态（PATCH-05）：y=[C_0..C_N, T_0..T_N, I]，I(0)=0，İ=(2 h_m/R)(C_N−C_env)，
   # 固定域 R=R0、Q4 取 R(t)；物理方程不依赖 I；事件只对 C 分量求极大；断点重启/检查点/续算保留 I 累计值；
   # 归一化收支 Cbar(t)−Cbar(0)+I(t)（V-4a）。当前求解器已实现增广态（默认关闭，V-4a/BDF 时启用）。
@@ -163,10 +184,13 @@ acceptance:
     bdf: {method: "independent_quadrature_refine", tol_rel_factor_of_rtol: 10.0}
   # V-4c 有效热残差：单位长度 W/m 口径（PATCH-05，去 L）；参考尺度不含 L；若导数取自同一离散 RHS 则仅检离散代数平衡，时间精度由 V-3 独立核验
   energy_residual: {unit: "W/m", abs_W_per_m: 1.0e-6, rel: 1.0e-8, ref_scale: "2*pi*R(t)*h*max(dT_ref, 1 K)"}
+  static_limit_rel: 1.0e-6
 
 production:
   approved: false
   config_id: null
+  config_digest: null
+  verification_record: null
   # D12：依适用于该问的数值检验（Q1: V-1/2/3；Q23: V-3/4/6/11；Q4: V-3/4/10/13）选定并登记配置。
   # V-8/V-9 是导出后的文件验收，非 D12 前置（PATCH-02）。改物性/边界/几何/网格/积分方法后，受影响的旧轨迹失效，
   # 按新配置从原始初态重积分再验证与导出；仅改文件格式/文案可复用仍有效的未舍入轨迹。
