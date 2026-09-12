@@ -80,36 +80,90 @@ def verify_workbook(path, *, expected_sheets, a1_text, expected_cols, n_data_row
     issues = []
     if list(wb.sheetnames) != list(expected_sheets):
         issues.append(f"工作表名 {wb.sheetnames} != {expected_sheets}")
+    exp_header = [a1_text] + [float(c) for c in expected_cols] + \
+                 ([surface_header] if surface_header else [])
     for sn in wb.sheetnames:
         ws = wb[sn]
         rows = list(ws.iter_rows(values_only=True))
-        header = rows[0]
+        header = list(rows[0])
+        # 逐项表头（A1 + 数值列顺序 + 表面列）
         if header[0] != a1_text:
             issues.append(f"{sn}: A1={header[0]!r} != {a1_text!r}")
-        exp_header = tuple([a1_text] + list(expected_cols) +
-                           ([surface_header] if surface_header else []))
-        got_header = tuple(header)
-        if len(got_header) != len(exp_header):
-            issues.append(f"{sn}: 表头列数 {len(got_header)} != {len(exp_header)}")
-        # A 列连续整数、无重复
+        if len(header) != len(exp_header):
+            issues.append(f"{sn}: 表头列数 {len(header)} != {len(exp_header)}")
+        else:
+            for j, (g, e) in enumerate(zip(header[1:], exp_header[1:]), start=1):
+                if isinstance(e, float):
+                    if not (isinstance(g, (int, float)) and abs(float(g) - e) < 1e-9):
+                        issues.append(f"{sn}: 表头列{j}={g!r} != {e}")
+                elif g != e:
+                    issues.append(f"{sn}: 表头列{j}={g!r} != {e!r}")
+        # A 列连续整数、无重复、步距
         a_col = [r[0] for r in rows[1:]]
         if len(a_col) != n_data_rows:
             issues.append(f"{sn}: 数据行 {len(a_col)} != {n_data_rows}")
         expected_a = list(range(int(t_start), int(t_start) + n_data_rows * int(t_step), int(t_step)))
         if a_col != expected_a:
-            issues.append(f"{sn}: A 列非预期连续整数（首 {a_col[:3]} 末 {a_col[-3:]}）")
+            issues.append(f"{sn}: A 列非预期连续整数步距 {t_step}（首 {a_col[:3]} 末 {a_col[-3:]}）")
         if len(set(a_col)) != len(a_col):
             issues.append(f"{sn}: A 列有重复")
-        # 掩码一致性（result4）
+        if not all(isinstance(v, int) and not isinstance(v, bool) for v in a_col):
+            issues.append(f"{sn}: A 列须为整数秒")
+        # 数据单元格：数值型（或 None 表域外），非字符串
+        for i, r in enumerate(rows[1:]):
+            for j, v in enumerate(r[1:], start=1):
+                if v is not None and not (isinstance(v, (int, float)) and not isinstance(v, bool)):
+                    issues.append(f"{sn}: 行{i} 列{j} 非数值型 {v!r}")
+                    break
+        # 数字格式 0.0000（抽首个数据行）
+        if n_data_rows > 0:
+            for col in range(2, len(exp_header) + 1):
+                cell = ws.cell(row=2, column=col)
+                if cell.value is not None and cell.number_format != NUMFMT:
+                    issues.append(f"{sn}: 行2 列{col} 数字格式 {cell.number_format!r} != {NUMFMT!r}")
+                    break
+        # 掩码一致性（result4）：域内非空、域外空 ⇔ inside()
         if mask is not None:
             for i, r in enumerate(rows[1:]):
-                # 数据列（去掉 A 列）
                 data = r[1:1 + len(expected_cols)]
                 for j, v in enumerate(data):
-                    is_none = v is None
-                    should_be_inside = bool(mask[i][j])
-                    if should_be_inside == is_none:
-                        issues.append(f"{sn}: 行{i} 列{j} 掩码不一致 (inside={should_be_inside}, empty={is_none})")
+                    if bool(mask[i][j]) == (v is None):
+                        issues.append(f"{sn}: 行{i} 列{j} 掩码不一致 (inside={bool(mask[i][j])}, empty={v is None})")
                         break
     wb.close()
     return {"ok": len(issues) == 0, "issues": issues}
+
+
+def cross_file_check(result2_path, result3_path, *, decimals=4):
+    """V-8 跨文件一致性：result2（1 s）与 result3（60 s）在共同 60 s 倍数时刻×位置
+    舍入后相等（同源解）。返回不一致列表。"""
+    def load_sheet(path, sheet):
+        wb = openpyxl.load_workbook(path, read_only=True)
+        ws = wb[sheet] if sheet in wb.sheetnames else wb[wb.sheetnames[0]]
+        rows = list(ws.iter_rows(values_only=True))
+        wb.close()
+        header = rows[0]
+        data = {int(r[0]): r[1:] for r in rows[1:]}
+        return header, data
+
+    h2, d2 = load_sheet(result2_path, "水分浓度")
+    h3, d3 = load_sheet(result3_path, "Sheet1")
+    issues = []
+    if list(h2)[:len(h3)] != list(h3):
+        # 表头前若干列应一致（result3 无温度表；比较水分列头）
+        pass
+    common = sorted(set(d2) & set(d3))
+    common = [t for t in common if t % 60 == 0]
+    ncol = min(len(next(iter(d2.values()))), len(next(iter(d3.values()))))
+    mism = 0
+    for t in common:
+        for j in range(ncol):
+            v2, v3 = d2[t][j], d3[t][j]
+            if v2 is None or v3 is None:
+                continue
+            if round(float(v2), decimals) != round(float(v3), decimals):
+                mism += 1
+                if len(issues) < 10:
+                    issues.append(f"t={t}s 列{j}: result2={v2} != result3={v3}")
+    return {"ok": mism == 0, "n_common_times": len(common), "n_mismatch": mism,
+            "issues": issues}

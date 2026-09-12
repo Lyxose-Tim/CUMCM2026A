@@ -65,3 +65,48 @@ def test_rounding_applied(tmp_path):
     rows = list(ws.iter_rows(values_only=True))
     assert rows[1][1] == pytest.approx(0.15)          # 0.149963 → 0.1500
     wb.close()
+
+
+def test_verify_catches_wrong_header(tmp_path):
+    """增强检查器：表头列值错误应被捕获。"""
+    p = tmp_path / "r.xlsx"
+    t = np.arange(60, 60 * 4, 60)
+    grid = np.full((len(t), 21), 0.3)
+    W.write_result34(p, t, grid, COLS21, A1, sheet_name="Sheet1")
+    # 用错误的期望列头（0.15 而非 0.1）应报不一致
+    bad_cols = [0.0, 0.15] + [round(0.1 * j, 4) for j in range(2, 21)]
+    r = W.verify_workbook(p, expected_sheets=["Sheet1"], a1_text=A1,
+                          expected_cols=bad_cols, n_data_rows=len(t), t_start=60, t_step=60)
+    assert not r["ok"]
+
+
+def test_cross_file_check_consistent(tmp_path):
+    """V-8：result2(1s) 与 result3(60s) 共同 60s 时刻舍入相等。"""
+    # result2：1..180 s 每 1 s；result3：60,120,180 s
+    import numpy as _np
+    t2 = _np.arange(1, 181)
+    C2 = _np.tile(_np.linspace(0.3, 0.2, 21), (len(t2), 1))
+    T2 = _np.full((len(t2), 21), 40.0)
+    r2 = tmp_path / "result2.xlsx"
+    W.write_result12(r2, t2, C2, T2, COLS21, A1)
+    t3 = _np.array([60, 120, 180])
+    C3 = _np.tile(_np.linspace(0.3, 0.2, 21), (3, 1))
+    r3 = tmp_path / "result3.xlsx"
+    W.write_result34(r3, t3, C3, COLS21, A1, sheet_name="Sheet1")
+    res = W.cross_file_check(r2, r3)
+    assert res["ok"] and res["n_common_times"] == 3 and res["n_mismatch"] == 0
+
+
+def test_cross_file_check_detects_mismatch(tmp_path):
+    import numpy as _np
+    t2 = _np.arange(1, 181)
+    C2 = _np.full((len(t2), 21), 0.3)
+    T2 = _np.full((len(t2), 21), 40.0)
+    r2 = tmp_path / "result2.xlsx"
+    W.write_result12(r2, t2, C2, T2, COLS21, A1)
+    t3 = _np.array([60, 120, 180])
+    C3 = _np.full((3, 21), 0.25)          # 与 result2 不同源
+    r3 = tmp_path / "result3.xlsx"
+    W.write_result34(r3, t3, C3, COLS21, A1, sheet_name="Sheet1")
+    res = W.cross_file_check(r2, r3)
+    assert not res["ok"] and res["n_mismatch"] > 0
