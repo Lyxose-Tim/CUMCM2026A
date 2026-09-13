@@ -10,9 +10,11 @@
     reports/sensitivity.md                           参数扰动时长变化
 温度场与水分场各用独立色标与单位；连续场对照保持一致归一化。
 
-统一调色板（五色协调，不机械按序拼接为渐变）：
-    深蓝 #5271AE  浅蓝 #70ACDE  橙 #FFA660  金 #F5CC7D  红 #D85B59
-白底、深灰文字；金黄/浅橙只用于填充与背景带，不承担白底上的细线、箭头或数字标签。
+统一调色板（Ocean Jelly + Warm Coral）：
+    冷色 深海蓝 #005BBD / 海洋蓝 #008FF5 / 果冻青 #29C7F6 / 冰蓝 #86E6FF
+    暖色 琥珀 #FFC247 / 金橙 #FFA83A / 珊瑚橙 #FF7A45 / 珊瑚红 #FF5B57 / 正红 #F0404F
+    中性 炭黑 #252A30 / 薄雾 #EAF3F8
+白底、炭黑文字；浅色只用于填充与背景带，不承担白底上的细线、箭头或数字标签。
 """
 from __future__ import annotations
 
@@ -352,19 +354,21 @@ def fig_q4_fields(cfg):
 # ==========================================================================
 def fig_analytic_convergence():
     d = load_v1v2()
-    fig, ax = plt.subplots(1, 2, figsize=(10.5, 3.9))
+    fig, ax = plt.subplots(1, 2, figsize=(6.6, 2.95))   # 按最终插入宽度设画布，避免缩放后字过小
     for a, key, ttl, yl, col in (
-            (ax[0], "temp", "(a) 温度（附录2 常物性，$t=100$ s）", "沿半径最大误差 / °C", RED),
+            (ax[0], "temp", "(a) 温度（附录2 常物性，$t=100$ s）", "沿半径最大误差 / °C", CORAL),
             (ax[1], "moist", "(b) 含水率（$D\\equiv D(C_0)$，$t=100$ s）",
-             "沿半径最大误差 / (kg·kg$^{-1}$)", DEEP)):
+             "沿半径最大误差 / (kg·kg$^{-1}$)", OCEAN)):
         Ns = np.array([p[0] for p in d[key]], float)
         err = np.array([p[1] for p in d[key]], float)
-        a.loglog(Ns, err, "o-", color=col, ms=6, lw=1.5, label="数值 vs 解析级数解")
+        a.loglog(Ns, err, "o-", color=col, ms=5.5, lw=1.7, label="数值 vs 解析级数解")
         ref = err[0] * (Ns[0] / Ns) ** 2
-        a.loglog(Ns, ref, "--", color="#888888", lw=1.1, label="二阶参考斜率")
-        a.set_xlabel("网格区间数 $N$"); a.set_ylabel(yl); a.set_title(ttl)
+        a.loglog(Ns, ref, "--", color="#9AA0A6", lw=1.1, label="二阶参考斜率")
+        a.set_xlabel("网格区间数 $N$", fontsize=10.5); a.set_ylabel(yl, fontsize=10)
+        a.set_title(ttl, fontsize=10.5)
         a.set_xticks(Ns); a.get_xaxis().set_major_formatter(ticker.ScalarFormatter())
-        a.grid(which="both", ls=":", alpha=0.4); a.legend(fontsize=8)
+        a.tick_params(labelsize=9.5)
+        a.grid(which="both", ls=":", alpha=0.4); a.legend(fontsize=9.5)
     fig.tight_layout()
     _save(fig, "fig_analytic_convergence")
 
@@ -374,23 +378,24 @@ def fig_analytic_convergence():
 # ==========================================================================
 def fig_convergence():
     d = load_convergence()
-    styles = {"harmonic": dict(color=RED, marker="s", label="调和平均界面"),
-              "integral": dict(color=BLUE_D, marker="o", label="积分界面（8 点 Gauss）")}
-    fig, ax = plt.subplots(1, 2, figsize=(10.6, 3.9))
+    styles = {"harmonic": dict(color=CORAL, marker="s", label="调和平均界面"),
+              "integral": dict(color=OCEAN, marker="o", label="积分界面（8 点 Gauss）")}
+    fig, ax = plt.subplots(1, 2, figsize=(6.8, 2.95))
     for key, pts in d.items():
         Ns = [p[0] for p in pts]; ts = [p[1] for p in pts]
-        st = styles.get(key, dict(color=GOLD, marker="^", label=key))
-        ax[0].plot(Ns, ts, "-", **st, ms=7, lw=1.5)
+        st = styles.get(key, dict(color=AMBER, marker="^", label=key))
+        ax[0].plot(Ns, ts, "-", **st, ms=6.5, lw=1.6)
         ref = ts[-1]
-        ax[1].loglog(Ns[:-1], [abs(t - ref) for t in ts[:-1]], "-", **st, ms=7, lw=1.5)
+        # (b) 只画比最细网格更粗的两点（最细网格相对自身为 0，不伪造正误差点）
+        ax[1].loglog(Ns[:-1], [abs(t - ref) for t in ts[:-1]], "-", **st, ms=6.5, lw=1.6)
     ax[0].set_xscale("log", base=2)
     for a in ax:
         a.set_xticks([200, 400, 800]); a.get_xaxis().set_major_formatter(ticker.ScalarFormatter())
-        a.grid(which="both", ls=":", alpha=0.4)
-    ax[0].set_xlabel("网格区间数 $N$"); ax[0].set_ylabel("达标时长 $t^*$ / h")
-    ax[0].set_title("(a) 达标时长随网格加密"); ax[0].legend(fontsize=8)
-    ax[1].set_xlabel("网格区间数 $N$"); ax[1].set_ylabel("$|t^*_N-t^*_{800}|$ / h")
-    ax[1].set_title("(b) 相对最细网格的收敛（对数）"); ax[1].legend(fontsize=8)
+        a.grid(which="both", ls=":", alpha=0.4); a.tick_params(labelsize=9.5)
+    ax[0].set_xlabel("网格区间数 $N$", fontsize=10.5); ax[0].set_ylabel("达标时长 $t^*$ / h", fontsize=10.5)
+    ax[0].set_title("(a) 达标时长随网格加密", fontsize=10.5); ax[0].legend(fontsize=9.5)
+    ax[1].set_xlabel("网格区间数 $N$", fontsize=10.5); ax[1].set_ylabel("$|t^*_N-t^*_{800}|$ / h", fontsize=10.5)
+    ax[1].set_title("(b) 相对最细网格的收敛（对数）", fontsize=10.5); ax[1].legend(fontsize=9.5)
     fig.tight_layout()
     _save(fig, "fig_convergence")
 
@@ -479,9 +484,77 @@ def fig_sensitivity():
     _save(fig, "fig_sensitivity")
 
 
+# ==========================================================================
+# 图：四问关系（matplotlib：文字边界测量 + 分层布置，替代原 TikZ）
+# ==========================================================================
+def fig_relation():
+    from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+    fig, ax = plt.subplots(figsize=(7.2, 4.3))
+    ax.set_xlim(0.2, 9.8); ax.set_ylim(1.6, 9.9); ax.axis("off"); ax.set_aspect("auto")
+    fig.canvas.draw()
+    rend = fig.canvas.get_renderer()
+    inv = ax.transData.inverted()
+
+    def measure(s, fs):
+        t = ax.text(0, 0, s, ha="center", va="center", fontsize=fs, linespacing=1.5, alpha=0)
+        fig.canvas.draw()
+        bb = t.get_window_extent(rend); t.remove()
+        (x0, y0), (x1, y1) = inv.transform([(bb.x0, bb.y0), (bb.x1, bb.y1)])
+        return x1 - x0, y1 - y0
+
+    FS = 10.5
+
+    def node(cx, cy, title, infos, w, h, fc):
+        ax.add_patch(FancyBboxPatch((cx - w / 2, cy - h / 2), w, h,
+                                    boxstyle="round,pad=0.03", fc=fc, ec=DEEP, lw=1.4, zorder=2))
+        ax.text(cx, cy + h / 2 - 0.34, title, ha="center", va="center",
+                fontsize=FS + 1, fontweight="bold", color=DEEP, zorder=3)
+        ax.text(cx, cy - h / 2 + 0.30 + (len(infos) - 1) * 0.13, "\n".join(infos),
+                ha="center", va="center", fontsize=FS, color=CHAR, linespacing=1.55, zorder=3)
+
+    q1 = ("问题一", ["附录2 常物性", "预热阶段", "温度与水分分别求解"])
+    q2 = ("问题二", ["附录3 变物性", "全过程", "温度与水分耦合"])
+    q4 = ("问题四", ["附录4 变物性", "半径收缩 $R(t)$", "参考坐标求解"])
+    q3 = ("问题三", ["沿用问题二数值解", "最大含水率降至 0.15"])
+    # 中层三框统一宽高（按最宽文字测量）
+    wmid = max(measure("\n".join(t[1]), FS)[0] for t in (q1, q2, q4)) + 0.7
+    hmid = 1.95
+    # 上层框
+    gtxt = "（散度形式，节点型有限体积离散）"
+    wgov = max(measure("统一径向传热传质框架", FS + 1)[0], measure(gtxt, FS)[0]) + 0.9
+    ax.add_patch(FancyBboxPatch((5 - wgov / 2, 9.0 - 0.55), wgov, 1.1,
+                                boxstyle="round,pad=0.03", fc=ICE + "40", ec=DEEP, lw=1.5, zorder=2))
+    ax.text(5, 9.22, "统一径向传热传质框架", ha="center", va="center",
+            fontsize=FS + 1, fontweight="bold", color=DEEP, zorder=3)
+    ax.text(5, 8.80, gtxt, ha="center", va="center", fontsize=FS, color=CHAR, zorder=3)
+    # 中层三列
+    xs = {"q1": 2.0, "q2": 5.0, "q4": 8.0}
+    ymid = 6.35
+    node(xs["q1"], ymid, *q1, wmid, hmid, MIST)
+    node(xs["q2"], ymid, *q2, wmid, hmid, MIST)
+    node(xs["q4"], ymid, *q4, wmid, hmid, MIST)
+    # 下层：问题三在问题二正下方
+    wq3 = measure("\n".join(q3[1]), FS)[0] + 0.7
+    yq3 = 3.15
+    node(xs["q2"], yq3, *q3, wq3, 1.55, MIST)
+    # 主干 + 水平干线（不作箭头，纯连线）
+    gov_bot = 8.45
+    ax.plot([5, 5], [gov_bot, 7.75], color=DEEP, lw=1.4, zorder=1)
+    ax.plot([xs["q1"], xs["q4"]], [7.75, 7.75], color=DEEP, lw=1.4, zorder=1)
+    ar = dict(arrowstyle="-|>", color=DEEP, lw=1.4, mutation_scale=12, shrinkA=0, shrinkB=1, zorder=1)
+    for x in xs.values():
+        ax.add_patch(FancyArrowPatch((x, 7.75), (x, ymid + hmid / 2), **ar))
+    # 问题二 → 问题三（唯一连线）
+    ax.add_patch(FancyArrowPatch((xs["q2"], ymid - hmid / 2), (xs["q2"], yq3 + 1.55 / 2), **ar))
+    ax.text(xs["q2"] + 0.35, (ymid - hmid / 2 + yq3 + 1.55 / 2) / 2, "达标判据",
+            ha="left", va="center", fontsize=FS - 0.5, color=CHAR, zorder=3)
+    _save(fig, "fig_relation")
+
+
 def main():
     cfg = cfgmod.load_config()
     print("生成论文插图 →", FIGDIR)
+    fig_relation()
     fig_inputs(cfg)
     fig_q1_profiles()
     fig_q23_fields()
