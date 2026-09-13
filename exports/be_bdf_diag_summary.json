@@ -1,0 +1,60 @@
+{
+  "aux_problem": {
+    "N": 400,
+    "R0_m": 0.02,
+    "T0_C": 28.0,
+    "Tair_C": 50.0,
+    "t_end_s": 100.0,
+    "interface": "harmonic",
+    "decoupled": true
+  },
+  "be": [
+    {
+      "method": "向后Euler",
+      "N": 400,
+      "control": "dt=1.0s",
+      "T_surf_100s_K": 307.24259212341747,
+      "T_surf_100s_C": 34.09259212341749,
+      "diff_vs_tightBDF_K": 0.008329704088851031
+    },
+    {
+      "method": "向后Euler",
+      "N": 400,
+      "control": "dt=0.5s",
+      "T_surf_100s_K": 307.24675579022784,
+      "T_surf_100s_C": 34.09675579022786,
+      "diff_vs_tightBDF_K": 0.004166037278480417,
+      "obs_order": 0.9995894960937401
+    },
+    {
+      "method": "向后Euler",
+      "N": 400,
+      "control": "dt=0.25s",
+      "T_surf_100s_K": 307.2488385168826,
+      "T_surf_100s_C": 34.09883851688261,
+      "diff_vs_tightBDF_K": 0.0020833106237319043,
+      "obs_order": 0.9997977862274978
+    }
+  ],
+  "bdf_prod": {
+    "method": "自适应BDF",
+    "N": 400,
+    "control": "rtol=1e-08",
+    "T_surf_100s_K": 307.25092053501965,
+    "T_surf_100s_C": 34.10092053501967,
+    "diff_vs_tightBDF_K": 1.2924866723551531e-06
+  },
+  "ref": {
+    "method": "紧容差BDF参考",
+    "N": 400,
+    "control": "rtol=1e-11,atol=1e-13",
+    "T_surf_100s_K": 307.2509218275063,
+    "T_surf_100s_C": 34.10092182750634,
+    "diff_vs_tightBDF_K": 0.0
+  },
+  "be_orders_dt_halving": [
+    0.9995894960937401,
+    0.9997977862274978
+  ],
+  "bdf_prod_diff_vs_ref_K": 1.2924866723551531e-06
+}

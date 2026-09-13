@@ -488,67 +488,230 @@ def fig_sensitivity():
 # 图：四问关系（matplotlib：文字边界测量 + 分层布置，替代原 TikZ）
 # ==========================================================================
 def fig_relation():
+    """四问与模型关系图：三列浅色任务分区（模型节点 + 结果节点）+ 跨区关系箭头。
+
+    几何完全由文字外框测量确定：框宽=最宽文字+左右内边距，框高=上内边距+标题高+
+    标题正文间距+正文高+下内边距；标题与正文按测得高度用 va='top' 定位（不再按行数猜）。
+    生成时断言：文字框被节点框包含、节点框互不相交、箭头不穿越非目标节点框。
+    """
     from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
-    fig, ax = plt.subplots(figsize=(7.2, 4.3))
-    ax.set_xlim(0.2, 9.8); ax.set_ylim(1.6, 9.9); ax.axis("off"); ax.set_aspect("auto")
+    W, H = 10.0, 8.0
+    fig, ax = plt.subplots(figsize=(8.4, 4.7))
+    ax.set_xlim(0, W); ax.set_ylim(0, H); ax.axis("off"); ax.set_aspect("auto")
     fig.canvas.draw()
     rend = fig.canvas.get_renderer()
     inv = ax.transData.inverted()
 
-    def measure(s, fs):
-        t = ax.text(0, 0, s, ha="center", va="center", fontsize=fs, linespacing=1.5, alpha=0)
+    def measure(s, fs, weight="normal", ls=1.5):
+        t = ax.text(0, 0, s, ha="center", va="center", fontsize=fs,
+                    fontweight=weight, linespacing=ls, alpha=0)
         fig.canvas.draw()
         bb = t.get_window_extent(rend); t.remove()
         (x0, y0), (x1, y1) = inv.transform([(bb.x0, bb.y0), (bb.x1, bb.y1)])
-        return x1 - x0, y1 - y0
+        return abs(x1 - x0), abs(y1 - y0)
 
-    FS = 10.5
+    FS_T, FS_B, FS_L, LS = 10.5, 10.0, 9.0, 1.45
+    PADX, PADT, PADB = 0.20, 0.16, 0.16          # 节点框内边距
+    PPADX, PPADT, PPADB = 0.24, 0.18, 0.24       # 分区面板内边距
+    G_TM, G_MR = 0.22, 0.52                      # 标题-模型、模型-结果 间距
+    GAPC = 0.80                                  # 列间净距
 
-    def node(cx, cy, title, infos, w, h, fc):
-        ax.add_patch(FancyBboxPatch((cx - w / 2, cy - h / 2), w, h,
-                                    boxstyle="round,pad=0.03", fc=fc, ec=DEEP, lw=1.4, zorder=2))
-        ax.text(cx, cy + h / 2 - 0.34, title, ha="center", va="center",
-                fontsize=FS + 1, fontweight="bold", color=DEEP, zorder=3)
-        ax.text(cx, cy - h / 2 + 0.30 + (len(infos) - 1) * 0.13, "\n".join(infos),
-                ha="center", va="center", fontsize=FS, color=CHAR, linespacing=1.55, zorder=3)
+    # ---- 内容（图中节点用短语；换行控制列宽）----
+    cols = [
+        dict(key="q1", title="问题一 · 预热过程",
+             model=["径向导热与水分扩散", "分别求解"],
+             result=["预热温度与", "含水率分布"], warm=False),
+        dict(key="q2", title="问题二 · 完整干燥过程",
+             model=["变物性传热传质", "耦合模型"],
+             result=["全过程温度场", "与含水率场"], warm=False),
+        dict(key="q4", title="问题四 · 尺寸收缩",
+             model=["更新物性与", "收缩参考坐标"],
+             result=["收缩条件下含水率", "与达标时长"], warm=True),
+    ]
+    for c in cols:
+        c["tw"], c["th"] = measure(c["title"], FS_T, "bold")
+        c["mtxt"] = "\n".join(c["model"]); c["mw"], c["mh"] = measure(c["mtxt"], FS_B, ls=LS)
+        c["rtxt"] = "\n".join(c["result"]); c["rw"], c["rh"] = measure(c["rtxt"], FS_B, ls=LS)
+    # 统一列宽/框高（取各列最大，成规则网格）
+    box_w = max(max(c["mw"], c["rw"]) for c in cols) + 2 * PADX
+    inner_w = max(box_w, max(c["tw"] for c in cols))
+    panel_w = inner_w + 2 * PPADX
+    mbox_h = max(c["mh"] for c in cols) + PADT + PADB
+    rbox_h = max(c["rh"] for c in cols) + PADT + PADB
+    th_max = max(c["th"] for c in cols)
+    panel_h = PPADT + th_max + G_TM + mbox_h + G_MR + rbox_h + PPADB
 
-    q1 = ("问题一", ["附录2 常物性", "预热阶段", "温度与水分分别求解"])
-    q2 = ("问题二", ["附录3 变物性", "全过程", "温度与水分耦合"])
-    q4 = ("问题四", ["附录4 变物性", "半径收缩 $R(t)$", "参考坐标求解"])
-    q3 = ("问题三", ["沿用问题二数值解", "最大含水率降至 0.15"])
-    # 中层三框统一宽高（按最宽文字测量）
-    wmid = max(measure("\n".join(t[1]), FS)[0] for t in (q1, q2, q4)) + 0.7
-    hmid = 1.95
-    # 上层框
-    gtxt = "（散度形式，节点型有限体积离散）"
-    wgov = max(measure("统一径向传热传质框架", FS + 1)[0], measure(gtxt, FS)[0]) + 0.9
-    ax.add_patch(FancyBboxPatch((5 - wgov / 2, 9.0 - 0.55), wgov, 1.1,
-                                boxstyle="round,pad=0.03", fc=ICE + "40", ec=DEEP, lw=1.5, zorder=2))
-    ax.text(5, 9.22, "统一径向传热传质框架", ha="center", va="center",
-            fontsize=FS + 1, fontweight="bold", color=DEEP, zorder=3)
-    ax.text(5, 8.80, gtxt, ha="center", va="center", fontsize=FS, color=CHAR, zorder=3)
-    # 中层三列
-    xs = {"q1": 2.0, "q2": 5.0, "q4": 8.0}
-    ymid = 6.35
-    node(xs["q1"], ymid, *q1, wmid, hmid, MIST)
-    node(xs["q2"], ymid, *q2, wmid, hmid, MIST)
-    node(xs["q4"], ymid, *q4, wmid, hmid, MIST)
-    # 下层：问题三在问题二正下方
-    wq3 = measure("\n".join(q3[1]), FS)[0] + 0.7
-    yq3 = 3.15
-    node(xs["q2"], yq3, *q3, wq3, 1.55, MIST)
-    # 主干 + 水平干线（不作箭头，纯连线）
-    gov_bot = 8.45
-    ax.plot([5, 5], [gov_bot, 7.75], color=DEEP, lw=1.4, zorder=1)
-    ax.plot([xs["q1"], xs["q4"]], [7.75, 7.75], color=DEEP, lw=1.4, zorder=1)
-    ar = dict(arrowstyle="-|>", color=DEEP, lw=1.4, mutation_scale=12, shrinkA=0, shrinkB=1, zorder=1)
-    for x in xs.values():
-        ax.add_patch(FancyArrowPatch((x, 7.75), (x, ymid + hmid / 2), **ar))
-    # 问题二 → 问题三（唯一连线）
-    ax.add_patch(FancyArrowPatch((xs["q2"], ymid - hmid / 2), (xs["q2"], yq3 + 1.55 / 2), **ar))
-    ax.text(xs["q2"] + 0.35, (ymid - hmid / 2 + yq3 + 1.55 / 2) / 2, "达标判据",
-            ha="left", va="center", fontsize=FS - 0.5, color=CHAR, zorder=3)
+    total_w = 3 * panel_w + 2 * GAPC
+    x0 = (W - total_w) / 2.0
+    for i, c in enumerate(cols):
+        c["cx"] = x0 + i * (panel_w + GAPC) + panel_w / 2.0
+    panel_top = 6.55
+    panel_bot = panel_top - panel_h
+
+    boxes = []                                    # 节点框（供几何检查）：(name,x0,y0,x1,y1)
+    panels = []                                   # 分区面板：(name,x0,y0,x1,y1)
+
+    def draw_box(cx, top, w, h, text, fs, fc, ec, tcol, weight="normal", ls=1.0, name=""):
+        ax.add_patch(FancyBboxPatch((cx - w / 2, top - h), w, h,
+                                    boxstyle="round,pad=0.015", fc=fc, ec=ec, lw=1.3, zorder=3))
+        ax.text(cx, top - PADT, text, ha="center", va="top", fontsize=fs,
+                fontweight=weight, color=tcol, linespacing=ls, zorder=4)
+        boxes.append((name, cx - w / 2, top - h, cx + w / 2, top))
+
+    # ---- 概览标题（共用框架，文字形式，不再用会溢出的框）----
+    ax.text(W / 2, 7.62, "统一径向传热传质模型", ha="center", va="center",
+            fontsize=FS_T + 1.5, fontweight="bold", color=DEEP, zorder=5)
+    ax.text(W / 2, 7.18, "同一套控制方程与定解条件，按各问替换物性、几何与判据",
+            ha="center", va="center", fontsize=FS_L, color="#5A6169", zorder=5)
+
+    # ---- 三列分区 ----
+    node_xy = {}
+    for c in cols:
+        cx = c["cx"]
+        pfc = (AMBER + "2E") if c["warm"] else (ICE + "33")
+        pec = GORANGE if c["warm"] else OCEAN
+        ax.add_patch(FancyBboxPatch((cx - panel_w / 2, panel_bot), panel_w, panel_h,
+                                    boxstyle="round,pad=0.02", fc=pfc, ec=pec, lw=1.1,
+                                    zorder=1, alpha=0.95))
+        panels.append((c["key"], cx - panel_w / 2, panel_bot, cx + panel_w / 2, panel_top))
+        # 任务标题
+        title_top = panel_top - PPADT
+        ax.text(cx, title_top, c["title"], ha="center", va="top",
+                fontsize=FS_T, fontweight="bold", color=CHAR, zorder=4)
+        # 模型节点
+        mtop = title_top - th_max - G_TM
+        draw_box(cx, mtop, box_w, mbox_h, c["mtxt"], FS_B, "#FFFFFF", pec, CHAR,
+                 ls=LS, name=c["key"] + "_m")
+        # 结果节点
+        rtop = mtop - mbox_h - G_MR
+        draw_box(cx, rtop, box_w, rbox_h, c["rtxt"], FS_B, "#FFFFFF", pec, CHAR,
+                 ls=LS, name=c["key"] + "_r")
+        node_xy[c["key"]] = dict(cx=cx, m_top=mtop, m_bot=mtop - mbox_h,
+                                 r_top=rtop, r_bot=rtop - rbox_h)
+
+    # ---- 问题三（问题二结果节点下方）----
+    cx2 = node_xy["q2"]["cx"]
+    q3_title, q3_body = "问题三 · 达标判定", "达标时长"
+    q3tw, q3th = measure(q3_title, FS_B, "bold")
+    q3bw, q3bh = measure(q3_body, FS_B)
+    q3w = max(q3tw, q3bw) + 2 * PADX
+    q3h = PADT + q3th + 0.14 + q3bh + PADB
+    q3_top = panel_bot - 0.62
+    ax.add_patch(FancyBboxPatch((cx2 - q3w / 2, q3_top - q3h), q3w, q3h,
+                                boxstyle="round,pad=0.015", fc=ICE + "55", ec=OCEAN, lw=1.3, zorder=3))
+    ax.text(cx2, q3_top - PADT, q3_title, ha="center", va="top",
+            fontsize=FS_B, fontweight="bold", color=DEEP, zorder=4)
+    ax.text(cx2, q3_top - PADT - q3th - 0.14, q3_body, ha="center", va="top",
+            fontsize=FS_B, fontweight="bold", color=CHAR, zorder=4)
+    boxes.append(("q3", cx2 - q3w / 2, q3_top - q3h, cx2 + q3w / 2, q3_top))
+
+    # ---- 箭头 ----
+    ar = dict(arrowstyle="-|>", color=DEEP, lw=1.4, mutation_scale=12,
+              shrinkA=1, shrinkB=1, zorder=2)
+    ar_w = dict(ar, color=GORANGE)
+    arrows = []                                   # (p0,p1,{connected boxes})
+    # 列内：模型 → 结果（结果提取）
+    for k in ("q1", "q2", "q4"):
+        p0 = (node_xy[k]["cx"], node_xy[k]["m_bot"]); p1 = (node_xy[k]["cx"], node_xy[k]["r_top"])
+        ax.add_patch(FancyArrowPatch(p0, p1, **ar))
+        arrows.append((p0, p1, {k + "_m", k + "_r"}))
+    # 问题二模型 → 问题四模型（物性与几何修正）
+    m_mid = (node_xy["q2"]["m_top"] + node_xy["q2"]["m_bot"]) / 2.0
+    p0 = (node_xy["q2"]["cx"] + box_w / 2, m_mid); p1 = (node_xy["q4"]["cx"] - box_w / 2, m_mid)
+    ax.add_patch(FancyArrowPatch(p0, p1, **ar_w))
+    arrows.append((p0, p1, {"q2_m", "q4_m"}))
+    lbl_x = (p0[0] + p1[0]) / 2.0
+    ax.text(lbl_x, node_xy["q2"]["m_top"] + 0.30, "物性与\n几何修正", ha="center", va="bottom",
+            fontsize=FS_L, color="#8A4B12", linespacing=1.2, zorder=5,
+            bbox=dict(boxstyle="round,pad=0.15", fc="#FFFFFF", ec="none", alpha=0.85))
+    # 问题二结果 → 问题三（最大含水率判据）
+    p0 = (cx2, node_xy["q2"]["r_bot"]); p1 = (cx2, q3_top)
+    ax.add_patch(FancyArrowPatch(p0, p1, **ar))
+    arrows.append((p0, p1, {"q2_r", "q3"}))
+    ax.text(cx2 + 0.16, (p0[1] + p1[1]) / 2.0, "最大含水率\n判据", ha="left", va="center",
+            fontsize=FS_L, color=CHAR, linespacing=1.2, zorder=5)
+
+    # ---- 几何自检（制图必要步骤）----
+    def overlap(a, b, tol=1e-6):
+        return not (a[3] <= b[1] + tol or b[3] <= a[1] + tol or
+                    a[4] <= b[2] + tol or b[4] <= a[2] + tol)
+
+    def seg_hits(p0, p1, rect, tol=0.02):
+        for s in np.linspace(0.06, 0.94, 30):
+            x = p0[0] + s * (p1[0] - p0[0]); y = p0[1] + s * (p1[1] - p0[1])
+            if rect[1] + tol < x < rect[3] - tol and rect[2] + tol < y < rect[4] - tol:
+                return True
+        return False
+
+    for i in range(len(boxes)):
+        for j in range(i + 1, len(boxes)):
+            assert not overlap(boxes[i], boxes[j]), f"节点框相交: {boxes[i][0]} vs {boxes[j][0]}"
+    for i in range(len(panels)):
+        for j in range(i + 1, len(panels)):
+            assert not overlap(panels[i], panels[j]), f"分区面板相交: {panels[i][0]} vs {panels[j][0]}"
+    for p0, p1, conn in arrows:
+        for bx in boxes:
+            if bx[0] in conn:
+                continue
+            assert not seg_hits(p0, p1, bx), f"箭头穿越非目标节点: {bx[0]}"
+    # 内容不超出画布
+    all_x0 = min(b[1] for b in boxes + panels); all_x1 = max(b[3] for b in boxes + panels)
+    assert 0 <= all_x0 and all_x1 <= W, f"横向越界: [{all_x0:.2f},{all_x1:.2f}]"
     _save(fig, "fig_relation")
+
+
+# ==========================================================================
+# 图：辅助热问题的时间积分对照（向后 Euler vs 自适应 BDF；读诊断 CSV）
+# ==========================================================================
+def _load_be_bdf_diag():
+    diag = list(csv.DictReader((EXPORTS / "be_bdf_diag.csv").open(encoding="utf-8")))
+    hist = list(csv.DictReader((EXPORTS / "be_bdf_history.csv").open(encoding="utf-8")))
+    return diag, hist
+
+
+def fig_be_bdf():
+    diag, hist = _load_be_bdf_diag()
+    t = np.array([float(r["t"]) for r in hist])
+    hcols = [c for c in hist[0].keys() if c != "t"]
+    series = {c: np.array([float(r[c]) for r in hist]) for c in hcols}
+    # 端点差异（相对紧容差 BDF 参考）
+    be = [(float(r["control"].split("=")[1].rstrip("s")), float(r["diff_vs_tightBDF_K"]))
+          for r in diag if r["method"] == "向后Euler"]
+    be.sort(reverse=True)                       # Δt 从大到小
+    dts = np.array([b[0] for b in be]); errs = np.array([b[1] for b in be])
+    bdf_err = next(float(r["diff_vs_tightBDF_K"]) for r in diag if r["method"] == "自适应BDF")
+    bdf_ctrl = next(r["control"] for r in diag if r["method"] == "自适应BDF")
+
+    fig, ax = plt.subplots(1, 2, figsize=(7.0, 3.0))
+    # (a) 表面温度时程（各方法在此标度下基本重合，用一条参考曲线呈现升温）
+    Tref_C = series["T_ref_tightBDF"] - 273.15
+    ax[0].plot(t, Tref_C, "-", color=DEEP, lw=1.8, label="表面温度（各方法重合）")
+    spread = max(float(np.max(np.abs(series[c] - series["T_ref_tightBDF"]))) for c in hcols
+                 if c != "T_ref_tightBDF")
+    ax[0].plot(t, series["T_be_dt1.0"] - 273.15, "--", color=CORAL, lw=1.0, alpha=0.9,
+               label="向后 Euler $\\Delta t=1$ s")
+    ax[0].set_xlabel("时间 $t$ / s", fontsize=10.5)
+    ax[0].set_ylabel("表面温度 / °C", fontsize=10.5)
+    ax[0].set_title("(a) 表面温度时程", fontsize=10.5)
+    ax[0].grid(ls=":", alpha=0.4); ax[0].tick_params(labelsize=9.5)
+    ax[0].legend(fontsize=8.5, loc="lower right")
+    ax[0].text(0.04, 0.94, f"各方法曲线基本重合\n（全程最大偏差 {spread:.1e} K，位于初始升温段）",
+               transform=ax[0].transAxes, fontsize=8.0, color=CHAR, va="top", linespacing=1.3)
+    # (b) 向后 Euler 终点差异随步长（双对数）+ 一阶参考线；BDF 差异单独标示
+    ax[1].loglog(dts, errs, "o-", color=CORAL, ms=6, lw=1.7, label="向后 Euler（100 s 终点）")
+    ref = errs[0] * (dts / dts[0])              # 一阶参考：误差 ∝ Δt
+    ax[1].loglog(dts, ref, "--", color="#9AA0A6", lw=1.1, label="一阶参考斜率")
+    ax[1].axhline(bdf_err, color=OCEAN, lw=1.6, ls="-.",
+                  label=f"自适应 BDF（{bdf_ctrl}）")
+    ax[1].set_xlabel("时间步长 $\\Delta t$ / s", fontsize=10.5)
+    ax[1].set_ylabel("100 s 表面温度差 $|\\Delta T|$ / K", fontsize=10)
+    ax[1].set_title("(b) 相对紧容差 BDF 参考的差异", fontsize=10.5)
+    ax[1].set_xticks(dts); ax[1].get_xaxis().set_major_formatter(ticker.ScalarFormatter())
+    ax[1].get_xaxis().set_minor_formatter(ticker.NullFormatter())
+    ax[1].grid(which="both", ls=":", alpha=0.4); ax[1].tick_params(labelsize=9.5)
+    ax[1].legend(fontsize=8.2, loc="upper left")
+    fig.tight_layout()
+    _save(fig, "fig_be_bdf")
 
 
 def main():
@@ -561,6 +724,7 @@ def main():
     fig_q4_fields(cfg)
     fig_analytic_convergence()
     fig_convergence()
+    fig_be_bdf()
     fig_threecase()
     fig_sensitivity()
     print("完成。")

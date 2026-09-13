@@ -23,6 +23,7 @@
 \texttt{writers.py} & 结果写盘与工作簿检查。 \\
 \texttt{verify.py} & 解析对照、收敛、守恒、包络、端面等检验。 \\
 \texttt{paper\_figs.py} & 论文插图重绘入口（只读官方结果与验证记录）。 \\
+\texttt{be\_bdf\_diag.py} & 辅助热问题的向后 Euler 与 BDF 时间积分对照诊断（生成图~\ref{fig:bebdf}，只写诊断 CSV）。 \\
 \texttt{outputs/result1--4.xlsx} & 四问正式结果。 \\
 \texttt{outputs/table*.csv} & 表~\ref{tab:t1}--\ref{tab:t6} 的同源数据。 \\
 \texttt{reports/*.md} & 检验与灵敏度报告。 \\
@@ -36,12 +37,32 @@
 运行环境为 Python 3.13，依赖 \texttt{numpy}、\texttt{scipy}、\texttt{openpyxl}、\texttt{PyYAML}、\texttt{matplotlib}。参数来自 \texttt{config/A题\_config.yaml}，输入数据为 \texttt{附件/附件1.xlsx}、\texttt{附件/附件2.xlsx}。三类操作区分如下。
 
 \begin{enumerate}[label=(\arabic*),leftmargin=2.2em,itemsep=1pt]
-\item \textbf{只读重绘图表}（不重跑求解）：\texttt{python -m drymodel.paper\_figs} 由官方结果与验证记录重绘 \texttt{figures/*.pdf}；\texttt{python -m drymodel.paper\_latex} 由 \texttt{outputs/*.csv} 重新生成表格片段。论文的图与表 $1$--$6$ 均由此得到，重新排版不需要重跑生产。
+\item \textbf{只读重绘图表}（不重跑求解）：\texttt{python -m drymodel.paper\_figs} 由官方结果与验证记录重绘 \texttt{figures/*.pdf}；\texttt{python -m drymodel.paper\_latex} 由 \texttt{outputs/*.csv} 重新生成表格片段。图~\ref{fig:bebdf} 所需的时间积分对照数据由 \texttt{python -m drymodel.be\_bdf\_diag} 单独生成（仅写 \texttt{exports/be\_bdf\_diag*.csv}，不触发生产计算）。论文的图与表 $1$--$6$ 均由此得到，重新排版不需要重跑生产。
 \item \textbf{候选/验证计算}：\texttt{python -m drymodel.run\_all}（不加 \texttt{-{}-produce}）走候选与验证管线，生成 \texttt{reports/} 下的检验报告，不导出正式结果。
 \item \textbf{正式结果复现}：\texttt{python -m drymodel.run\_all -{}-produce} 在 \texttt{config.production.approved=true} 下续算并导出官方 \texttt{result1--4.xlsx}，同时执行工作簿终检。文字与图表的修订不需要执行该步。
 \end{enumerate}
 
 Overleaf 编译包用于论文编译，与可独立运行 Python 的支撑材料包分开。
+
+\subsection{散度展开与离散代数核算}\label{sec:divexp}
+
+\paragraph{散度形式中的系数梯度项}
+把式~\eqref{eq:govC} 右端在 $r>0$ 处展开
+\begin{equation}
+\frac1r\pd{}{r}\!\left(rD\pd{C}{r}\right)=D\!\left(\frac{\partial^2C}{\partial r^2}+\frac1r\pd{C}{r}\right)+\pd{D}{r}\pd{C}{r}
+\label{eq:divexp-eq}
+\end{equation}
+
+其中最后一项 $\partial D/\partial r\cdot\partial C/\partial r$ 反映扩散能力随位置变化的影响。若把方程写成 $D\,\nabla^2C$，便省去该项，使局部含水率变化与原扩散通量的净流入不再一致，从而改变含水率场与达标时刻；在状态梯度陡峭的区域这一影响可能更明显。本文保留散度形式并按界面通量离散，正是为把该项完整包含在通量里。
+
+\paragraph{离散代数自洽核算}
+向后 Euler 的逐步离散累计通量为
+\begin{equation}
+I_{\mathrm{BE}}^{n}=\sum_{j=1}^{n}\Delta t_j\,\frac{2h_m}{R_j}\big[C_s^{j}-\Cenv(t_j)\big]
+\label{eq:ibe}
+\end{equation}
+
+其中 $j$ 为实际时间子步编号，$\Delta t_j=t_j-t_{j-1}$，$C_s^{j}$ 为该步末表面值，固定域取 $R_j=R_0$、动域取 $R_j=R(t_j)$。以之作离散代数收支，$|\Cbar^{n}-\Cbar^{0}+I_{\mathrm{BE}}^{n}|/|\Delta\Cbar|$ 约为 $\num{1.5e-14}$（$\Cbar^{n}$、$\Cbar^{0}$ 为末、初时间层的平均含水率）；热量收支的残差约 $\SI{3.212e-10}{W/m}$。这类代数恒等式核验离散实现的自洽性，与第~\ref{sec:verification}~节把连续解表面通量独立求积的水分收支核验分属不同层次。
 
 \subsection{主要源程序}\label{sec:code}
 

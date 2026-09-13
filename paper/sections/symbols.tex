@@ -1,13 +1,28 @@
 \section{符号说明}
 
-下表列出主要符号；仅在局部出现的记号在正文首次使用处解释。温度在扩散系数与方程中以热力学温标 $\si{K}$ 计，结果图表以 $\si{\celsius}$ 显示。
+下表列出主要符号；仅在局部出现的记号在正文首次使用处解释。温度在扩散系数与方程中以热力学温标 $\si{K}$ 计，结果图表以 $\si{\celsius}$ 显示。本表随正文自然分页，若跨页则在续页重复表头。
 
-\begin{center}\small
+% 无编号符号表：置于正文流中的 longtable，允许逐行分页；
+% 保存并恢复表计数，避免占用结果表 1--7 的编号。
+\begingroup
+\small
+\setcounter{symtblsave}{\value{table}}
 \renewcommand{\arraystretch}{1.3}
-\begin{tabular}{C{2.3cm}C{8.0cm}C{4.0cm}}
+\begin{longtable}{C{2.3cm}C{8.0cm}C{4.0cm}}
 \toprule
 符号 & 含义 & 单位 \\
 \midrule
+\endfirsthead
+\multicolumn{3}{c}{\small\heiti 符号说明（续）}\\[3pt]
+\toprule
+符号 & 含义 & 单位 \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\footnotesize\itshape 续下页}\\
+\endfoot
+\bottomrule
+\endlastfoot
 $r,\ t$ & 径向坐标、时间 & \si{m},\ \si{s} \\
 $R_0,\ R(t)$ & 初始半径（$\SI{0.02}{m}$）、问题四的当前半径 & \si{m} \\
 $L$ & 药材长度（$\SI{0.25}{m}$，恒定） & \si{m} \\
@@ -29,9 +44,9 @@ $\Cmax(t)$ & 全域最大含水率（本算例位于中心节点） & \si{kg/kg}
 $\tstar$ & 达标阈值穿越时间（最大含水率降到 $0.15$ 的时刻） & \si{s}（报告 \si{h}） \\
 $\tsamp$ & 首个计算得到的、最大含水率低于 $0.15$ 的输出时刻 & \si{s} \\
 $N,\ \Delta r$ & 径向区间数、径向步长（节点数为 $N{+}1$） & 无量纲,\ \si{m} \\
-$Bi_h,\ Bi_m$ & 传热、传质 Biot 数（$Bi_h=hR/k$，$Bi_m=h_mR/D$） & 无量纲 \\
-\bottomrule
-\end{tabular}
-\end{center}
+$Bi_h,\ Bi_m$ & 传热、传质 Biot 数（$Bi_h=hR_0/k$，$Bi_m=h_mR_0/D$） & 无量纲 \\
+\end{longtable}
+\setcounter{table}{\value{symtblsave}}
+\endgroup
 
 其中 $\rho(C)$ 是各附录给出的随含水率变化的经验密度，用于计算体积热容；$\rhos(t)$ 是把湿药材换算为干物质基准的密度，只在问题四由干物质守恒确定收缩后的分布，两者含义不同。最大含水率 $\Cmax$ 用于达标判定，平均含水率 $\Cbar$ 用于守恒核算。

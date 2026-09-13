@@ -15,6 +15,7 @@
 \usepackage{siunitx}
 \usepackage{xcolor}
 \usepackage{tabularx}
+\usepackage{longtable}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,fit}
 \usepackage{listings}
@@ -38,6 +39,9 @@
 
 % 居中且允许换行的定宽列
 \newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
+
+% 符号说明续表用：保存/恢复表计数，使无编号 longtable 不占用结果表 1--7 的编号
+\newcounter{symtblsave}
 
 % ---- 统一记号 ----
 \newcommand{\pd}[2]{\dfrac{\partial #1}{\partial #2}}
@@ -103,10 +107,12 @@
 % 参考文献按正文首次引用顺序排列（thebibliography 为唯一来源）。
 \begin{thebibliography}{9}
 \bibitem{crank} Crank J. The Mathematics of Diffusion[M]. 2nd ed. Oxford: Clarendon Press, 1975.
+\bibitem{carslaw} Carslaw H S, Jaeger J C. Conduction of Heat in Solids[M]. 2nd ed. Oxford: Clarendon Press, 1959.
+\bibitem{fipy} National Institute of Standards and Technology. FiPy: Discretization[EB/OL]. [2026-09-12]. https://pages.nist.gov/fipy/en/stable/numerical/discret.html.
 \bibitem{maddix2018a} Maddix D C, Sampaio L, Gerritsen M. Numerical artifacts in the Generalized Porous Medium Equation: Why harmonic averaging itself is not to blame[J]. Journal of Computational Physics, 2018, 361: 280--298. DOI: 10.1016/j.jcp.2018.02.010.
 \bibitem{maddix2018b} Maddix D C, Sampaio L, Gerritsen M. Numerical artifacts in the discontinuous Generalized Porous Medium Equation: How to avoid spurious temporal oscillations[J]. Journal of Computational Physics, 2018, 368: 277--298. DOI: 10.1016/j.jcp.2018.04.045.
 \bibitem{scipy} Virtanen P, Gommers R, Oliphant T E, et al. SciPy 1.0: fundamental algorithms for scientific computing in Python[J]. Nature Methods, 2020, 17: 261--272. DOI: 10.1038/s41592-019-0686-2.
-\bibitem{carslaw} Carslaw H S, Jaeger J C. Conduction of Heat in Solids[M]. 2nd ed. Oxford: Clarendon Press, 1959.
+\bibitem{scipybdf} SciPy Developers. scipy.integrate.BDF --- SciPy Reference Guide[EB/OL]. [2026-09-12]. https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.BDF.html.
 \bibitem{mcmrule} 全国大学生数学建模竞赛组委会. 全国大学生数学建模竞赛人工智能工具使用规定（2026 年试行）[EB/OL]. (2026-08-03). https://www.mcm.edu.cn/.
 \end{thebibliography}
 

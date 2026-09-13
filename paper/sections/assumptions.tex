@@ -1,6 +1,6 @@
 \section{模型假设}
 
-为使模型可解且抓住主要物理机制，作如下假设。图~\ref{fig:geom} 给出几何与主要假设的示意，控制方程、插值与外推的具体做法、时间步与求解细节属于建模与求解的内容，放在第~\ref{sec:model}~节说明。
+为使模型可解且抓住主要物理机制，作如下假设。图~\ref{fig:geom} 给出几何与主要假设的示意；题给的尺寸、初值与附件来源见第~\ref{sec:restate}~节，控制方程、干物质密度关系、插值与常值延续的具体做法分别见第~\ref{sec:model}~节的相应小节。
 
 \begin{figure}[H]\centering
 \begin{tikzpicture}[font=\small,>=Stealth,line join=round]
@@ -27,6 +27,7 @@
 % 第三层（最下）：长度尺寸
 \draw[<->,palChar] (0,-\Ry-1.18) -- (\Lx,-\Ry-1.18);
 \node[palChar,font=\scriptsize,anchor=north] at (\Lx/2,-\Ry-1.20) {长度 $L=\SI{25}{cm}$（恒定）};
+\node[palChar,font=\footnotesize,anchor=north] at (\Lx/2,-\Ry-1.78) {(a) 圆柱侧视};
 % —— 截面视图（右，放大；R(t) 置于上部环带、与 R0、r、收缩箭头分区）——
 \begin{scope}[xshift=9.6cm,yshift=-0.55cm]
 \draw[palDeep,dashed] (0,0) circle (1.15);
@@ -37,31 +38,24 @@
 \fill[palDeep] (0,0) circle (1.2pt);
 \node[palChar,font=\scriptsize,anchor=south] at (0,1.18) {$R_0$};
 \node[text=palCoral,font=\scriptsize] at (0,0.92) {$R(t)$};
-\node[palChar,font=\scriptsize,align=center,anchor=north] at (0,-1.34) {问题四中截面\\$R_0\!\to\!R(t)$、$L$ 不变};
+\node[palChar,font=\scriptsize,align=center,anchor=north] at (0,-1.34) {$R_0\!\to\!R(t)$、$L$ 不变};
+\node[palChar,font=\footnotesize,anchor=north] at (0,-1.86) {(b) 中截面收缩};
 \end{scope}
 \end{tikzpicture}
-\caption{几何与主要假设示意。侧视图自上而下分为热交换、几何主体、失水、长度尺寸四层：珊瑚色箭头为加热阶段热风向物料的对流传热，深蓝箭头为表面向环境的失水，虚线端面表示忽略轴向变化的一维径向近似。截面视图给出中截面与半径方向，并表示问题四中半径由 $R_0$ 收缩到 $R(t)$、长度保持不变。}
+\caption{几何与主要假设示意。左图：圆柱药材侧视图，展示侧面对流换热、表面失水及长度尺寸，虚线端面表示忽略轴向变化的一维径向近似；右图：中截面收缩示意，蓝色虚线与珊瑚色实线分别表示初始边界和当前边界，半径由 $R_0$ 变为 $R(t)$，长度保持不变。}
 \label{fig:geom}
 \end{figure}
 
-\paragraph{一、题目给定并直接采用的条件}
-\begin{enumerate}[label=(\arabic*),leftmargin=2.2em,itemsep=1pt]
-\item 药材为半径 $R_0=\SI{2}{cm}$、长 $L=\SI{25}{cm}$ 的圆柱；初始温度 $\SI{28}{\celsius}$、初始干基含水率 $2.55$，且内部均匀。
-\item 烘房空气温度 $\Tair(t)$ 与环境含水浓度 $\Cenv(t)$ 由附件 1 给定；问题四的半径 $R(t)$ 由附件 2 给定。
-\item 表面对流换热系数 $h=\SI{25}{W/(m^2.K)}$、传质系数 $h_m=\SI{8e-7}{m/s}$；各问物性按对应附录给定的公式取值，不重新拟合。
+基于上述物理图景，本文作如下假设：
+
+\begin{enumerate}[label=(\arabic*),leftmargin=2.2em,itemsep=2pt]
+\item 药材视为均匀、各向同性的连续多孔介质，初始温度与含水率均匀。
+\item 忽略轴向变化与两端散失，温度和含水率仅随半径及时间变化，中心处满足对称条件。
+\item 水分迁移采用有效扩散描述，将蒸汽扩散、毛细流动等机制的净效果并入有效扩散系数，环境含水浓度作为表面传质的有效驱动量。
+\item 传热过程考虑内部导热与表面对流换热，体积热容取 $\rho(C)c_p(C)$，水分蒸发的吸热项不单独计入。
+\item 各问沿用题给的同一组表面对流换热系数 $h$ 与传质系数 $h_m$。
+\item 问题四中干物质质量守恒，干物质基准密度在各时刻沿半径均匀分布，物料按给定半径作仿射收缩，长度保持不变。
+\item 环境观测结束后，以观测末段的平均状态代表后续的恒定工况。
 \end{enumerate}
 
-\paragraph{二、为建模而作的假设及其依据}
-\begin{enumerate}[label=(\arabic*),leftmargin=2.2em,itemsep=1pt]
-\item {\heiti\bfseries 一维径向}\enspace  因长直径比约 $6.25$，忽略轴向梯度与两端散失，只在中截面上沿半径求解（对应图~\ref{fig:geom} 的虚线端面）；问题一至三半径固定为 $R_0$，问题四半径随时间收缩而长度不变。端面影响的量级另在第~\ref{sec:verification}~节估计。
-\item {\heiti\bfseries 均匀连续介质}\enspace  药材视为各向同性的连续多孔介质，初始温度与含水率均匀。
-\item {\heiti\bfseries 有效水分扩散}\enspace  水分迁移用题给的有效扩散系数描述，认为它已把蒸汽扩散、毛细流动等机制的净效果并入其中，故不再单列各分项通量\cite{crank}。
-\item {\heiti\bfseries 有效体积热容、暂不设蒸发吸热项}\enspace  传热用 Fourier 定律，体积热容取 $\rho(C)c_p(C)$。本文采用题给经验物性建立导热--扩散模型，传热方程包含内部导热与表面对流换热，暂不单独设置水分蒸发的吸热项；该简化的影响在第~\ref{sec:eval}~节讨论。
-\item {\heiti\bfseries 环境含水浓度为有效边界驱动}\enspace  把附件 1 中的环境含水浓度 $\Cenv(t)$ 作为表面传质的驱动量；它与药材真实平衡含水率之间的关系未由独立实验确定，故仅作有效边界处理。
-\item {\heiti\bfseries 边界系数跨问沿用}\enspace  由于 $h$、$h_m$ 只在附录 2 给出，问题二至四仍沿用该组数值，作为额外的有效系数假设。
-\item {\heiti\bfseries 中心对称}\enspace  中心处温度与含水率的径向梯度为零。
-\item {\heiti\bfseries 收缩时干物质守恒（问题四）}\enspace  干物质总量不变、且收缩后仍均匀分布，于是干物质基准密度随半径按 $\rhos(t)=\rho_{\mathrm{s}0}(R_0/R(t))^2$ 变化；半径收缩速度按仿射方式分配到各点。
-\end{enumerate}
-
-\paragraph{三、关于数据外推}
-附件 1 只给出前 $\SI{4}{h}$ 的环境数据，附件 2 的半径数据止于 $\SI{72}{h}$。超出给定范围后，环境量与半径均按常值延续，并在结果中标注为外推段，具体取值方式见第~\ref{sec:model}~节。题面提到「干燥一般持续两三天」只作量级参考，不作为终止条件或拟合目标。
+其中一维近似的依据见第~\ref{sec:analysis}~节，有效扩散与干物质密度关系的推导见第~\ref{sec:model}~节，这些简化对结果的影响在第~\ref{sec:eval}~节讨论。
