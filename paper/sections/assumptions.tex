@@ -1,25 +1,62 @@
 \section{模型假设}
 
-为使模型可解且抓住主要物理机制，作如下假设。控制方程、插值与外推的具体做法、时间步与求解细节属于建模与求解的内容，放在第~\ref{sec:model}~节说明。
+为使模型可解且抓住主要物理机制，作如下假设。图~\ref{fig:geom} 给出几何与主要假设的示意，控制方程、插值与外推的具体做法、时间步与求解细节属于建模与求解的内容，放在第~\ref{sec:model}~节说明。
 
-\paragraph{一、题目给定并直接采用的条件。}
+\begin{figure}[H]\centering
+\begin{tikzpicture}[font=\small,>=Stealth,line join=round]
+\def\Lx{6.0}\def\Ry{1.0}\def\ee{0.42}
+% —— 侧视图 ——
+\fill[palBlueL!14] (0,-\Ry) rectangle (\Lx,\Ry);
+\draw[palBlueD,dashed] (0,0) ellipse (\ee and \Ry);         % 背端面（忽略轴向）
+\draw[palBlueD] (0,\Ry) -- (\Lx,\Ry) (0,-\Ry) -- (\Lx,-\Ry);
+\filldraw[fill=palBlueL!24,draw=palBlueD] (\Lx,0) ellipse (\ee and \Ry);  % 前端面
+% 长度
+\draw[<->] (0,-\Ry-0.45) -- (\Lx,-\Ry-0.45) node[midway,below,font=\scriptsize]{长度 $L=\SI{25}{cm}$（恒定）};
+% 中截面与半径
+\draw[palRed,thick] (\Lx/2,-\Ry) -- (\Lx/2,\Ry);
+\node[palRed,font=\scriptsize,anchor=south] at (\Lx/2,\Ry+0.02) {中截面};
+\draw[->,palBlueD,thick] (\Lx/2,0) -- (\Lx/2,\Ry);
+\node[palBlueD,font=\scriptsize,anchor=west] at (\Lx/2+0.05,\Ry*0.55) {$r$};
+\fill[palBlueD] (\Lx/2,0) circle (1.3pt);
+\node[font=\scriptsize,anchor=north west] at (\Lx/2+0.05,-0.05) {中心 $r=0$（对称）};
+% 加热与失水箭头
+\foreach \x in {1.4,2.6,3.8}{
+  \draw[->,palRed] (\x,\Ry+0.5) -- (\x,\Ry+0.06);
+  \draw[->,palBlueD] (\x,-\Ry-0.06) -- (\x,-\Ry-0.5);}
+\node[palRed,font=\scriptsize,anchor=west] at (\Lx-1.4,\Ry+0.45) {热风对流加热 $h$};
+\node[palBlueD,font=\scriptsize,anchor=west] at (\Lx-1.3,-\Ry-0.45) {表面失水 $h_m$};
+% —— 截面视图（问题四收缩）——
+\begin{scope}[xshift=9.3cm]
+\draw[palBlueD,dashed] (0,0) circle (1.05);
+\filldraw[fill=palGold!22,draw=palRed] (0,0) circle (0.70);
+\foreach \a in {30,150,270}{\draw[->,palRed] ({1.05*cos(\a)},{1.05*sin(\a)}) -- ({0.74*cos(\a)},{0.74*sin(\a)});}
+\node[font=\scriptsize,anchor=south] at (0,1.08) {$R_0$};
+\node[palRed,font=\scriptsize] at (0,0) {$R(t)$};
+\node[font=\scriptsize,align=center,anchor=north] at (0,-1.15) {问题四中截面\\半径由 $R_0$ 收缩到 $R(t)$、$L$ 不变};
+\end{scope}
+\end{tikzpicture}
+\caption{几何与主要假设示意。侧视图：忽略轴向变化的一维径向近似（虚线端面），中截面上以半径 $r$ 从中心到表面描述场；红色箭头为加热阶段热风向表面的对流传热，蓝色箭头为表面向环境的失水。截面视图：问题四中半径由 $R_0$ 收缩到 $R(t)$、长度保持不变。}
+\label{fig:geom}
+\end{figure}
+
+\paragraph{一、题目给定并直接采用的条件：}
 \begin{enumerate}[label=(\arabic*),leftmargin=2.2em,itemsep=1pt]
 \item 药材为半径 $R_0=\SI{2}{cm}$、长 $L=\SI{25}{cm}$ 的圆柱；初始温度 $\SI{28}{\celsius}$、初始干基含水率 $2.55$，且内部均匀。
 \item 烘房空气温度 $\Tair(t)$ 与环境含水浓度 $\Cenv(t)$ 由附件 1 给定；问题四的半径 $R(t)$ 由附件 2 给定。
 \item 表面对流换热系数 $h=\SI{25}{W/(m^2.K)}$、传质系数 $h_m=\SI{8e-7}{m/s}$；各问物性按对应附录给定的公式取值，不重新拟合。
 \end{enumerate}
 
-\paragraph{二、为建模而作的假设及其依据。}
+\paragraph{二、为建模而作的假设及其依据：}
 \begin{enumerate}[label=(\arabic*),leftmargin=2.2em,itemsep=1pt]
-\item \textbf{一维径向。} 因长径比约 $12.5$，忽略轴向梯度与两端散失，只在中截面上沿半径求解；问题一至三半径固定为 $R_0$，问题四半径随时间收缩而长度不变。端面影响的量级另在第~\ref{sec:verification}~节估计。
-\item \textbf{均匀连续介质。} 药材视为各向同性的连续多孔介质，初始温度与含水率均匀。
-\item \textbf{有效水分扩散。} 水分迁移用题给的有效扩散系数描述，认为它已把蒸汽扩散、毛细流动等机制的净效果并入其中，故不再单列各分项通量\cite{crank}。
-\item \textbf{有效体积热容、不显式计潜热。} 传热用 Fourier 定律，体积热容取 $\rho(C)c_p(C)$；主线只保留对流换热与内部导热，不显式引入水分蒸发潜热汇。这样处理与题目只给对流边界、不给相变参数相一致。
-\item \textbf{环境含水浓度为有效边界驱动。} 把附件 1 中的环境含水浓度 $\Cenv(t)$ 作为表面传质的驱动量，它与药材真实平衡含水率之间的关系未由独立实验确定，故仅作有效边界处理。
-\item \textbf{边界系数跨问沿用。} 由于 $h$、$h_m$ 只在附录 2 给出，问题二至四仍沿用该组数值，作为额外的有效系数假设。
-\item \textbf{中心对称。} 中心处温度与含水率的径向梯度为零。
-\item \textbf{收缩时干物质守恒（问题四）。} 干物质总量不变、且在收缩后仍均匀分布，于是干物质基准密度随半径按 $\rhos(t)=\rho_{\mathrm{s}0}(R_0/R(t))^2$ 变化；半径收缩速度按仿射方式分配到各点。
+\item \textbf{一维径向：} 因长直径比约 $6.25$，忽略轴向梯度与两端散失，只在中截面上沿半径求解（对应图~\ref{fig:geom} 的虚线端面）；问题一至三半径固定为 $R_0$，问题四半径随时间收缩而长度不变。端面影响的量级另在第~\ref{sec:verification}~节估计。
+\item \textbf{均匀连续介质：} 药材视为各向同性的连续多孔介质，初始温度与含水率均匀。
+\item \textbf{有效水分扩散：} 水分迁移用题给的有效扩散系数描述，认为它已把蒸汽扩散、毛细流动等机制的净效果并入其中，故不再单列各分项通量\cite{crank}。
+\item \textbf{有效体积热容、不显式计入潜热：} 传热用 Fourier 定律，体积热容取 $\rho(C)c_p(C)$；本文只保留对流换热与内部导热，未显式计入水分蒸发的相变潜热。这一简化与题目只提供对流边界、不提供相变参数一致，其可能影响在第~\ref{sec:eval}~节讨论。
+\item \textbf{环境含水浓度为有效边界驱动：} 把附件 1 中的环境含水浓度 $\Cenv(t)$ 作为表面传质的驱动量；它与药材真实平衡含水率之间的关系未由独立实验确定，故仅作有效边界处理。
+\item \textbf{边界系数跨问沿用：} 由于 $h$、$h_m$ 只在附录 2 给出，问题二至四仍沿用该组数值，作为额外的有效系数假设。
+\item \textbf{中心对称：} 中心处温度与含水率的径向梯度为零。
+\item \textbf{收缩时干物质守恒（问题四）：} 干物质总量不变、且收缩后仍均匀分布，于是干物质基准密度随半径按 $\rhos(t)=\rho_{\mathrm{s}0}(R_0/R(t))^2$ 变化；半径收缩速度按仿射方式分配到各点。
 \end{enumerate}
 
-\paragraph{三、关于数据外推。}
-附件 1 只给出前 $\SI{4}{h}$ 的环境数据，附件 2 的半径数据止于 $\SI{72}{h}$。超出给定范围后，环境量与半径均按常值延续，并在结果中标注为外推段；具体取值方式见第~\ref{sec:model}~节。题面提到「干燥一般持续两三天」只作为量级参考，不作为终止条件或拟合目标。
+\paragraph{三、关于数据外推：}
+附件 1 只给出前 $\SI{4}{h}$ 的环境数据，附件 2 的半径数据止于 $\SI{72}{h}$。超出给定范围后，环境量与半径均按常值延续，并在结果中标注为外推段，具体取值方式见第~\ref{sec:model}~节。题面提到「干燥一般持续两三天」只作量级参考，不作为终止条件或拟合目标。

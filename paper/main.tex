@@ -14,6 +14,7 @@
 \usepackage[shortlabels]{enumitem}
 \usepackage{siunitx}
 \usepackage{xcolor}
+\usepackage{tabularx}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,fit}
 \usepackage{listings}
@@ -23,12 +24,27 @@
 \captionsetup{font=small,labelsep=quad}
 \setlength{\parskip}{3pt}
 \linespread{1.25}
+\setlength{\parindent}{2em}
+
+% 显示公式与上下文留出约一行的清晰间距（统一设置，不逐处叠加 \\ 或负 vspace）
+\setlength{\abovedisplayskip}{10pt plus 2pt minus 2pt}
+\setlength{\belowdisplayskip}{10pt plus 2pt minus 2pt}
+\setlength{\abovedisplayshortskip}{6pt plus 2pt}
+\setlength{\belowdisplayshortskip}{8pt plus 2pt}
+
+% 公式编号 (节号,节内序号)，例如 (5,1)、(5,2)、(6,1)
+\numberwithin{equation}{section}
+\renewcommand{\theequation}{\arabic{section},\arabic{equation}}
+
+% 居中且允许换行的定宽列
+\newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
 
 % ---- 统一记号 ----
 \newcommand{\pd}[2]{\dfrac{\partial #1}{\partial #2}}
 \newcommand{\Cbar}{\bar{C}}
 \newcommand{\tstar}{t^{*}}
 \newcommand{\tsamp}{t_{\mathrm{s}}}
+\newcommand{\tsampq}[1]{t_{\mathrm{s},#1}}   % 带问题编号的严格合格采样时刻
 \newcommand{\Cmax}{C_{\max}}
 \newcommand{\Cenv}{C_{\mathrm{env}}}
 \newcommand{\Tair}{T_{\mathrm{air}}}
@@ -45,7 +61,7 @@
 \lstset{
   basicstyle=\ttfamily\footnotesize,
   keywordstyle=\color{palBlueD}\bfseries,
-  commentstyle=\color{gray!70!black}\itshape,
+  commentstyle=\color{gray!60!black},
   stringstyle=\color{palRed},
   numbers=left, numberstyle=\tiny\color{gray}, numbersep=6pt,
   frame=single, rulecolor=\color{gray!40},

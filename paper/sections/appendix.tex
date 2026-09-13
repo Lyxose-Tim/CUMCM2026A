@@ -3,48 +3,52 @@
 
 \subsection{支撑材料清单}
 
-随论文提交的支撑材料包括原始数据、源程序、正式结果与检验报告，主要文件如下表。完整源程序附于本附录第~\ref{sec:code}~节，可在装有 Python 3 与 NumPy、SciPy、openpyxl、matplotlib 的环境下运行复现。
+随论文提交的支撑材料包括原始数据、源程序、正式结果与检验报告，主要文件如下表。复现正式结果所需的主要源程序附于本附录第~\ref{sec:code}~节，完整源码（含验证、绘图与测试模块）随源码包 \texttt{paper/code/} 一并提交。
 
 \begin{center}\small
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{p{4.6cm}p{9.6cm}}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{C{4.6cm}C{9.6cm}}
 \toprule
 文件 & 说明 \\
 \midrule
 \texttt{config/A题\_config.yaml} & 全部参数的唯一来源（几何、初值、物性、边界、数值与输出设置）。 \\
 \texttt{附件1.xlsx，附件2.xlsx} & 原始环境时序与半径数据（只读）。 \\
-\texttt{src/drymodel/*.py} & 源程序，模块见下。 \\
-\quad \texttt{config.py, config\_check.py} & 配置加载与合法性校验。 \\
-\quad \texttt{data\_io.py} & 附件读取、环境驱动与半径函数。 \\
-\quad \texttt{props.py} & 各附录的物性公式（具名函数，不用字符串求值）。 \\
-\quad \texttt{grid.py, operators.py} & 节点/控制体权重与有限体积算子（含界面系数）。 \\
-\quad \texttt{solver\_be.py, solver\_bdf.py} & 向后 Euler 与 BDF 时间积分。 \\
-\quad \texttt{criterion.py, postprocess.py} & 达标判据求根与场重构、采样。 \\
-\quad \texttt{runners.py, production.py, run\_all.py} & 各问求解、正式结果生成与总编排。 \\
-\quad \texttt{verify.py} & 解析对照、收敛、守恒、包络、端面等检验。 \\
-\quad \texttt{writers.py} & 结果写盘与工作簿检查。 \\
-\quad \texttt{paper\_figs.py} & 论文插图重绘入口（只读官方结果）。 \\
+\texttt{config.py, config\_check.py} & 配置加载与合法性校验。 \\
+\texttt{data\_io.py} & 附件读取、环境驱动与半径函数。 \\
+\texttt{props.py} & 各附录的物性公式（具名函数，不用字符串求值）。 \\
+\texttt{grid.py, operators.py} & 节点/控制体权重与有限体积算子（含界面系数）。 \\
+\texttt{solver\_be.py, solver\_bdf.py} & 向后 Euler 与 BDF 时间积分。 \\
+\texttt{criterion.py, postprocess.py} & 达标判据求根与场重构、采样。 \\
+\texttt{runners.py, production.py, run\_all.py} & 各问求解、正式结果生成与总编排。 \\
+\texttt{writers.py} & 结果写盘与工作簿检查。 \\
+\texttt{verify.py} & 解析对照、收敛、守恒、包络、端面等检验。 \\
+\texttt{paper\_figs.py} & 论文插图重绘入口（只读官方结果与验证记录）。 \\
 \texttt{outputs/result1--4.xlsx} & 四问正式结果。 \\
-\texttt{outputs/table*.csv} & 表~1--6 的同源数据（论文表格由此生成）。 \\
+\texttt{outputs/table*.csv} & 表~\ref{tab:t1}--\ref{tab:t6} 的同源数据。 \\
 \texttt{reports/*.md} & 检验与灵敏度报告。 \\
 \texttt{tests/*.py} & 单元测试。 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\subsection{结果与图表的复现}
-正式结果由统一程序在既定配置下生成；论文的表~1--6 由 \texttt{outputs/} 下的同源 CSV 生成，插图由 \texttt{paper\_figs.py} 读取官方结果重绘。因此，重新排版或修改插图不需要重跑生产计算。若需从头复现，在项目根目录执行：
+\subsection{运行环境与复现方式}
 
-\begin{center}\small\ttfamily
-python -m drymodel.run\_all\qquad\#\ 求解并生成结果与报告\\
-python -m drymodel.paper\_figs\qquad\#\ 由官方结果重绘论文插图
-\end{center}
+运行环境为 Python 3.13，依赖 \texttt{numpy}、\texttt{scipy}、\texttt{openpyxl}、\texttt{PyYAML}、\texttt{matplotlib}。参数来自 \texttt{config/A题\_config.yaml}，输入数据为 \texttt{附件/附件1.xlsx}、\texttt{附件/附件2.xlsx}。三类操作区分如下。
 
-\subsection{核心源程序}\label{sec:code}
+\begin{enumerate}[label=(\arabic*),leftmargin=2.2em,itemsep=1pt]
+\item \textbf{只读重绘图表}（不重跑求解）：\texttt{python -m drymodel.paper\_figs} 由官方结果与验证记录重绘 \texttt{figures/*.pdf}；\texttt{python -m drymodel.paper\_latex} 由 \texttt{outputs/*.csv} 重新生成表格片段。论文的图与表 $1$--$6$ 均由此得到，重新排版不需要重跑生产。
+\item \textbf{候选/验证计算}：\texttt{python -m drymodel.run\_all}（不加 \texttt{-{}-produce}）走候选与验证管线，生成 \texttt{reports/} 下的检验报告，不导出正式结果。
+\item \textbf{正式结果复现}：\texttt{python -m drymodel.run\_all -{}-produce} 在 \texttt{config.production.approved=true} 下续算并导出官方 \texttt{result1--4.xlsx}，同时执行工作簿终检。文字与图表的修订不需要执行该步。
+\end{enumerate}
 
-以下按调用关系给出核心求解链的源程序；其余模块见支撑材料。
+Overleaf 编译包用于论文编译，与可独立运行 Python 的支撑材料包分开。
+
+\subsection{主要源程序}\label{sec:code}
+
+以下按调用关系给出复现正式结果所需的主要源程序，包括配置校验与结果写盘等依赖模块；验证、绘图与测试模块见源码包 \texttt{paper/code/}。
 
 \lstinputlisting[caption={config.py：配置加载与访问},label={lst:config}]{code/config.py}
+\lstinputlisting[caption={config\_check.py：配置合法性校验},label={lst:cfgchk}]{code/config_check.py}
 \lstinputlisting[caption={props.py：各附录物性公式},label={lst:props}]{code/props.py}
 \lstinputlisting[caption={data\_io.py：附件读取与环境/半径驱动},label={lst:dataio}]{code/data_io.py}
 \lstinputlisting[caption={grid.py：节点与控制体权重},label={lst:grid}]{code/grid.py}
@@ -54,5 +58,6 @@ python -m drymodel.paper\_figs\qquad\#\ 由官方结果重绘论文插图
 \lstinputlisting[caption={criterion.py：达标判据求根},label={lst:crit}]{code/criterion.py}
 \lstinputlisting[caption={postprocess.py：场重构与采样},label={lst:post}]{code/postprocess.py}
 \lstinputlisting[caption={runners.py：各问求解},label={lst:runners}]{code/runners.py}
+\lstinputlisting[caption={writers.py：结果写盘与工作簿检查},label={lst:writers}]{code/writers.py}
 \lstinputlisting[caption={production.py：正式结果生成},label={lst:prod}]{code/production.py}
 \lstinputlisting[caption={run\_all.py：总编排},label={lst:runall}]{code/run_all.py}

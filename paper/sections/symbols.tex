@@ -3,8 +3,8 @@
 下表列出主要符号；仅在局部出现的记号在正文首次使用处解释。温度在扩散系数与方程中以热力学温标 $\si{K}$ 计，结果图表以 $\si{\celsius}$ 显示。
 
 \begin{center}\small
-\renewcommand{\arraystretch}{1.18}
-\begin{tabular}{cll}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{C{2.3cm}C{8.0cm}C{4.0cm}}
 \toprule
 符号 & 含义 & 单位 \\
 \midrule
@@ -12,23 +12,26 @@ $r,\ t$ & 径向坐标、时间 & \si{m},\ \si{s} \\
 $R_0,\ R(t)$ & 初始半径（$\SI{0.02}{m}$）、问题四的当前半径 & \si{m} \\
 $L$ & 药材长度（$\SI{0.25}{m}$，恒定） & \si{m} \\
 $x=r/R(t)$ & 问题四的参考坐标，$x\in[0,1]$ & 无量纲 \\
-$T(r,t),\ C(r,t)$ & 温度、干基含水率 & \si{K}（显示 \si{\celsius}），\si{kg/kg} \\
+$T(r,t)$ & 温度（方程中用 K，图表显示 $\si{\celsius}$） & \si{K} \\
+$C(r,t)$ & 干基含水率 & \si{kg/kg} \\
 $\tilde T(x,t),\ \tilde c(x,t)$ & 问题四参考坐标下的温度、含水率 & \si{K},\ \si{kg/kg} \\
 $\Theta$ & 解析级数解中的无量纲温度 & 无量纲 \\
-$\Tair(t),\ \Cenv(t)$ & 烘房空气温度、环境有效含水浓度 & \si{\celsius}$\to$\si{K},\ \si{kg/kg} \\
-$\rho(C),\ c_p(C),\ k(C)$ & 经验密度、比热、导热系数 & \si{kg/m^3},\ \si{J/(kg.K)},\ \si{W/(m.K)} \\
+$\Tair(t)$ & 烘房空气温度 & \si{\celsius}$\to$\si{K} \\
+$\Cenv(t)$ & 环境有效含水浓度 & \si{kg/kg} \\
+$\rho(C)$ & 经验（湿基）密度 & \si{kg/m^3} \\
+$c_p(C),\ k(C)$ & 比热、导热系数 & \si{J/(kg.K)},\ \si{W/(m.K)} \\
 $\rhos(t)$ & 干物质基准密度（问题四随收缩变化） & \si{kg/m^3} \\
 $b(C)=\rho(C)c_p(C)$ & 有效体积热容 & \si{J/(m^3.K)} \\
 $D(C)$ 或 $D(C,T)$ & 有效水分扩散系数 & \si{m^2/s} \\
 $h,\ h_m$ & 对流换热系数、传质系数 & \si{W/(m^2.K)},\ \si{m/s} \\
 $\Cbar(t)$ & 干基质量加权平均含水率 & \si{kg/kg} \\
-$\Cmax(t)$ & 全域最大含水率（等于中心节点值） & \si{kg/kg} \\
+$\Cmax(t)$ & 全域最大含水率（本算例位于中心节点） & \si{kg/kg} \\
 $\tstar$ & 达标阈值穿越时间（最大含水率降到 $0.15$ 的时刻） & \si{s}（报告 \si{h}） \\
-$\tsamp$ & 首个实测最大含水率低于 $0.15$ 的输出时刻 & \si{s} \\
+$\tsamp$ & 首个计算得到的、最大含水率低于 $0.15$ 的输出时刻 & \si{s} \\
 $N,\ \Delta r$ & 径向区间数、径向步长（节点数为 $N{+}1$） & 无量纲,\ \si{m} \\
-$Bi_h=hR/k,\ Bi_m=h_mR/D$ & 传热、传质 Biot 数 & 无量纲 \\
+$Bi_h,\ Bi_m$ & 传热、传质 Biot 数（$Bi_h=hR/k$，$Bi_m=h_mR/D$） & 无量纲 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-其中 $\rho(C)$ 是各附录给出的随含水率变化的经验密度，用于热容；$\rhos(t)$ 是把湿药材换算为干物质基准的密度，只在问题四由干物质守恒确定收缩后的分布，二者含义不同。最大含水率 $\Cmax$ 与平均含水率 $\Cbar$ 分别用于达标判定和守恒核算。
+其中 $\rho(C)$ 是各附录给出的随含水率变化的经验密度，用于计算体积热容；$\rhos(t)$ 是把湿药材换算为干物质基准的密度，只在问题四由干物质守恒确定收缩后的分布，两者含义不同。最大含水率 $\Cmax$ 用于达标判定，平均含水率 $\Cbar$ 用于守恒核算。
