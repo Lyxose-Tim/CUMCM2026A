@@ -5,14 +5,14 @@
     "npts": 8,
     "C0": 2.55,
     "Lv_50C": 2379300.0,
-    "Lv_form": "fit to IAPWS saturation enthalpy difference"
+    "Lv_form": "diagnostic approximate latent-heat correlation (see paper appendix)"
   },
   "rows": [
     {
       "question": "q23",
       "scenario": "η=0 无蒸发吸热",
       "N": 400,
-      "Lv_form": "IAPWS 饱和焓差相关式",
+      "Lv_form": "诊断用近似汽化焓关系式（见论文附录）",
       "rho_s0": 275.0423,
       "reached": true,
       "t_star_h": 57.4741,
@@ -24,7 +24,7 @@
       "question": "q23",
       "scenario": "η=1 表面蒸发吸热",
       "N": 400,
-      "Lv_form": "IAPWS 饱和焓差相关式",
+      "Lv_form": "诊断用近似汽化焓关系式（见论文附录）",
       "rho_s0": 275.0423,
       "reached": true,
       "t_star_h": 60.5182,
@@ -36,7 +36,7 @@
       "question": "q4",
       "scenario": "η=0 无蒸发吸热",
       "N": 400,
-      "Lv_form": "IAPWS 饱和焓差相关式",
+      "Lv_form": "诊断用近似汽化焓关系式（见论文附录）",
       "rho_s0": 278.7324,
       "reached": true,
       "t_star_h": 51.0921,
@@ -48,7 +48,7 @@
       "question": "q4",
       "scenario": "η=1 表面蒸发吸热",
       "N": 400,
-      "Lv_form": "IAPWS 饱和焓差相关式",
+      "Lv_form": "诊断用近似汽化焓关系式（见论文附录）",
       "rho_s0": 278.7324,
       "reached": true,
       "t_star_h": 56.5051,

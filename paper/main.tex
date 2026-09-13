@@ -19,10 +19,20 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,fit}
 \usepackage{listings}
+\usepackage{fancyhdr}
 
 \sisetup{detect-all}
 \graphicspath{{figures/}}
 \captionsetup{font=footnotesize,labelsep=quad}
+
+% 页眉页脚：页码居中于页脚，页眉留空（不要左上角小标与文字、无页眉横线）
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\thepage}%
+  \renewcommand{\headrulewidth}{0pt}\renewcommand{\footrulewidth}{0pt}}
 \setlength{\parskip}{3pt}
 \linespread{1.25}
 \setlength{\parindent}{2em}
@@ -109,8 +119,8 @@
 \bibitem{crank} Crank J. The Mathematics of Diffusion[M]. 2nd ed. Oxford: Clarendon Press, 1975.
 \bibitem{carslaw} Carslaw H S, Jaeger J C. Conduction of Heat in Solids[M]. 2nd ed. Oxford: Clarendon Press, 1959.
 \bibitem{fipy} National Institute of Standards and Technology. FiPy: Discretization[EB/OL]. [2026-09-12]. https://pages.nist.gov/fipy/en/stable/numerical/discret.html.
-\bibitem{maddix2018a} Maddix D C, Sampaio L, Gerritsen M. Numerical artifacts in the Generalized Porous Medium Equation: Why harmonic averaging itself is not to blame[J]. Journal of Computational Physics, 2018, 361: 280--298. DOI: 10.1016/j.jcp.2018.02.010.
 \bibitem{maddix2018b} Maddix D C, Sampaio L, Gerritsen M. Numerical artifacts in the discontinuous Generalized Porous Medium Equation: How to avoid spurious temporal oscillations[J]. Journal of Computational Physics, 2018, 368: 277--298. DOI: 10.1016/j.jcp.2018.04.045.
+\bibitem{maddix2018a} Maddix D C, Sampaio L, Gerritsen M. Numerical artifacts in the Generalized Porous Medium Equation: Why harmonic averaging itself is not to blame[J]. Journal of Computational Physics, 2018, 361: 280--298. DOI: 10.1016/j.jcp.2018.02.010.
 \bibitem{scipy} Virtanen P, Gommers R, Oliphant T E, et al. SciPy 1.0: fundamental algorithms for scientific computing in Python[J]. Nature Methods, 2020, 17: 261--272. DOI: 10.1038/s41592-019-0686-2.
 \bibitem{scipybdf} SciPy Developers. scipy.integrate.BDF --- SciPy Reference Guide[EB/OL]. [2026-09-12]. https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.BDF.html.
 \bibitem{iapws} International Association for the Properties of Water and Steam (IAPWS). Saturation properties of ordinary water substance: liquid and vapour enthalpy[EB/OL]. [2026-09-13]. https://iapws.org/technical-guidance/release/Supp-sat.

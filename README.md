@@ -40,7 +40,7 @@ pip install -e .        # 或 pip install -r requirements.txt 后设 PYTHONPATH=
 python -m pytest tests/ -q                      # 单元测试
 python -m drymodel.config_check config/A题_config.yaml   # 配置校验（八类变异+类型/有限性，-O 不失效）
 python -m drymodel.run_all                      # 候选计算 + 验证（配置驱动），出 reports/ 与 exports/config_snapshot.json
-python -m drymodel.run_all --produce            # 生产续算与正式导出（需 D12 授权；生产编排仍待实现，当前为占位）
+python -m drymodel.run_all --produce            # 生产续算与正式导出（正式 result1–4 已由该步生成，见 outputs/ 与 reports/production_receipt.md）
 ```
 
 > `run_all` 候选模式实测生成 `reports/{V1_V2,V3_convergence,verification,sensitivity,status}.md`
@@ -58,7 +58,7 @@ python -c "from drymodel import config,verify; verify.run_v15(config.load_config
 ```
 
 - 正式产出：`outputs/result1–4.xlsx` + `table{1..6}_*.csv`；回执 `reports/production_receipt.md`、
-  `outputs/production_receipt.json`（失败也记 `production_failures.log`）。
+  `outputs/production_receipt_supplementary.json`（失败也记 `production_failures.log`）。
 - 未舍入 t*₃=57.474027 h、t*₄=51.092029 h；t* 与严格合格采样 t_sample 的区分见 `reports/paper_tables.md`。
 
 ## 建模要点（摘）

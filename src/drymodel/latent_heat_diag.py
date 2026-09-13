@@ -10,7 +10,7 @@
 
 质量/热量换算：C 为干基含水率；干物质基准密度 ρ_s0=ρ(C0)/(1+C0)，收缩域 ρ_s=ρ_s0 (R0/R)²。
 表面蒸发质量通量 j_w=ρ_s h_m (C_s−C_env) [kg/(m²·s)]，蒸发热负荷 q_evap=L_v j_w [W/m²]。
-纯水汽化焓 L_v(T) 用拟合 IAPWS 饱和液/汽焓差的相关式（输入 K，近 50 °C 约 2.38e6 J/kg）。
+纯水汽化焓 L_v(T) 为诊断选用的近似关系式（输入 K，近 50 °C 约 2.38e6 J/kg；非 IAPWS 拟合，形式见论文附录）。
 
 运行：``python -m drymodel.latent_heat_diag``（写 exports/latent_heat_*.csv/json）。
 """
@@ -36,7 +36,7 @@ NPTS = 8
 
 
 # --------------------------------------------------------------------------
-# 纯水汽化焓 L_v(T)：拟合 IAPWS 饱和液/汽焓差的相关式（J/kg，输入 K）
+# 纯水汽化焓 L_v(T)：诊断选用的近似关系式（J/kg，输入 K；非 IAPWS 拟合，见论文附录）
 # --------------------------------------------------------------------------
 def Lv(T_K):
     Tc = float(T_K) - 273.15
@@ -155,7 +155,7 @@ def run(cfg=None):
         for tag, o in (("eta0", base_out), ("eta1", lat_out)):
             rows.append(dict(
                 question=question, scenario=("η=0 无蒸发吸热" if tag == "eta0" else "η=1 表面蒸发吸热"),
-                N=o["N"], Lv_form="IAPWS 饱和焓差相关式",
+                N=o["N"], Lv_form="诊断用近似汽化焓关系式（见论文附录）",
                 rho_s0=round(o["rho_s0"], 4),
                 reached=o["reached"],
                 t_star_h=(round(o["t_star_h"], 4) if o["reached"] else ""),
@@ -207,18 +207,20 @@ def run(cfg=None):
         b = series_out[q]["base"]; l = series_out[q]["latent"]
         with (EXPORTS / f"latent_heat_history_{q}.csv").open("w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
-            w.writerow(["t_s", "T_center_eta0_C", "T_surface_eta0_C",
+            # 每种情景使用其所属的时间列（η=0 与 η=1 的事件时刻不同，不得共用一列）
+            w.writerow(["t_eta0_s", "t_eta1_s", "T_center_eta0_C", "T_surface_eta0_C",
                         "T_center_eta1_C", "T_surface_eta1_C", "Cmax_eta0", "Cmax_eta1"])
             m = min(len(b["t"]), len(l["t"]))
             for i in range(m):
-                w.writerow([f"{b['t'][i]:.3f}", f"{b['T_center'][i]:.5f}", f"{b['T_surface'][i]:.5f}",
+                w.writerow([f"{b['t'][i]:.3f}", f"{l['t'][i]:.3f}",
+                            f"{b['T_center'][i]:.5f}", f"{b['T_surface'][i]:.5f}",
                             f"{l['T_center'][i]:.5f}", f"{l['T_surface'][i]:.5f}",
                             f"{b['Cmax'][i]:.6f}", f"{l['Cmax'][i]:.6f}"])
 
     # --- 写 JSON 汇总 ---
     summary = dict(
         aux=dict(N=N_DIAG, interface=INTERFACE, npts=NPTS, C0=C0,
-                 Lv_50C=round(Lv(323.15), 1), Lv_form="fit to IAPWS saturation enthalpy difference"),
+                 Lv_50C=round(Lv(323.15), 1), Lv_form="diagnostic approximate latent-heat correlation (see paper appendix)"),
         rows=rows, load_check=load_check,
         dt_star=dict(q23=series_out["q23"]["dt_star_h"], q4=series_out["q4"]["dt_star_h"]),
         max_surface_depression_C=dict(q23=series_out["q23"]["max_surface_depression_C"],
