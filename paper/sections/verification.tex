@@ -5,25 +5,27 @@
 \subsection{解析基准与空间收敛性}
 
 \textbf{目的与方法：} 在常物性、恒定环境的简化设定下，圆柱的第三类边界瞬态导热有经典的级数解\cite{carslaw}。以其为基准可把空间离散误差单独考察。无量纲温度写成
+
 \begin{equation}
 \Theta(\eta,Fo)=\sum_{n} c_n\,J_0(\lambda_n\eta)\,e^{-\lambda_n^2 Fo}
 \label{eq:series}
 \end{equation}
-其中 $\Theta=(T-T_\infty)/(T_0-T_\infty)$ 为无量纲温度、$T_\infty$ 为恒定环境温度，$\eta=r/R_0$ 为无量纲半径，$Fo=Dt/R_0^2$（或热扩散率对应的 Fourier 数）为无量纲时间，$J_0$、$J_1$ 为第一类零阶、一阶 Bessel 函数，特征值 $\lambda_n$ 由 $\lambda_n J_1(\lambda_n)=Bi\,J_0(\lambda_n)$ 确定（$Bi$ 为相应的 Biot 数），展开系数 $c_n$ 由初始条件正交展开得到。含水率的辅助问题取 $D\equiv D(C_0)$ 常数，形式相同。
 
-\textbf{结果：} 固定很紧的时间容差、只改变网格时，数值解相对级数解的全域最大误差随 $N$ 的变化见图~\ref{fig:aconv} 与表~\ref{tab:aconv}，两者都接近二阶收敛。据此按各问实际输出位置的误差选定正式网格。
+其中 $\Theta=(T-T_\infty)/(T_0-T_\infty)$ 为无量纲温度、$T_\infty$ 为恒定环境温度，$\eta=r/R_0$ 为无量纲半径，$J_0$、$J_1$ 为第一类零阶、一阶 Bessel 函数，展开系数 $c_n$ 由初始条件正交展开得到。温度辅助问题的 Fourier 数取 $Fo_h=\alpha t/R_0^2$（热扩散率 $\alpha=k/(\rho c_p)$）、Biot 数 $Bi_h=hR_0/k\approx1.39$；含水率辅助问题取常扩散系数 $D\equiv D(C_0)$，其 Fourier 数为 $Fo_m=Dt/R_0^2$、Biot 数 $Bi_m=h_mR_0/D\approx3.24$。两种情形的特征值 $\lambda_n$ 均由 $\lambda_n J_1(\lambda_n)=Bi\,J_0(\lambda_n)$ 确定，$Bi$ 取对应的 $Bi_h$ 或 $Bi_m$。
+
+\textbf{结果：} 固定很紧的时间容差、只改变网格时，取 $t=\SI{100}{s}$ 时刻沿半径的最大误差随 $N$ 的变化见图~\ref{fig:aconv} 与表~\ref{tab:aconv}，两者都接近二阶收敛。据此按各问实际输出位置的误差选定正式网格。
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.9\textwidth]{fig_analytic_convergence.pdf}
-\caption{数值解相对解析级数解的全域最大误差随网格加密的收敛（双对数），虚线为二阶参考斜率；该结论适用于所设常物性、恒环境的解析辅助问题。}
+\caption{$t=\SI{100}{s}$ 时数值解相对解析级数解沿半径的最大误差随网格加密的收敛（双对数），虚线为二阶参考斜率；该结论适用于所设常物性、恒环境的解析辅助问题。}
 \label{fig:aconv}
 \end{figure}
 
 \begin{table}[H]\centering\small
-\caption{解析基准全域最大误差（常物性、恒环境辅助问题）}\label{tab:aconv}
+\caption{解析基准误差（$t=\SI{100}{s}$ 时沿半径的最大误差，常物性、恒环境辅助问题）}\label{tab:aconv}
 \begin{tabular}{C{2.2cm}C{4.6cm}C{4.6cm}}
 \toprule
-$N$ & 温度全域最大误差 / $\si{\celsius}$ & 含水率全域最大误差 / $\si{kg/kg}$ \\
+$N$ & 温度沿半径最大误差 / $\si{\celsius}$ & 含水率沿半径最大误差 / $\si{kg/kg}$ \\
 \midrule
 200 & $1.0396\times10^{-4}$ & $2.7995\times10^{-4}$ \\
 400 & $2.5989\times10^{-5}$ & $6.9857\times10^{-5}$ \\
@@ -69,9 +71,23 @@ $N$ & 温度全域最大误差 / $\si{\celsius}$ & 含水率全域最大误差 /
 
 \subsection{守恒与独立通量核算}
 
-\textbf{目的与方法：} 从两个层次核算守恒：一是离散格式在代数上是否自洽；二是把表面通量沿时间独立求积，与平均含水率的实际变化对照。由式~\eqref{eq:massbal}，平均含水率的变化应等于表面通量的时间积分，记后者为 $I=\int_0^{t}\tfrac{2h_m}{R_0}(C_N-\Cenv)\,\mathrm{d}\tau$。
+\textbf{目的与方法：} 从两个层次核算守恒：一是离散格式在代数上是否自洽；二是把表面通量沿时间独立求积，与平均干基含水率的实际变化对照。由式~\eqref{eq:massbal}，平均干基含水率的损失应等于表面通量的累计。固定半径的问题二、三用初始半径 $R_0$、表面值 $C(R_0,\tau)$：
 
-\textbf{结果：} 向后 Euler 的离散收支 $|\Cbar_N-\Cbar_0+I|/|\Delta\Cbar|$ 约为 $\num{1.5e-14}$，这是离散格式的代数恒等式，说明实现无误，并不代表时间精度。真正独立的核验是把连续解的表面通量另行求积再与 $\Delta\Cbar$ 比较：在正式网格 $N=800$ 全程，问题二、三的相对差为 $\num{6.520e-8}$，问题四为 $\num{3.913e-8}$。热量收支的残差约 $\SI{3.212e-10}{W/m}$，属离散代数核算，不与独立时间积分精度混同。
+\begin{equation}
+I_{23}(t)=\int_0^{t}\frac{2h_m}{R_0}\big[C(R_0,\tau)-\Cenv(\tau)\big]\,\mathrm{d}\tau
+\label{eq:flux23}
+\end{equation}
+
+时变半径的问题四则用当前半径 $R(\tau)$、参考坐标下的表面值 $\tilde c(1,\tau)$：
+
+\begin{equation}
+I_{4}(t)=\int_0^{t}\frac{2h_m}{R(\tau)}\big[\tilde c(1,\tau)-\Cenv(\tau)\big]\,\mathrm{d}\tau
+\label{eq:flux4}
+\end{equation}
+
+二者都是用于核算平均干基含水率损失的累计量，$\Cbar(t)=\tfrac{2}{R_0^2}\sum_iV_iC_i$ 为质量加权平均，$\Delta\Cbar=\Cbar(t)-\Cbar(0)$。
+
+\textbf{结果：} 向后 Euler 的离散收支 $|\Cbar_N-\Cbar_0+I_{23}|/|\Delta\Cbar|$ 约为 $\num{1.5e-14}$，这是离散格式的代数恒等式，说明实现无误，并不代表时间精度。真正独立的核验是把连续解的表面通量按式~\eqref{eq:flux23}、\eqref{eq:flux4} 另行求积再与 $\Delta\Cbar$ 比较：在正式网格 $N=800$ 全程，问题二、三的相对差为 $\num{6.520e-8}$，问题四为 $\num{3.913e-8}$。热量收支的残差约 $\SI{3.212e-10}{W/m}$，属离散代数核算，不与独立时间积分精度混同。
 
 \textbf{结论：} 独立通量核算的相对差在 $10^{-8}$ 量级，支持数值求解的守恒性；代数恒等式与独立核算分列，不相互冒充。
 
@@ -79,7 +95,7 @@ $N$ & 温度全域最大误差 / $\si{\celsius}$ & 含水率全域最大误差 /
 
 \textbf{目的与方法：} 检查接受解是否越出由历史值构成的物理界限；并把动域求解器在半径恒为 $R_0$ 时退化，与固定域求解器对照，检验坐标变换的实现。
 
-\textbf{结果与结论：} 接受解始终落在物理界限之内，没有越界；动域求解器在 $R\equiv R_0$ 时与固定域求解器的相对差约 $\num{3.6e-8}$，说明式~\eqref{eq:q4gov} 的实现正确。
+\textbf{结果与结论：} 接受解始终落在物理界限之内，没有越界；动域求解器在 $R\equiv R_0$ 时与固定域求解器的相对差约 $\num{3.6e-8}$，说明式~\eqref{eq:q4govc}--\eqref{eq:q4govt} 的实现正确。
 
 \subsection{物性与几何效应的分离}
 

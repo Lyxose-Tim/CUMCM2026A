@@ -26,19 +26,22 @@
 \begin{figure}[H]\centering
 \begin{tikzpicture}[
   font=\small,
-  box/.style={draw=palBlueD,rounded corners,align=center,inner sep=5pt,text width=11.4cm,minimum height=0.85cm,fill=palBlueL!12},
-  qbox/.style={draw=palBlueD,rounded corners,align=center,inner sep=4pt,text width=2.85cm,minimum height=1.9cm,fill=palGold!20},
-  ar/.style={-{Stealth[length=2.2mm]},thick,palBlueD}
+  box/.style={draw=palDeep,rounded corners,align=center,inner sep=5pt,text width=11.4cm,minimum height=0.9cm,fill=palIce!25},
+  qbox/.style={draw=palDeep,rounded corners,align=center,inner sep=4pt,text width=2.85cm,minimum height=1.75cm,fill=palMist},
+  ar/.style={-{Stealth[length=2.2mm]},thick,palDeep}
 ]
-\node[box] (gov) at (0,2.55) {\textbf{统一径向传热传质框架}（散度形式，节点型有限体积法求解）};
+\node[box] (gov) at (0,2.6) {\textbf{统一径向传热传质框架}（散度形式，节点型有限体积法求解）};
 \node[qbox] (q1) at (-5.4,0) {\textbf{问题一}\\附录2 常物性\\预热 $0$--$\SI{1800}{s}$\\温度与水分解耦};
 \node[qbox] (q2) at (-1.8,0) {\textbf{问题二}\\附录3 变物性\\整个过程\\温度--水分耦合};
-\node[qbox] (q3) at (1.8,0) {\textbf{问题三}\\基于问题二同一解\\最大含水率\\降至 $0.15$};
-\node[qbox] (q4) at (5.4,0) {\textbf{问题四}\\附录4 变物性\\半径收缩 $R(t)$\\参考坐标\\\textcolor{palRed}{（在耦合模型上引入收缩）}};
-\draw[ar] (gov.south) -- ++(0,-0.35) -| (q1.north);
-\draw[ar] (gov.south) -- ++(0,-0.35) -| (q2.north);
-\draw[ar] (gov.south) -- ++(0,-0.35) -| (q4.north);
-\draw[ar] (q2.east) -- (q3.west) node[midway,above,font=\scriptsize]{判据};
+\node[qbox] (q3) at (1.8,0) {\textbf{问题三}\\基于问题二\\同一数值解\\最大含水率降 $0.15$};
+\node[qbox] (q4) at (5.4,0) {\textbf{问题四}\\附录4 变物性\\半径收缩 $R(t)$\\参考坐标求解};
+% 主干与水平分支干线，为箭头保留独立通道
+\draw[palDeep,thick] (gov.south) -- (0,1.35);
+\draw[palDeep,thick] (-5.4,1.35) -- (5.4,1.35);
+\draw[ar] (-5.4,1.35) -- (q1.north);
+\draw[ar] (-1.8,1.35) -- (q2.north);
+\draw[ar] (5.4,1.35) -- (q4.north);
+\draw[ar] (q2.east) -- (q3.west) node[midway,above=1pt,font=\scriptsize,text=palChar]{判据};
 \end{tikzpicture}
 \caption{四个问题的承接关系：共用一套径向传热传质框架，按物性、几何与判据的差异分问求解。}
 \label{fig:relation}

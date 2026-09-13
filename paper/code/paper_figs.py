@@ -51,24 +51,30 @@ EXPORTS = ROOT / "exports"
 FIGDIR = ROOT / "paper" / "figures"
 FIGDIR.mkdir(parents=True, exist_ok=True)
 
-# ---- 调色板 ----
-BLUE_D, BLUE_L, ORANGE, GOLD, RED = "#5271AE", "#70ACDE", "#FFA660", "#F5CC7D", "#D85B59"
-DARK = "#222222"          # 数字/文字标签
-GRAY_OUT = "#E4E4E4"      # 域外留白（淡灰）
+# ---- 调色板（Ocean Jelly + Warm Coral）----
+DEEP, OCEAN, JELLY, ICE = "#005BBD", "#008FF5", "#29C7F6", "#86E6FF"
+AMBER, GORANGE, CORAL, CRED, RED = "#FFC247", "#FFA83A", "#FF7A45", "#FF5B57", "#F0404F"
+CHAR, MIST = "#252A30", "#EAF3F8"
+DARK = CHAR               # 数字/文字标签（深灰）
+GRAY_OUT = "#E4E4E4"      # 域外留白（中性淡灰）
+# 兼容旧名（映射到新配色）
+BLUE_D, BLUE_L, ORANGE, GOLD = DEEP, OCEAN, CORAL, AMBER
 
-# 固定径向位置的颜色与标记（跨子图一致：内→外 = 蓝→红）
+# 固定径向位置的颜色与标记（跨子图一致：内→外 = 冷→暖）
 POS_STYLE = {
-    0.0: dict(color=BLUE_D, marker="o", label="中心 $r=0$"),
-    0.5: dict(color=BLUE_L, marker="s", label="$r=0.5$ cm"),
-    1.0: dict(color=ORANGE, marker="^", label="$r=1.0$ cm"),
-    1.5: dict(color=GOLD,   marker="D", label="$r=1.5$ cm"),
-    2.0: dict(color=RED,    marker="v", label="表面 $r=2.0$ cm"),
+    0.0: dict(color=DEEP,    marker="o", label="中心 $r=0$"),
+    0.5: dict(color=OCEAN,   marker="s", label="$r=0.5$ cm"),
+    1.0: dict(color=JELLY,   marker="^", label="$r=1.0$ cm"),
+    1.5: dict(color=GORANGE, marker="D", label="$r=1.5$ cm"),
+    2.0: dict(color=RED,     marker="v", label="表面 $r=2.0$ cm"),
 }
-TIME_COLORS = [BLUE_D, BLUE_L, ORANGE, RED]   # 早→晚
+TIME_COLORS = [DEEP, OCEAN, CORAL, RED]   # 早→晚
 
 # 连续场色带（湿=深蓝，热=红；单调、可黑白区分）
-CMAP_MOIST = LinearSegmentedColormap.from_list("moist", ["#F2F7FC", BLUE_L, BLUE_D])
-CMAP_TEMP = LinearSegmentedColormap.from_list("temp", ["#FBF0D8", GOLD, ORANGE, RED])
+CMAP_MOIST = LinearSegmentedColormap.from_list("moist", ["#F4FAFE", ICE, OCEAN, DEEP])
+CMAP_TEMP = LinearSegmentedColormap.from_list("temp", ["#FFF4D9", AMBER, CORAL, RED])
+# 蓝色阶（小影响条形，深→浅）
+CMAP_BLUES = LinearSegmentedColormap.from_list("blues", [DEEP, OCEAN, JELLY, ICE])
 
 THRESH = 0.15
 
@@ -254,27 +260,27 @@ def fig_q23_fields():
     axb.clabel(cs, fmt={THRESH: "0.15"}, fontsize=7)
     axb.set_xlabel("径向位置 $r$ / cm"); axb.set_ylabel("时间 $t$ / h")
     axb.set_title("(b) 含水率场演化（全程，附录3）")
-    # (c) 最大含水率曲线（输出为四位小数；严格达标时刻由未舍入求根确定）
-    axc = fig.add_subplot(gs[1, :])
-    axc.plot(hC, Cmax, "-", color=BLUE_D, lw=1.6, label="输出最大含水率（$60$ s / 四位小数）")
+    # (c) 全程最大含水率曲线（独立坐标，不用内嵌窗遮挡数据）
+    axc = fig.add_subplot(gs[1, 0])
+    axc.plot(hC, Cmax, "-", color=DEEP, lw=1.6, label="输出最大含水率")
     axc.axhline(THRESH, color=RED, ls="--", lw=1.1, label="阈值 0.15")
-    axc.axvline(tstar_h, color="#7a7a7a", ls=":", lw=1.2)
-    axc.annotate(f"$t^*={tstar_h:.4f}$ h（未舍入求根）", xy=(tstar_h, THRESH),
-                 xytext=(tstar_h - 24, 0.62), fontsize=9, color=DARK,
-                 arrowprops=dict(arrowstyle="->", color="#7a7a7a"))
+    axc.axvline(tstar_h, color=CHAR, ls=":", lw=1.0)
+    axc.annotate(f"$t^*={tstar_h:.4f}$ h", xy=(tstar_h, THRESH), xytext=(tstar_h - 32, 0.7),
+                 fontsize=8.5, color=DARK, arrowprops=dict(arrowstyle="->", color=CHAR))
     axc.set_xlabel("时间 $t$ / h"); axc.set_ylabel("干基含水率 / (kg·kg$^{-1}$)")
     axc.set_xlim(0, hC.max()); axc.set_ylim(0, 2.65)
-    axc.set_title("(c) 输出最大含水率随时间下降；阈值附近仅示采样分辨率")
+    axc.set_title("(c) 全程最大含水率")
     axc.legend(fontsize=8, loc="upper right")
-    # 放大窗：离散采样点（不以四位小数平台伪造严格穿越）
-    axins = axc.inset_axes([0.09, 0.30, 0.34, 0.56])
-    sel = (hC >= tstar_h - 2.0) & (hC <= hC.max())
-    axins.plot(hC[sel], Cmax[sel], "o", ms=3.0, color=BLUE_D, label="60 s 采样")
-    axins.axhline(THRESH, color=RED, ls="--", lw=1.0)
-    axins.axvline(tstar_h, color="#7a7a7a", ls=":", lw=1.1)
-    axins.set_xlim(tstar_h - 1.6, hC.max()); axins.set_ylim(0.1490, 0.1560)
-    axins.tick_params(labelsize=6.5)
-    axins.set_title("阈值附近（采样 60 s、四位小数）", fontsize=7)
+    # (d) 阈值附近放大：离散 60 s 采样点（不以四位小数平台伪造严格穿越）
+    axd = fig.add_subplot(gs[1, 1])
+    sel = (hC >= tstar_h - 1.6) & (hC <= hC.max())
+    axd.plot(hC[sel], Cmax[sel], "o", ms=3.4, color=OCEAN, label="$60$ s 采样（四位小数）")
+    axd.axhline(THRESH, color=RED, ls="--", lw=1.1, label="阈值 0.15")
+    axd.axvline(tstar_h, color=CHAR, ls=":", lw=1.2, label="$t^*$（未舍入求根）")
+    axd.set_xlim(tstar_h - 1.4, hC.max()); axd.set_ylim(0.1490, 0.1560)
+    axd.set_xlabel("时间 $t$ / h"); axd.set_ylabel("干基含水率 / (kg·kg$^{-1}$)")
+    axd.set_title("(d) 阈值附近（采样分辨率）")
+    axd.legend(fontsize=7.5, loc="upper right")
     _save(fig, "fig_q23_fields")
 
 
@@ -348,9 +354,9 @@ def fig_analytic_convergence():
     d = load_v1v2()
     fig, ax = plt.subplots(1, 2, figsize=(10.5, 3.9))
     for a, key, ttl, yl, col in (
-            (ax[0], "temp", "(a) 温度（附录2 常物性辅助问题）", "全域最大误差 / °C", RED),
-            (ax[1], "moist", "(b) 含水率（$D\\equiv D(C_0)$ 辅助问题）",
-             "全域最大误差 / (kg·kg$^{-1}$)", BLUE_D)):
+            (ax[0], "temp", "(a) 温度（附录2 常物性，$t=100$ s）", "沿半径最大误差 / °C", RED),
+            (ax[1], "moist", "(b) 含水率（$D\\equiv D(C_0)$，$t=100$ s）",
+             "沿半径最大误差 / (kg·kg$^{-1}$)", DEEP)):
         Ns = np.array([p[0] for p in d[key]], float)
         err = np.array([p[1] for p in d[key]], float)
         a.loglog(Ns, err, "o-", color=col, ms=6, lw=1.5, label="数值 vs 解析级数解")
@@ -394,17 +400,18 @@ def fig_convergence():
 # ==========================================================================
 def fig_threecase():
     tc = load_threecase(400)
-    order = [("① 附录3 物性 · 固定 $R_0$", "附录3/R0", BLUE_D),
-             ("② 附录4 物性 · 固定 $R_0$", "附录4/R0", ORANGE),
+    order = [("① 附录3 物性 · 固定 $R_0$", "附录3/R0", DEEP),
+             ("② 附录4 物性 · 固定 $R_0$", "附录4/R0", GORANGE),
              ("③ 附录4 物性 · 收缩 $R(t)$", "附录4/R(t)", RED)]
-    fig, ax = plt.subplots(figsize=(8.2, 2.9))
-    ys = np.arange(len(order))[::-1]
+    fig, ax = plt.subplots(figsize=(8.2, 2.5))
+    ys = [1, 0, -1]           # 紧凑等距三行
     for y, (lab, key, col) in zip(ys, order):
         val = next(v for k, v in tc.items() if key in k)
         ax.plot([0, val], [y, y], "-", color=col, lw=1.2, alpha=0.45)
         ax.plot(val, y, "o", color=col, ms=11)
         ax.text(val + 2, y, f"{val:.2f} h", va="center", fontsize=9.5, color=DARK)
     ax.set_yticks(ys); ax.set_yticklabels([o[0] for o in order], fontsize=9)
+    ax.set_ylim(-1.6, 1.6)
     ax.set_xlabel("达标时长 $t^*$ / h（同一网格 $N=400$）"); ax.set_xlim(0, 150)
     ax.set_title("物性变化（①→②）延长干燥、尺寸收缩（②→③）缩短干燥")
     ax.grid(axis="x", ls=":", alpha=0.4)
@@ -448,20 +455,26 @@ def fig_sensitivity():
     ax[0].set_xlabel(f"达标时长变化 $\\Delta t^*$ / h（基线 {base:.4f} h）")
     ax[0].set_title("(a) 全部扰动情景"); ax[0].set_xlim(-4, 9)
     ax[0].grid(axis="x", ls=":", alpha=0.4)
-    # (b) 小影响放大（|Δ|<0.4 h），显示 ±0.02 h 所设分辨判据带
+    # (b) 小影响放大（|Δ|<0.4 h）：条形统一蓝色阶（上深下浅），零变化用零值标记
     small = [it for it in items if abs(it[1]) < 0.4]
     ys2 = np.arange(len(small))[::-1]
-    ax[1].axvspan(-0.02, 0.02, color=GOLD, alpha=0.22, lw=0, label="所设分辨判据 $\\pm0.02$ h")
-    for y, (lab, dv, col, disc) in zip(ys2, small):
-        ax[1].barh(y, dv, color=col, alpha=0.9, height=0.6)
+    blues = [CMAP_BLUES(v) for v in np.linspace(0.05, 0.85, len(small))]  # 深→浅
+    band = ax[1].axvspan(-0.02, 0.02, color="#ECECEC", lw=0, label="所设分辨判据 $\\pm0.02$ h")
+    for k, (y, (lab, dv, _col, disc)) in enumerate(zip(ys2, small)):
         note = "" if disc.strip() == "是" else "（未分辨）" if "未" in disc else "（临界）"
-        ax[1].text(dv + (0.004 if dv >= 0 else -0.004), y, f"{dv:+.4f}{note}",
-                   va="center", ha="left" if dv >= 0 else "right", fontsize=7.5, color=DARK)
-    ax[1].axvline(0, color="#333333", lw=0.9)
+        if abs(dv) < 5e-5:                       # 零变化情景：零值标记，不画非零长度
+            ax[1].plot(0, y, "|", color=DEEP, ms=12, mew=2)
+            ax[1].text(0.006, y, f"{dv:+.4f}{note}", va="center", ha="left", fontsize=7.5, color=DARK)
+        else:
+            ax[1].barh(y, dv, color=blues[k], height=0.6)
+            ax[1].text(dv + (0.004 if dv >= 0 else -0.004), y, f"{dv:+.4f}{note}",
+                       va="center", ha="left" if dv >= 0 else "right", fontsize=7.5, color=DARK)
+    ax[1].axvline(0, color=CHAR, lw=0.9)
     ax[1].set_yticks(ys2); ax[1].set_yticklabels([it[0] for it in small], fontsize=8)
     ax[1].set_xlabel("达标时长变化 $\\Delta t^*$ / h（放大）")
     ax[1].set_title("(b) 小影响情景放大"); ax[1].set_xlim(-0.4, 0.2)
-    ax[1].legend(fontsize=7.5, loc="lower right"); ax[1].grid(axis="x", ls=":", alpha=0.4)
+    ax[1].legend(handles=[band], fontsize=7, loc="upper right", framealpha=0.9)
+    ax[1].grid(axis="x", ls=":", alpha=0.4)
     fig.tight_layout()
     _save(fig, "fig_sensitivity")
 
