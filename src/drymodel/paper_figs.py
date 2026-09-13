@@ -1,4 +1,4 @@
-"""paper_figs.py —— 论文插图（读取官方 outputs 与验证记录，输出矢量 PDF 到 paper/figures/）。
+"""paper_figs.py —— 论文插图（读取官方 outputs 与验证记录，输出论文 PDF 到 paper/figures/）。
 
 重绘入口：``python -m drymodel.paper_figs``。
 本模块**只读**已授权生产的官方结果、原始附件与验证记录，不重跑任何生产计算，
@@ -19,8 +19,10 @@
 from __future__ import annotations
 
 import csv
+import io
 import json
 import re
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -35,7 +37,7 @@ from matplotlib import gridspec, ticker
 from . import config as cfgmod
 from . import data_io
 
-plt.rcParams["font.sans-serif"] = ["Microsoft YaHei", "SimHei", "DejaVu Sans"]
+plt.rcParams["font.sans-serif"] = ["Microsoft YaHei", "SimHei", "Noto Sans CJK SC", "DejaVu Sans"]
 plt.rcParams["axes.unicode_minus"] = False
 plt.rcParams["pdf.fonttype"] = 42        # 字体子集嵌入，Overleaf 直接显示
 plt.rcParams["ps.fonttype"] = 42
@@ -167,7 +169,10 @@ def _read_sheet(path: Path, sheet_index: int, *, tmax_s=None, tstep=1):
 
 
 def _save(fig, name):
-    fig.savefig(FIGDIR / f"{name}.pdf", dpi=300)
+    # 完成 PDF 序列化后一次写入，避免流式输出留下不完整的交叉引用表。
+    with io.BytesIO() as buffer:
+        fig.savefig(buffer, format="pdf", dpi=300)
+        (FIGDIR / f"{name}.pdf").write_bytes(buffer.getvalue())
     fig.savefig(FIGDIR / f"{name}.png", dpi=160)
     plt.close(fig)
     print("  saved", name)
@@ -334,7 +339,7 @@ def fig_q4_fields(cfg):
     ax[0].plot(Rt_cm, hC, "-", color=RED, lw=1.7, zorder=3, label="移动边界 $R(t)$")
     ax[0].set_xlim(0, R0cm); ax[0].set_ylim(hC.min(), hC.max())
     ax[0].set_xlabel("固定物理位置 $r$ / cm"); ax[0].set_ylabel("时间 $t$ / h")
-    ax[0].set_title("(a) 含水率场与移动边界（域外留白、严格裁切）")
+    ax[0].set_title("(a) 含水率场与移动边界")
     ax[0].legend(fontsize=7, loc="upper right", framealpha=0.9)
     # (b) 固定位置 + 表面时程（用全部行，含首末；事件时刻标注）
     for rc in (0.0, 0.5, 1.0):
@@ -398,9 +403,12 @@ def fig_convergence():
         a.set_xticks([200, 400, 800]); a.get_xaxis().set_major_formatter(ticker.ScalarFormatter())
         a.grid(which="both", ls=":", alpha=0.4); a.tick_params(labelsize=9.5)
     ax[0].set_xlabel("网格区间数 $N$", fontsize=9.5); ax[0].set_ylabel("烘干时长 $t^*$ / h", fontsize=9.5)
-    ax[0].set_title("(a) 烘干时长随网格加密", fontsize=9.5); ax[0].legend(fontsize=8.5)
+    ax[0].set_title("(a) 烘干时长随网格加密", fontsize=9.5)
     ax[1].set_xlabel("网格区间数 $N$", fontsize=9.5); ax[1].set_ylabel("$|t^*_N-t^*_{800}|$ / h", fontsize=9.5)
-    ax[1].set_title("(b) 相对最细网格的收敛（对数）", fontsize=9.5); ax[1].legend(fontsize=8.5)
+    ax[1].set_title("(b) 相对最细网格的收敛（对数）", fontsize=9.5)
+    for a in ax:
+        a.legend(loc="upper right", bbox_to_anchor=(0.98, 0.98), fontsize=7,
+                 borderaxespad=0, handlelength=1.8, labelspacing=0.35)
     fig.tight_layout()
     _save(fig, "fig_convergence")
 
@@ -466,7 +474,7 @@ def fig_sensitivity():
     ax[0].set_yticks(ys); ax[0].set_yticklabels([it[0] for it in items], fontsize=8)
     ax[0].set_xlabel("烘干时长变化 $\\Delta t^*$ / h", fontsize=8.5)
     ax[0].set_title(f"(a) 全部扰动情景（基线 {base:.4f} h）", fontsize=9)
-    ax[0].set_xlim(-4, 9); ax[0].grid(axis="x", ls=":", alpha=0.4); ax[0].tick_params(labelsize=8)
+    ax[0].set_xlim(-5, 10); ax[0].grid(axis="x", ls=":", alpha=0.4); ax[0].tick_params(labelsize=8)
     # (b) 小影响放大：蓝色阶（上深下浅），灰带为筛选尺度（说明见图注，不再放图内图例框）
     small = [it for it in items if abs(it[1]) < 0.4]
     ys2 = np.arange(len(small))[::-1]
@@ -483,179 +491,29 @@ def fig_sensitivity():
     ax[1].axvline(0, color=CHAR, lw=0.9)
     ax[1].set_yticks(ys2); ax[1].set_yticklabels([it[0] for it in small], fontsize=8)
     ax[1].set_xlabel("$\\Delta t^*$ / h（放大）", fontsize=8.5)
-    ax[1].set_title("(b) 小影响情景放大", fontsize=9); ax[1].set_xlim(-0.4, 0.2)
+    ax[1].set_title("(b) 小影响情景放大", fontsize=9); ax[1].set_xlim(-0.5, 0.3)
     ax[1].tick_params(labelsize=8); ax[1].grid(axis="x", ls=":", alpha=0.4)
     fig.tight_layout()
     _save(fig, "fig_sensitivity")
 
 
 # ==========================================================================
-# 图：四问关系（matplotlib：文字边界测量 + 分层布置，替代原 TikZ）
+# 图：四问关系（采用用户提供的原图，重绘时保持原样）
 # ==========================================================================
 def fig_relation():
-    """四问与模型关系图（第七轮：附件版式）。
-
-    顶部共用框架 + 虚线『共同模型基础』箭头；三列彩色分区（问题一 冰蓝 / 问题二 海绿 /
-    问题四 琥珀），各含模型节点与结果节点；实线『求解与模型扩展』：问题一→问题二（耦合扩展）、
-    问题二→问题四（物性与几何修正）、问题二结果→问题三（最大含水率判据）；底部图例。
-    几何由文字外框测量确定：框宽=最宽文字+左右内边距，框高由测得高度累加；生成时自检
-    节点框互不相交、分区互不相交、内容不越出画布。
-    """
-    from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
-    W, H = 13.0, 10.5
-    fig, ax = plt.subplots(figsize=(9.6, 7.75))
-    ax.set_xlim(0, W); ax.set_ylim(0, H); ax.axis("off"); ax.set_aspect("auto")
-    fig.canvas.draw()
-    rend = fig.canvas.get_renderer(); inv = ax.transData.inverted()
-
-    def measure(s, fs, weight="normal", ls=1.4):
-        t = ax.text(0, 0, s, ha="center", va="center", fontsize=fs, fontweight=weight,
-                    linespacing=ls, alpha=0)
-        fig.canvas.draw(); bb = t.get_window_extent(rend); t.remove()
-        (x0, y0), (x1, y1) = inv.transform([(bb.x0, bb.y0), (bb.x1, bb.y1)])
-        return abs(x1 - x0), abs(y1 - y0)
-
-    DASH = AUXGRAY
-    FS_H, FS_B, FS_L = 12, 11, 10.5
-    PADX, PADT, PADB = 0.22, 0.18, 0.18
-    PPADX, PPADT, PPADB = 0.28, 0.20, 0.30
-    G_HM, G_MR, GAPC = 0.30, 0.55, 1.15
-
-    cols = [
-        dict(key="q1", title="问题一 · 预热过程", head=ICE, body="#E9F6FF", ec="#5EC7EC",
-             model=["径向导热与水分扩散", "分别求解"], result=["预热温度与", "含水率分布"]),
-        dict(key="q2", title="问题二 · 完整干燥过程", head=SEAFOAM, body="#E7FAF3", ec=JADE,
-             model=["变物性传热传质", "耦合模型"], result=["全过程温度场", "与含水率场"]),
-        dict(key="q4", title="问题四 · 尺寸收缩", head=AMBER, body="#FFF4DC", ec=GORANGE,
-             model=["更新物性与", "收缩参考坐标"], result=["收缩条件下含水率", "与烘干时长"]),
-    ]
-    for c in cols:
-        c["tw"], c["th"] = measure(c["title"], FS_H, "bold")
-        c["mtxt"] = "\n".join(c["model"]); c["mw"], c["mh_"] = measure(c["mtxt"], FS_B)
-        c["rtxt"] = "\n".join(c["result"]); c["rw"], c["rh_"] = measure(c["rtxt"], FS_B)
-    box_w = max(max(c["mw"], c["rw"]) for c in cols) + 2 * PADX
-    head_h = max(c["th"] for c in cols) + 2 * PADT
-    inner_w = max(box_w, max(c["tw"] for c in cols))
-    panel_w = inner_w + 2 * PPADX
-    mbox_h = max(c["mh_"] for c in cols) + PADT + PADB
-    rbox_h = max(c["rh_"] for c in cols) + PADT + PADB
-    panel_h = head_h + G_HM + mbox_h + G_MR + rbox_h + PPADB
-
-    total_w = 3 * panel_w + 2 * GAPC
-    x0 = (W - total_w) / 2.0
-    for i, c in enumerate(cols):
-        c["cx"] = x0 + i * (panel_w + GAPC) + panel_w / 2.0
-    panel_top = 7.0
-    panel_bot = panel_top - panel_h
-
-    boxes = []; panels = []
-
-    def node(cx, top, w, h, text, ec, name):
-        ax.add_patch(FancyBboxPatch((cx - w / 2, top - h), w, h, boxstyle="round,pad=0.012",
-                                    fc="#FFFFFF", ec=ec, lw=1.1, zorder=4))
-        ax.text(cx, top - PADT, text, ha="center", va="top", fontsize=FS_B, color=CHAR,
-                linespacing=1.4, zorder=5)
-        boxes.append((name, cx - w / 2, top - h, cx + w / 2, top))
-
-    # 顶部共用框架
-    fw_title = "统一径向传热传质模型"
-    fw_sub = "共用控制方程与定解条件，按各问调整物性、几何与判据"
-    ftw, fth = measure(fw_title, FS_H + 2, "bold"); fsw, fsh = measure(fw_sub, FS_L)
-    fw_w = max(ftw, fsw) + 1.3; fw_h = fth + fsh + 0.55
-    fw_top = 10.0; fw_cx = W / 2
-    ax.add_patch(FancyBboxPatch((fw_cx - fw_w / 2, fw_top - fw_h), fw_w, fw_h,
-                                boxstyle="round,pad=0.02", fc=MIST, ec=DASH, lw=1.2, zorder=3))
-    ax.text(fw_cx, fw_top - 0.22, fw_title, ha="center", va="top", fontsize=FS_H + 2,
-            fontweight="bold", color=CHAR, zorder=4)
-    ax.text(fw_cx, fw_top - 0.22 - fth - 0.14, fw_sub, ha="center", va="top", fontsize=FS_L,
-            color="#5A6169", zorder=4)
-    fw_bot = fw_top - fw_h
-
-    # 三列分区（彩色 header + 白色节点）
-    node_xy = {}
-    for c in cols:
-        cx = c["cx"]
-        ax.add_patch(FancyBboxPatch((cx - panel_w / 2, panel_bot), panel_w, panel_h,
-                                    boxstyle="round,pad=0.02", fc=c["body"], ec=c["ec"], lw=1.2,
-                                    zorder=1))
-        panels.append((c["key"], cx - panel_w / 2, panel_bot, cx + panel_w / 2, panel_top))
-        ax.add_patch(FancyBboxPatch((cx - panel_w / 2 + 0.05, panel_top - head_h),
-                                    panel_w - 0.10, head_h, boxstyle="round,pad=0.01",
-                                    fc=c["head"], ec="none", zorder=2, alpha=0.92))
-        ax.text(cx, panel_top - head_h / 2, c["title"], ha="center", va="center", fontsize=FS_H,
-                fontweight="bold", color=CHAR, zorder=3)
-        mtop = panel_top - head_h - G_HM
-        node(cx, mtop, box_w, mbox_h, c["mtxt"], c["ec"], c["key"] + "_m")
-        rtop = mtop - mbox_h - G_MR
-        node(cx, rtop, box_w, rbox_h, c["rtxt"], c["ec"], c["key"] + "_r")
-        node_xy[c["key"]] = dict(cx=cx, m_top=mtop, m_bot=mtop - mbox_h,
-                                 r_top=rtop, r_bot=rtop - rbox_h)
-
-    # 问题三（问题二结果下方）
-    cx2 = node_xy["q2"]["cx"]
-    q3t = "问题三 · 烘干判定"; q3b = "烘干时长"
-    q3tw, q3th = measure(q3t, FS_B, "bold"); q3bw, q3bh = measure(q3b, FS_B, "bold")
-    q3w = max(q3tw, q3bw) + 2 * PPADX + 0.2; q3h = 2 * PPADT + q3th + 0.16 + q3bh
-    q3_top = panel_bot - 0.7
-    ax.add_patch(FancyBboxPatch((cx2 - q3w / 2, q3_top - q3h), q3w, q3h, boxstyle="round,pad=0.02",
-                                fc="#E7FAF3", ec=JADE, lw=1.2, zorder=3))
-    ax.text(cx2, q3_top - PPADT, q3t, ha="center", va="top", fontsize=FS_B, fontweight="bold",
-            color=CHAR, zorder=4)
-    ax.text(cx2, q3_top - PPADT - q3th - 0.16, q3b, ha="center", va="top", fontsize=FS_B,
-            fontweight="bold", color=CHAR, zorder=4)
-    boxes.append(("q3", cx2 - q3w / 2, q3_top - q3h, cx2 + q3w / 2, q3_top))
-
-    # 虚线：框架 → 各分区顶部（共同模型基础）
-    dash = dict(arrowstyle="-|>", color=DASH, lw=1.3, ls="--", mutation_scale=12,
-                shrinkA=2, shrinkB=2, zorder=2)
-    for c in cols:
-        ax.add_patch(FancyArrowPatch((c["cx"], fw_bot), (c["cx"], panel_top), **dash))
-
-    # 实线：求解与模型扩展
-    solid = dict(arrowstyle="-|>", color=TEAL, lw=1.7, mutation_scale=13, shrinkA=1, shrinkB=1,
-                 zorder=3)
-    arrows = []
-    for k in ("q1", "q2", "q4"):
-        p0 = (node_xy[k]["cx"], node_xy[k]["m_bot"]); p1 = (node_xy[k]["cx"], node_xy[k]["r_top"])
-        ax.add_patch(FancyArrowPatch(p0, p1, **solid)); arrows.append((p0, p1, {k + "_m", k + "_r"}))
-    m_mid = (node_xy["q1"]["m_top"] + node_xy["q1"]["m_bot"]) / 2
-    p0 = (node_xy["q1"]["cx"] + box_w / 2, m_mid); p1 = (node_xy["q2"]["cx"] - box_w / 2, m_mid)
-    ax.add_patch(FancyArrowPatch(p0, p1, **solid)); arrows.append((p0, p1, {"q1_m", "q2_m"}))
-    ax.text((p0[0] + p1[0]) / 2, m_mid + 0.30, "耦合\n扩展", ha="center", va="bottom",
-            fontsize=FS_L, color=TEAL, linespacing=1.15, zorder=5)
-    p0 = (node_xy["q2"]["cx"] + box_w / 2, m_mid); p1 = (node_xy["q4"]["cx"] - box_w / 2, m_mid)
-    ax.add_patch(FancyArrowPatch(p0, p1, **solid)); arrows.append((p0, p1, {"q2_m", "q4_m"}))
-    ax.text((p0[0] + p1[0]) / 2, m_mid + 0.30, "物性与\n几何修正", ha="center", va="bottom",
-            fontsize=FS_L, color=TEAL, linespacing=1.15, zorder=5)
-    p0 = (cx2, node_xy["q2"]["r_bot"]); p1 = (cx2, q3_top)
-    ax.add_patch(FancyArrowPatch(p0, p1, **solid)); arrows.append((p0, p1, {"q2_r", "q3"}))
-    ax.text(cx2 + 0.18, (p0[1] + p1[1]) / 2, "最大含水率\n判据", ha="left", va="center",
-            fontsize=FS_L, color=CHAR, linespacing=1.15, zorder=5)
-
-    # 图例
-    ly = q3_top - q3h - 0.65
-    lx = W / 2 - 3.4
-    ax.add_patch(FancyArrowPatch((lx, ly), (lx + 0.9, ly), **dash))
-    ax.text(lx + 1.05, ly, "共同模型基础", ha="left", va="center", fontsize=FS_L, color=CHAR)
-    lx2 = W / 2 + 0.5
-    ax.add_patch(FancyArrowPatch((lx2, ly), (lx2 + 0.9, ly), **solid))
-    ax.text(lx2 + 1.05, ly, "求解与模型扩展", ha="left", va="center", fontsize=FS_L, color=CHAR)
-
-    # 几何自检
-    def overlap(a, b, tol=1e-6):
-        return not (a[3] <= b[1] + tol or b[3] <= a[1] + tol or
-                    a[4] <= b[2] + tol or b[4] <= a[2] + tol)
-    for i in range(len(boxes)):
-        for j in range(i + 1, len(boxes)):
-            assert not overlap(boxes[i], boxes[j]), f"节点框相交 {boxes[i][0]} {boxes[j][0]}"
-    for i in range(len(panels)):
-        for j in range(i + 1, len(panels)):
-            assert not overlap(panels[i], panels[j]), f"分区相交 {panels[i][0]} {panels[j][0]}"
-    allx0 = min(b[1] for b in boxes + panels); allx1 = max(b[3] for b in boxes + panels)
-    assert 0 <= allx0 and allx1 <= W, f"横向越界 [{allx0:.2f},{allx1:.2f}]"
-    ally0 = min(b[2] for b in boxes + panels)
-    assert ly - 0.2 >= 0 and fw_top <= H, f"纵向越界 ly={ly:.2f} fw_top={fw_top:.2f}"
-    _save(fig, "fig_relation")
+    """原图直接嵌入 PDF；PNG 保留上传文件的原始字节。"""
+    source = ROOT / "paper" / "assets" / "fig_relation_uploaded.png"
+    pixels = plt.imread(source)
+    height, width = pixels.shape[:2]
+    fig = plt.figure(figsize=(width / 240, height / 240), dpi=240)
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.imshow(pixels, interpolation="none", aspect="equal")
+    ax.set_axis_off()
+    with plt.rc_context({"savefig.bbox": None}):
+        fig.savefig(FIGDIR / "fig_relation.pdf", dpi=240, pad_inches=0)
+    plt.close(fig)
+    shutil.copyfile(source, FIGDIR / "fig_relation.png")
+    print("  saved fig_relation (uploaded image)")
 
 
 # ==========================================================================
@@ -692,8 +550,9 @@ def fig_be_bdf():
     ax[0].set_ylabel("表面温度 / °C", fontsize=9.5)
     ax[0].set_title("(a) 表面温度时程", fontsize=9.5)
     ax[0].grid(ls=":", alpha=0.4); ax[0].tick_params(labelsize=9.5)
-    ax[0].legend(fontsize=7.5, loc="lower right")
-    ax[0].text(0.04, 0.94, f"各方法曲线基本重合\n（全程最大偏差 {spread:.1e} K，位于初始升温段）",
+    ax[0].legend(fontsize=7, loc="lower right", bbox_to_anchor=(0.98, 0.14),
+                 borderaxespad=0, handlelength=1.8, labelspacing=0.35)
+    ax[0].text(0.04, 0.94, f"各方法曲线基本重合\n全程最大偏差 {spread:.1e} K\n偏差位于初始升温段",
                transform=ax[0].transAxes, fontsize=7, color=CHAR, va="top", linespacing=1.3)
     # (b) 向后 Euler 终点差异随步长（双对数）+ 一阶参考线；BDF 差异单独标示
     ax[1].loglog(dts, errs, "o-", color=CORAL, ms=6, lw=1.7, label="向后 Euler（100 s 终点）")
@@ -707,7 +566,8 @@ def fig_be_bdf():
     ax[1].set_xticks(dts); ax[1].get_xaxis().set_major_formatter(ticker.ScalarFormatter())
     ax[1].get_xaxis().set_minor_formatter(ticker.NullFormatter())
     ax[1].grid(which="both", ls=":", alpha=0.4); ax[1].tick_params(labelsize=9.5)
-    ax[1].legend(fontsize=7.2, loc="center")     # 置于数据点与 BDF 参考线之间的空白带
+    ax[1].legend(fontsize=7, loc="lower right", bbox_to_anchor=(0.98, 0.14),
+                 borderaxespad=0, handlelength=1.8, labelspacing=0.35)
     fig.tight_layout()
     _save(fig, "fig_be_bdf")
 
