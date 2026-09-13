@@ -1,9 +1,9 @@
-"""paper_figs.py —— 论文正式插图（读取官方 outputs 与验证记录，输出矢量 PDF 到 paper/figures/）。
+"""paper_figs.py —— 论文插图（读取官方 outputs 与验证记录，输出矢量 PDF 到 paper/figures/）。
 
 重绘入口：``python -m drymodel.paper_figs``。
 本模块**只读**已授权生产的官方结果、原始附件与验证记录，不重跑任何生产计算，
-也不在代码中硬编码结果常数：达标时长、三情形、收敛与灵敏度数值均从下列来源读取
-    outputs/production_receipt_supplementary.json   达标 t*、采样时刻、未舍入 Cmax
+也不在代码中硬编码结果常数：烘干时长、三情形、收敛与灵敏度数值均从下列来源读取
+    outputs/production_receipt_supplementary.json   烘干 t*、采样时刻、未舍入 Cmax
     exports/convergence.csv                          网格/界面收敛 t*
     exports/fig10_diff.csv                           三情形对照 t*
     reports/V1_V2.md                                 解析基准全域最大误差
@@ -192,7 +192,7 @@ def fig_inputs(cfg):
         a.axvline(tsw_h, color=RED, ls="--", lw=1.0, zorder=4)
         a.set_xlabel("时间 $t$ / h"); a.set_ylabel(yl); a.set_title(ttl)
     ax[0].text(tsw_h + 0.05, ax[0].get_ylim()[0] + 0.12 * (ax[0].get_ylim()[1] - ax[0].get_ylim()[0]),
-               "常值外推段\n（4 h 后）", fontsize=7.5, color="#8a6d1f")
+               "常值外推段\n（4 h 后）", fontsize=7, color="#8a6d1f")
     # 图例（用代理）
     from matplotlib.lines import Line2D
     proxy = [Line2D([0], [0], color=BLUE_D, lw=1.5, label="分段线性插值"),
@@ -226,9 +226,9 @@ def fig_q1_profiles():
         ax[0].plot(pos, T[i], "-", color=col, marker=mk[k], ms=3.6, lw=1.3, label=f"$t={tw}$ s")
         ax[1].plot(pos, C[i], "-", color=col, marker=mk[k], ms=3.6, lw=1.3, label=f"$t={tw}$ s")
     ax[0].set_xlabel("径向位置 $r$ / cm"); ax[0].set_ylabel("温度 $T$ / °C")
-    ax[0].set_title("(a) 温度径向剖面"); ax[0].legend(fontsize=8)
+    ax[0].set_title("(a) 温度径向剖面"); ax[0].legend(fontsize=7)
     ax[1].set_xlabel("径向位置 $r$ / cm"); ax[1].set_ylabel("干基含水率 $C$ / (kg·kg$^{-1}$)")
-    ax[1].set_title("(b) 含水率径向剖面"); ax[1].legend(fontsize=8)
+    ax[1].set_title("(b) 含水率径向剖面"); ax[1].legend(fontsize=7)
     fig.tight_layout()
     _save(fig, "fig_q1_profiles")
 
@@ -268,11 +268,11 @@ def fig_q23_fields():
     axc.axhline(THRESH, color=RED, ls="--", lw=1.1, label="阈值 0.15")
     axc.axvline(tstar_h, color=CHAR, ls=":", lw=1.0)
     axc.annotate(f"$t^*={tstar_h:.4f}$ h", xy=(tstar_h, THRESH), xytext=(tstar_h - 32, 0.7),
-                 fontsize=8.5, color=DARK, arrowprops=dict(arrowstyle="->", color=CHAR))
+                 fontsize=7.5, color=DARK, arrowprops=dict(arrowstyle="->", color=CHAR))
     axc.set_xlabel("时间 $t$ / h"); axc.set_ylabel("干基含水率 / (kg·kg$^{-1}$)")
     axc.set_xlim(0, hC.max()); axc.set_ylim(0, 2.65)
     axc.set_title("(c) 全程最大含水率")
-    axc.legend(fontsize=8, loc="upper right")
+    axc.legend(fontsize=7, loc="upper right")
     # (d) 阈值附近放大：离散 60 s 采样点（不以四位小数平台伪造严格穿越）
     axd = fig.add_subplot(gs[1, 1])
     sel = (hC >= tstar_h - 1.6) & (hC <= hC.max())
@@ -282,7 +282,7 @@ def fig_q23_fields():
     axd.set_xlim(tstar_h - 1.4, hC.max()); axd.set_ylim(0.1490, 0.1560)
     axd.set_xlabel("时间 $t$ / h"); axd.set_ylabel("干基含水率 / (kg·kg$^{-1}$)")
     axd.set_title("(d) 阈值附近（采样分辨率）")
-    axd.legend(fontsize=7.5, loc="upper right")
+    axd.legend(fontsize=7, loc="upper right")
     _save(fig, "fig_q23_fields")
 
 
@@ -330,7 +330,7 @@ def fig_q4_fields(cfg):
     ax[0].set_xlim(0, R0cm); ax[0].set_ylim(hC.min(), hC.max())
     ax[0].set_xlabel("固定物理位置 $r$ / cm"); ax[0].set_ylabel("时间 $t$ / h")
     ax[0].set_title("(a) 含水率场与移动边界（域外淡灰、严格裁切）")
-    ax[0].legend(fontsize=8, loc="upper right", framealpha=0.9)
+    ax[0].legend(fontsize=7, loc="upper right", framealpha=0.9)
     # (b) 固定位置 + 表面时程（用全部行，含首末；事件时刻标注）
     for rc in (0.0, 0.5, 1.0):
         j = int(np.argmin(np.abs(pos_cm - rc)))
@@ -340,11 +340,11 @@ def fig_q4_fields(cfg):
     ax[1].axhline(THRESH, color="#555555", ls=":", lw=1.0, label="阈值 0.15")
     ax[1].axvline(tstar4_h, color="#7a7a7a", ls="--", lw=1.0)
     ax[1].annotate(f"$t^*={tstar4_h:.4f}$ h", xy=(tstar4_h, THRESH), xytext=(28, 0.95),
-                   fontsize=9, color=DARK, arrowprops=dict(arrowstyle="->", color="#7a7a7a"))
+                   fontsize=8, color=DARK, arrowprops=dict(arrowstyle="->", color="#7a7a7a"))
     ax[1].set_xlim(0, hC.max()); ax[1].set_ylim(0, 2.65)
     ax[1].set_xlabel("时间 $t$ / h"); ax[1].set_ylabel("干基含水率 / (kg·kg$^{-1}$)")
     ax[1].set_title("(b) 固定位置与表面含水率时程")
-    ax[1].legend(fontsize=8)
+    ax[1].legend(fontsize=7)
     fig.tight_layout()
     _save(fig, "fig_q4_fields")
 
@@ -364,11 +364,11 @@ def fig_analytic_convergence():
         a.loglog(Ns, err, "o-", color=col, ms=5.5, lw=1.7, label="数值 vs 解析级数解")
         ref = err[0] * (Ns[0] / Ns) ** 2
         a.loglog(Ns, ref, "--", color="#9AA0A6", lw=1.1, label="二阶参考斜率")
-        a.set_xlabel("网格区间数 $N$", fontsize=10.5); a.set_ylabel(yl, fontsize=10)
-        a.set_title(ttl, fontsize=10.5)
+        a.set_xlabel("网格区间数 $N$", fontsize=9.5); a.set_ylabel(yl, fontsize=9)
+        a.set_title(ttl, fontsize=9.5)
         a.set_xticks(Ns); a.get_xaxis().set_major_formatter(ticker.ScalarFormatter())
         a.tick_params(labelsize=9.5)
-        a.grid(which="both", ls=":", alpha=0.4); a.legend(fontsize=9.5)
+        a.grid(which="both", ls=":", alpha=0.4); a.legend(fontsize=8.5)
     fig.tight_layout()
     _save(fig, "fig_analytic_convergence")
 
@@ -392,10 +392,10 @@ def fig_convergence():
     for a in ax:
         a.set_xticks([200, 400, 800]); a.get_xaxis().set_major_formatter(ticker.ScalarFormatter())
         a.grid(which="both", ls=":", alpha=0.4); a.tick_params(labelsize=9.5)
-    ax[0].set_xlabel("网格区间数 $N$", fontsize=10.5); ax[0].set_ylabel("达标时长 $t^*$ / h", fontsize=10.5)
-    ax[0].set_title("(a) 达标时长随网格加密", fontsize=10.5); ax[0].legend(fontsize=9.5)
-    ax[1].set_xlabel("网格区间数 $N$", fontsize=10.5); ax[1].set_ylabel("$|t^*_N-t^*_{800}|$ / h", fontsize=10.5)
-    ax[1].set_title("(b) 相对最细网格的收敛（对数）", fontsize=10.5); ax[1].legend(fontsize=9.5)
+    ax[0].set_xlabel("网格区间数 $N$", fontsize=9.5); ax[0].set_ylabel("烘干时长 $t^*$ / h", fontsize=9.5)
+    ax[0].set_title("(a) 烘干时长随网格加密", fontsize=9.5); ax[0].legend(fontsize=8.5)
+    ax[1].set_xlabel("网格区间数 $N$", fontsize=9.5); ax[1].set_ylabel("$|t^*_N-t^*_{800}|$ / h", fontsize=9.5)
+    ax[1].set_title("(b) 相对最细网格的收敛（对数）", fontsize=9.5); ax[1].legend(fontsize=8.5)
     fig.tight_layout()
     _save(fig, "fig_convergence")
 
@@ -414,10 +414,10 @@ def fig_threecase():
         val = next(v for k, v in tc.items() if key in k)
         ax.plot([0, val], [y, y], "-", color=col, lw=1.2, alpha=0.45)
         ax.plot(val, y, "o", color=col, ms=11)
-        ax.text(val + 2, y, f"{val:.2f} h", va="center", fontsize=9.5, color=DARK)
-    ax.set_yticks(ys); ax.set_yticklabels([o[0] for o in order], fontsize=9)
+        ax.text(val + 2, y, f"{val:.2f} h", va="center", fontsize=8.5, color=DARK)
+    ax.set_yticks(ys); ax.set_yticklabels([o[0] for o in order], fontsize=8)
     ax.set_ylim(-1.6, 1.6)
-    ax.set_xlabel("达标时长 $t^*$ / h（同一网格 $N=400$）"); ax.set_xlim(0, 150)
+    ax.set_xlabel("烘干时长 $t^*$ / h（同一网格 $N=400$）"); ax.set_xlim(0, 150)
     ax.set_title("物性变化（①→②）延长干燥、尺寸收缩（②→③）缩短干燥")
     ax.grid(axis="x", ls=":", alpha=0.4)
     fig.tight_layout()
@@ -454,29 +454,29 @@ def fig_sensitivity():
     for y, (lab, dv, col, disc) in zip(ys, items):
         ax[0].barh(y, dv, color=col, alpha=0.9, height=0.64)
         ax[0].text(dv + (0.12 if dv >= 0 else -0.12), y, f"{dv:+.3f}",
-                   va="center", ha="left" if dv >= 0 else "right", fontsize=8, color=DARK)
+                   va="center", ha="left" if dv >= 0 else "right", fontsize=7, color=DARK)
     ax[0].axvline(0, color="#333333", lw=0.9)
-    ax[0].set_yticks(ys); ax[0].set_yticklabels([it[0] for it in items], fontsize=8.5)
-    ax[0].set_xlabel(f"达标时长变化 $\\Delta t^*$ / h（基线 {base:.4f} h）")
+    ax[0].set_yticks(ys); ax[0].set_yticklabels([it[0] for it in items], fontsize=7.5)
+    ax[0].set_xlabel(f"烘干时长变化 $\\Delta t^*$ / h（基线 {base:.4f} h）")
     ax[0].set_title("(a) 全部扰动情景"); ax[0].set_xlim(-4, 9)
     ax[0].grid(axis="x", ls=":", alpha=0.4)
     # (b) 小影响放大（|Δ|<0.4 h）：条形统一蓝色阶（上深下浅），零变化用零值标记
     small = [it for it in items if abs(it[1]) < 0.4]
     ys2 = np.arange(len(small))[::-1]
     blues = [CMAP_BLUES(v) for v in np.linspace(0.05, 0.85, len(small))]  # 深→浅
-    band = ax[1].axvspan(-0.02, 0.02, color="#ECECEC", lw=0, label="所设分辨判据 $\\pm0.02$ h")
+    band = ax[1].axvspan(-0.02, 0.02, color="#ECECEC", lw=0, label="时长变化筛选尺度 $\\pm0.02$ h")
     for k, (y, (lab, dv, _col, disc)) in enumerate(zip(ys2, small)):
-        note = "" if disc.strip() == "是" else "（未分辨）" if "未" in disc else "（临界）"
+        note = "" if abs(dv) >= 0.02 else "（低于筛选尺度）"
         if abs(dv) < 5e-5:                       # 零变化情景：零值标记，不画非零长度
             ax[1].plot(0, y, "|", color=DEEP, ms=12, mew=2)
-            ax[1].text(0.006, y, f"{dv:+.4f}{note}", va="center", ha="left", fontsize=7.5, color=DARK)
+            ax[1].text(0.006, y, f"{dv:+.4f}{note}", va="center", ha="left", fontsize=7, color=DARK)
         else:
             ax[1].barh(y, dv, color=blues[k], height=0.6)
             ax[1].text(dv + (0.004 if dv >= 0 else -0.004), y, f"{dv:+.4f}{note}",
-                       va="center", ha="left" if dv >= 0 else "right", fontsize=7.5, color=DARK)
+                       va="center", ha="left" if dv >= 0 else "right", fontsize=7, color=DARK)
     ax[1].axvline(0, color=CHAR, lw=0.9)
-    ax[1].set_yticks(ys2); ax[1].set_yticklabels([it[0] for it in small], fontsize=8)
-    ax[1].set_xlabel("达标时长变化 $\\Delta t^*$ / h（放大）")
+    ax[1].set_yticks(ys2); ax[1].set_yticklabels([it[0] for it in small], fontsize=7)
+    ax[1].set_xlabel("烘干时长变化 $\\Delta t^*$ / h（放大）")
     ax[1].set_title("(b) 小影响情景放大"); ax[1].set_xlim(-0.4, 0.2)
     ax[1].legend(handles=[band], fontsize=7, loc="upper right", framealpha=0.9)
     ax[1].grid(axis="x", ls=":", alpha=0.4)
@@ -526,7 +526,7 @@ def fig_relation():
              result=["全过程温度场", "与含水率场"], warm=False),
         dict(key="q4", title="问题四 · 尺寸收缩",
              model=["更新物性与", "收缩参考坐标"],
-             result=["收缩条件下含水率", "与达标时长"], warm=True),
+             result=["收缩条件下含水率", "与烘干时长"], warm=True),
     ]
     for c in cols:
         c["tw"], c["th"] = measure(c["title"], FS_T, "bold")
@@ -591,7 +591,7 @@ def fig_relation():
 
     # ---- 问题三（问题二结果节点下方）----
     cx2 = node_xy["q2"]["cx"]
-    q3_title, q3_body = "问题三 · 达标判定", "达标时长"
+    q3_title, q3_body = "问题三 · 烘干判定", "烘干时长"
     q3tw, q3th = measure(q3_title, FS_B, "bold")
     q3bw, q3bh = measure(q3_body, FS_B)
     q3w = max(q3tw, q3bw) + 2 * PADX
@@ -690,28 +690,78 @@ def fig_be_bdf():
                  if c != "T_ref_tightBDF")
     ax[0].plot(t, series["T_be_dt1.0"] - 273.15, "--", color=CORAL, lw=1.0, alpha=0.9,
                label="向后 Euler $\\Delta t=1$ s")
-    ax[0].set_xlabel("时间 $t$ / s", fontsize=10.5)
-    ax[0].set_ylabel("表面温度 / °C", fontsize=10.5)
-    ax[0].set_title("(a) 表面温度时程", fontsize=10.5)
+    ax[0].set_xlabel("时间 $t$ / s", fontsize=9.5)
+    ax[0].set_ylabel("表面温度 / °C", fontsize=9.5)
+    ax[0].set_title("(a) 表面温度时程", fontsize=9.5)
     ax[0].grid(ls=":", alpha=0.4); ax[0].tick_params(labelsize=9.5)
-    ax[0].legend(fontsize=8.5, loc="lower right")
+    ax[0].legend(fontsize=7.5, loc="lower right")
     ax[0].text(0.04, 0.94, f"各方法曲线基本重合\n（全程最大偏差 {spread:.1e} K，位于初始升温段）",
-               transform=ax[0].transAxes, fontsize=8.0, color=CHAR, va="top", linespacing=1.3)
+               transform=ax[0].transAxes, fontsize=7, color=CHAR, va="top", linespacing=1.3)
     # (b) 向后 Euler 终点差异随步长（双对数）+ 一阶参考线；BDF 差异单独标示
     ax[1].loglog(dts, errs, "o-", color=CORAL, ms=6, lw=1.7, label="向后 Euler（100 s 终点）")
     ref = errs[0] * (dts / dts[0])              # 一阶参考：误差 ∝ Δt
     ax[1].loglog(dts, ref, "--", color="#9AA0A6", lw=1.1, label="一阶参考斜率")
     ax[1].axhline(bdf_err, color=OCEAN, lw=1.6, ls="-.",
                   label=f"自适应 BDF（{bdf_ctrl}）")
-    ax[1].set_xlabel("时间步长 $\\Delta t$ / s", fontsize=10.5)
-    ax[1].set_ylabel("100 s 表面温度差 $|\\Delta T|$ / K", fontsize=10)
-    ax[1].set_title("(b) 相对紧容差 BDF 参考的差异", fontsize=10.5)
+    ax[1].set_xlabel("时间步长 $\\Delta t$ / s", fontsize=9.5)
+    ax[1].set_ylabel("100 s 表面温度差 $|\\Delta T|$ / K", fontsize=9)
+    ax[1].set_title("(b) 相对紧容差 BDF 参考的差异", fontsize=9.5)
     ax[1].set_xticks(dts); ax[1].get_xaxis().set_major_formatter(ticker.ScalarFormatter())
     ax[1].get_xaxis().set_minor_formatter(ticker.NullFormatter())
     ax[1].grid(which="both", ls=":", alpha=0.4); ax[1].tick_params(labelsize=9.5)
-    ax[1].legend(fontsize=8.2, loc="upper left")
+    ax[1].legend(fontsize=7.2, loc="upper left")
     fig.tight_layout()
     _save(fig, "fig_be_bdf")
+
+
+# ==========================================================================
+# 图：蒸发吸热影响评估（左：温度时程两种边界；右：烘干时长对照）
+# ==========================================================================
+def fig_latent():
+    hist = list(csv.DictReader((EXPORTS / "latent_heat_history_q23.csv").open(encoding="utf-8")))
+    t_h = np.array([float(r["t_s"]) for r in hist]) / 3600.0
+    Tc0 = np.array([float(r["T_center_eta0_C"]) for r in hist])
+    Ts0 = np.array([float(r["T_surface_eta0_C"]) for r in hist])
+    Tc1 = np.array([float(r["T_center_eta1_C"]) for r in hist])
+    Ts1 = np.array([float(r["T_surface_eta1_C"]) for r in hist])
+    diag = json.loads((EXPORTS / "latent_heat_diag_summary.json").read_text(encoding="utf-8"))
+    tstar = {}
+    for r in diag["rows"]:
+        tstar[(r["question"], r["scenario"][:3])] = float(r["t_star_h"])
+    q3_0, q3_1 = tstar[("q23", "η=0")], tstar[("q23", "η=1")]
+    q4_0, q4_1 = tstar[("q4", "η=0")], tstar[("q4", "η=1")]
+
+    fig, ax = plt.subplots(1, 2, figsize=(7.2, 3.0), gridspec_kw=dict(width_ratios=[1.35, 1.0]))
+    # (a) 温度时程（问题二三，η=0 实线 / η=1 虚线）
+    ax[0].plot(t_h, Ts0, "-", color=OCEAN, lw=1.6, label="表面 $\\eta{=}0$")
+    ax[0].plot(t_h, Tc0, "-", color=DEEP, lw=1.6, label="中心 $\\eta{=}0$")
+    ax[0].plot(t_h, Ts1, "--", color=CORAL, lw=1.6, label="表面 $\\eta{=}1$")
+    ax[0].plot(t_h, Tc1, "--", color=RED, lw=1.6, label="中心 $\\eta{=}1$")
+    ax[0].set_xlabel("时间 $t$ / h", fontsize=8.5)
+    ax[0].set_ylabel("温度 / °C", fontsize=8.5)
+    ax[0].set_title("(a) 温度时程（问题二、三，$N{=}400$）", fontsize=8.5)
+    ax[0].grid(ls=":", alpha=0.4); ax[0].tick_params(labelsize=8.5)
+    ax[0].legend(fontsize=7, ncol=2, loc="lower right")
+    # (b) 烘干时长对照
+    groups = ["问题三\n（附录3）", "问题四\n（附录4 收缩）"]
+    v0 = [q3_0, q4_0]; v1 = [q3_1, q4_1]
+    xpos = np.arange(2); wb = 0.36
+    ax[1].bar(xpos - wb / 2, v0, wb, color=OCEAN, label="$\\eta{=}0$ 无蒸发吸热")
+    ax[1].bar(xpos + wb / 2, v1, wb, color=CORAL, label="$\\eta{=}1$ 表面蒸发吸热")
+    for i in range(2):
+        ax[1].text(xpos[i] - wb / 2, v0[i] + 0.8, f"{v0[i]:.2f}", ha="center", fontsize=7, color=DARK)
+        ax[1].text(xpos[i] + wb / 2, v1[i] + 0.8, f"{v1[i]:.2f}", ha="center", fontsize=7, color=DARK)
+        ax[1].annotate(f"+{v1[i]-v0[i]:.2f} h", (xpos[i], max(v0[i], v1[i]) + 4.0),
+                       ha="center", fontsize=7, color="#8A4B12")
+    ax[1].set_xticks(xpos); ax[1].set_xticklabels(groups, fontsize=7)
+    ax[1].set_ylabel("烘干时长 $t^*$ / h", fontsize=8.5)
+    ax[1].set_ylim(0, max(v1) + 26)
+    ax[1].set_title("(b) 烘干时长对照", fontsize=8.5)
+    ax[1].tick_params(labelsize=8.5)
+    ax[1].legend(fontsize=7, loc="upper center", ncol=1, framealpha=0.9)
+    ax[1].grid(axis="y", ls=":", alpha=0.4)
+    fig.tight_layout()
+    _save(fig, "fig_latent")
 
 
 def main():
@@ -725,6 +775,7 @@ def main():
     fig_analytic_convergence()
     fig_convergence()
     fig_be_bdf()
+    fig_latent()
     fig_threecase()
     fig_sensitivity()
     print("完成。")

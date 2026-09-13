@@ -1,0 +1,82 @@
+{
+  "aux": {
+    "N": 400,
+    "interface": "integral",
+    "npts": 8,
+    "C0": 2.55,
+    "Lv_50C": 2379300.0,
+    "Lv_form": "fit to IAPWS saturation enthalpy difference"
+  },
+  "rows": [
+    {
+      "question": "q23",
+      "scenario": "η=0 无蒸发吸热",
+      "N": 400,
+      "Lv_form": "IAPWS 饱和焓差相关式",
+      "rho_s0": 275.0423,
+      "reached": true,
+      "t_star_h": 57.4741,
+      "note": "",
+      "T_surface_min_C": 28.0,
+      "q_evap_surface_W_m2_at_start": 1355.537
+    },
+    {
+      "question": "q23",
+      "scenario": "η=1 表面蒸发吸热",
+      "N": 400,
+      "Lv_form": "IAPWS 饱和焓差相关式",
+      "rho_s0": 275.0423,
+      "reached": true,
+      "t_star_h": 60.5182,
+      "note": "",
+      "T_surface_min_C": 10.3005,
+      "q_evap_surface_W_m2_at_start": 1355.537
+    },
+    {
+      "question": "q4",
+      "scenario": "η=0 无蒸发吸热",
+      "N": 400,
+      "Lv_form": "IAPWS 饱和焓差相关式",
+      "rho_s0": 278.7324,
+      "reached": true,
+      "t_star_h": 51.0921,
+      "note": "",
+      "T_surface_min_C": 28.0,
+      "q_evap_surface_W_m2_at_start": 1373.723
+    },
+    {
+      "question": "q4",
+      "scenario": "η=1 表面蒸发吸热",
+      "N": 400,
+      "Lv_form": "IAPWS 饱和焓差相关式",
+      "rho_s0": 278.7324,
+      "reached": true,
+      "t_star_h": 56.5051,
+      "note": "",
+      "T_surface_min_C": 14.8201,
+      "q_evap_surface_W_m2_at_start": 1373.723
+    }
+  ],
+  "load_check": {
+    "question": "q23",
+    "t_h": 3.0,
+    "C_s": 1.0081,
+    "C_env": 0.04977,
+    "T_s_C": 49.9663,
+    "rho_s0": 275.0423,
+    "Lv_at_Ts": 2379389.2,
+    "j_w_kg_m2_s": 0.00021086988662565164,
+    "q_evap_W_m2": 501.74,
+    "q_evap_over_h_C": 20.07,
+    "h_W_m2K": 25.0,
+    "note": "q_evap/h 为承担该热负荷的对流温差尺度，非实际温降或时长误差"
+  },
+  "dt_star": {
+    "q23": 3.04404156239773,
+    "q4": 5.41304605495543
+  },
+  "max_surface_depression_C": {
+    "q23": 24.450418481396923,
+    "q4": 19.290364363004244
+  }
+}

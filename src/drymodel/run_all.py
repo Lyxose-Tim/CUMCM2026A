@@ -232,8 +232,8 @@ def step_sensitivity(cfg, *, N=400):
     _log("步7 灵敏度（Q2/Q3，N=%d，每情景重新积分）" % N)
     s = sensitivity.run_scenarios(cfg, question="q23", N=N)
     L = ["# 灵敏度分析（S1–S6，Q2/Q3）\n",
-         "> 情景=人为范围，非置信区间；每情景重新积分。分辨判据：|Δt*| > 数值误差量级。\n",
-         f"基线 t* = {s['base_t_star_h']:.4f} h（N={N}）；数值误差量级 = {s['numeric_dt_star_h']} h\n",
+         "> 情景=设定范围；每情景重新积分。筛选尺度：|Δt*| > 0.02 h（取自验收配置 config.acceptance.t_star_h，用以突出主要变化，非数值误差量级）。\n",
+         f"基线 t* = {s['base_t_star_h']:.4f} h（N={N}）；时长变化筛选尺度 = {s['numeric_dt_star_h']} h\n",
          "| 情景 | t* (h) | Δt* (h) | 可分辨 |", "|---|---|---|---|"]
     for r in s["rows"]:
         L.append(f"| {r['label']} | {r['t_star_h']:.4f} | {r['dt_star_h']:+.4f} | "

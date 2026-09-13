@@ -1,0 +1,5 @@
+question,scenario,N,Lv_form,rho_s0,reached,t_star_h,note,T_surface_min_C,q_evap_surface_W_m2_at_start
+q23,η=0 无蒸发吸热,400,IAPWS 饱和焓差相关式,275.0423,True,57.4741,,28.0,1355.537
+q23,η=1 表面蒸发吸热,400,IAPWS 饱和焓差相关式,275.0423,True,60.5182,,10.3005,1355.537
+q4,η=0 无蒸发吸热,400,IAPWS 饱和焓差相关式,278.7324,True,51.0921,,28.0,1373.723
+q4,η=1 表面蒸发吸热,400,IAPWS 饱和焓差相关式,278.7324,True,56.5051,,14.8201,1373.723
