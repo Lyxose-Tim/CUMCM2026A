@@ -3,8 +3,8 @@
 一维径向（中截面）有效扩散—导热模型的 Q1–Q4 建模求解代码。实现严格对齐冻结方案
 《建模方案v1.1/A题_建模方案.md》v1.2，参数唯一来源为 [`config/A题_config.yaml`](config/A题_config.yaml)。
 
-> **状态**：候选计算 + 验证阶段（方案 §9.4 步 0–3）。生产配置 D12 **待用户授权**；
-> 正式 result1–4 与表 1–6 的官方数值在授权后由生产续算生成。**四位小数显示 ≠ 末位精度保证。**
+> **状态**：D12 生产配置已授权并完成正式生产（final_N 1600/800/800、integral 8 点、BDF rtol 1e-8）。
+> 正式 result1–4 与表 1–6 的官方数值已由生产续算生成（见 `outputs/`、`reports/production_receipt.md`）。**四位小数显示 ≠ 末位精度保证。**
 
 ## 环境
 
@@ -22,7 +22,7 @@ pip install -e .        # 或 pip install -r requirements.txt 后设 PYTHONPATH=
 | `config/A题_config.yaml` | 冻结配置（复制自 `建模方案v1.1/`，唯一真值源） |
 | `tests/` | pytest 单元测试 |
 | `cache/candidates/` | 候选计算缓存（不入库） |
-| `outputs/` | 正式 result1–4（待 D12 授权后生成） |
+| `outputs/` | 正式 result1–4（已生成） |
 | `exports/` | 供 MATLAB 读取的 CSV |
 | `reports/` | 验证 / 收敛 / 灵敏度 / 状态报告 |
 | `figs/`, `matlab/` | matplotlib 图 与 MATLAB 出图脚本 |
@@ -72,4 +72,12 @@ python -c "from drymodel import config,verify; verify.run_v15(config.load_config
 
 ## AI 使用
 
-代码实现由 Claude Code 辅助完成；方案设计与决策见 `建模方案v1.1/`。正式数值与论文文本须参赛队人工核验。
+本项目在完成过程中使用了以下 AI 工具（完整声明与使用详情见 [`AI工具使用声明.md`](AI工具使用声明.md)）：
+
+| AI 工具 | 版本/型号 |
+|---|---|
+| Claude 及 Claude Code | Fable 5.1、Opus 4.8 |
+| ChatGPT | GPT6-Astra |
+| OpenAI Codex | GPT5.6 |
+
+主要用于赛题与资料梳理、文献检索与 DOI 核对、模型与数值方法审阅、程序实现与调试、烘干判据与结果呈现检查，以及文字表达润色。模型建立、方程与边界条件选取、烘干终止判据设计、数值方案确定与结论判断由参赛队主导；AI 生成或辅助的内容经参赛队核对后方可采用，文中数值结果均由统一程序在既定环境下运行得到（复现命令、配置与源程序见附录）。方案设计与决策见 `建模方案v1.1/`。
