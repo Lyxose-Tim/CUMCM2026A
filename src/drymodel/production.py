@@ -78,9 +78,13 @@ def _single_trajectory(cfg, question, fc, moving):
 
 def gate_production(question, det, cmax_at_tsample, thr):
     """生产失败阻断门（可单测）：续算回穿、严格合格末行。任一不满足抛 RuntimeError。"""
-    if not det.post_ok:
+    if not np.isfinite(thr) or thr <= 0:
+        raise RuntimeError(f"{question} 生产失败：阈值须有限且为正")
+    if (not det.post_ok or not np.isfinite(det.post_max_cmax)
+            or det.post_max_cmax > thr + 1e-9):
         raise RuntimeError(f"{question} 生产失败：续算回穿检查未过（post_max_cmax={det.post_max_cmax}）")
-    if det.t_sample is None or cmax_at_tsample >= thr:
+    if (det.t_sample is None or not np.isfinite(det.t_sample)
+            or not np.isfinite(cmax_at_tsample) or not 0 < cmax_at_tsample < thr):
         raise RuntimeError(f"{question} 生产失败：严格合格末行 t_sample={det.t_sample} 实测 C_max≥{thr}")
 
 

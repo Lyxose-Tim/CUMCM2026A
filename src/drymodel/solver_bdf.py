@@ -28,7 +28,11 @@ class BDFResult:
 
     def eval(self, t):
         """在已积分区间内用稠密输出求值（分段）。**区间外显式报错，不静默外插**。"""
+        if not self.ok or not self.segments:
+            raise ValueError(f"无可用的成功 BDF 轨迹：{self.message}")
         t = np.atleast_1d(np.asarray(t, dtype=np.float64))
+        if t.ndim != 1 or not np.all(np.isfinite(t)):
+            raise ValueError("BDF 求值时刻须为有限标量或一维数组")
         out = np.empty((t.size, self.segments[0].y.shape[0]))
         for k, ti in enumerate(t):
             seg = self._find_segment(ti)
@@ -39,7 +43,7 @@ class BDFResult:
     def t_start(self) -> float:
         return float(self.segments[0].t[0])
 
-    def _find_segment(self, ti, tol=1e-6):
+    def _find_segment(self, ti, tol=0.0):
         for seg in self.segments:
             if seg.t[0] - tol <= ti <= seg.t[-1] + tol:
                 return seg
@@ -69,18 +73,35 @@ def _cmax_event(op, threshold):
 def integrate_bdf(op, y0, t0, t_end, bdf, *, breakpoints=(14400.0,),
                   threshold=None, air_data_end=14400.0):
     """从 t0 积分到 t_end，断点分段重启。若给 threshold 则设终端事件（Cmax 下穿）。"""
+    t0, t_end, air_data_end = float(t0), float(t_end), float(air_data_end)
+    if not np.all(np.isfinite([t0, t_end, air_data_end])) or t_end <= t0:
+        raise ValueError("BDF 要求有限 t0<t_end 和 air_data_end")
+    y = np.asarray(y0, dtype=np.float64).copy()
+    n = op.N + 1
+    expected = 2 * n + int(bool(getattr(op, "augmented", False)))
+    if y.ndim != 1 or y.size != expected:
+        raise ValueError(f"BDF 初态应为长度 {expected} 的一维数组")
+    if not np.all(np.isfinite(y)) or np.any(y[:2*n] <= 0):
+        raise ValueError("BDF 初态必须有限且 C>0、T>0；辅助通量态允许零或负值")
     rtol = float(bdf["rtol"])
     atol = _atol_vector(op, bdf)
     max_step_data = float(bdf["max_step_data_s"])
     max_step_after = float(bdf["max_step_after_s"])
+    controls = np.concatenate(([rtol, max_step_data, max_step_after], atol))
+    if not np.all(np.isfinite(controls)) or np.any(controls <= 0):
+        raise ValueError("BDF 容差和最大步长须为有限正数")
+    if threshold is not None and (not np.isfinite(threshold) or threshold <= 0):
+        raise ValueError("BDF threshold 须为有限正数")
     S = jac_sparsity(op.N, getattr(op, "augmented", False))
 
     # 段边界：t0、区间内断点、t_end
-    bpts = sorted(b for b in breakpoints if t0 < b < t_end)
+    breakpoints = [float(b) for b in breakpoints]
+    if not all(np.isfinite(b) for b in breakpoints):
+        raise ValueError("BDF breakpoints 须为有限时刻")
+    bpts = sorted({b for b in [*breakpoints, air_data_end] if t0 < b < t_end})
     edges = [t0] + bpts + [t_end]
 
     segments = []
-    y = np.asarray(y0, dtype=np.float64).copy()
     t_cross = None
     y_cross = None
     events = _cmax_event(op, threshold) if threshold is not None else None
@@ -93,6 +114,10 @@ def integrate_bdf(op, y0, t0, t_end, bdf, *, breakpoints=(14400.0,),
         if not sol.success:
             return BDFResult(segments=segments, t_end=a, y_end=y, ok=False,
                              message=f"BDF 段 [{a},{b}] 失败：{sol.message}")
+        # 只检验实际接受态，允许 Newton 试探值暂时越界；不裁剪求解状态。
+        if not np.all(np.isfinite(sol.y)) or np.any(sol.y[:2*n] <= 0):
+            return BDFResult(segments=segments, t_end=a, y_end=y, ok=False,
+                             message=f"BDF 段 [{a},{b}] 接受态无效：须有限且 C>0、T>0")
         segments.append(sol)
         y = sol.y[:, -1].copy()
         # 事件命中（terminal）→ 记录并停止

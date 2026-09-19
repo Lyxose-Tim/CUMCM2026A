@@ -1,4 +1,4 @@
-"""统一两份检查器：src/drymodel/config_check 与 建模方案v1.1/config_check 行为一致。
+"""统一两份检查器：src/drymodel/config_check 与 paper/code/config_check 行为一致。
 
 对基例 + 全部负例断言两者接受/拒绝完全一致（W2）。
 """
@@ -11,8 +11,8 @@ import yaml
 from drymodel import config as cfgmod
 from drymodel import config_check as src_cc
 
-# 载入独立交付版检查器（自包含）
-_STANDALONE = cfgmod.PROJECT_ROOT / "建模方案v1.1" / "config_check.py"
+# 核对实际论文交付副本；建模方案v1.1 为保留的赛时材料，不是运行入口。
+_STANDALONE = cfgmod.PROJECT_ROOT / "paper" / "code" / "config_check.py"
 _spec = importlib.util.spec_from_file_location("_standalone_config_check", _STANDALONE)
 std_cc = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(std_cc)
