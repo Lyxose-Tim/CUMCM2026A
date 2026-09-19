@@ -1,0 +1,1243 @@
+{
+  "schema_version": 2,
+  "started_at_utc": "2026-09-19T03:57:39.919175+00:00",
+  "provenance": {
+    "config_path": "E:\\Lyxose\\Documents\\数模国赛\\2026CUMCM\\config\\A题_config.yaml",
+    "config_file_sha256": "ee73bc0aff14273f71fc832fd1c361ad33f507add199a9ad57a88646bebfee73",
+    "effective_config_sha256": "0a85f68027f98422713519cdaedd90107401c04e756b7b62fc67da0b10da9bba",
+    "effective_config": {
+      "version": "1.2",
+      "revision": "定点返修 2026-09-12",
+      "status_note": "配置解析通过 ≠ 模型验证通过，更 ≠ 公式—配置一致；D12 生产配置由适用于该问的数值检验选定并登记，V-8/V-9 属导出后文件验收（非 D12 前置）；生产经 D12 验收授权，production.approved=true（config_id 见 production；final_N 1600/800/800）",
+      "geometry": {
+        "R0": {
+          "value": 0.02,
+          "unit": "m",
+          "source": "题面Q1"
+        },
+        "L": {
+          "value": 0.25,
+          "unit": "m",
+          "source": "题面Q1",
+          "note": "固定，H01"
+        }
+      },
+      "initial": {
+        "T0": {
+          "value": 28.0,
+          "unit": "degC",
+          "source": "题面Q1"
+        },
+        "C0": {
+          "value": 2.55,
+          "unit": "kg/kg",
+          "source": "题面Q1"
+        }
+      },
+      "bc": {
+        "h": {
+          "value": 25.0,
+          "unit": "W/(m^2 K)",
+          "source": "附录2",
+          "reuse_q2_q4": true,
+          "reuse_note": "跨问沿用为额外有效系数假设（D04, H07）"
+        },
+        "hm": {
+          "value": 8e-07,
+          "unit": "m/s",
+          "source": "附录2",
+          "reuse_q2_q4": true,
+          "reuse_note": "同上"
+        },
+        "mass_basis": "effective_C",
+        "heat_latent": false
+      },
+      "air": {
+        "file": "附件1.xlsx",
+        "read_only": true,
+        "interp": "linear",
+        "extrapolation": "hold_window_mean",
+        "window_s": [
+          10800,
+          14400
+        ],
+        "breakpoints_s": [
+          14400
+        ],
+        "sensitivity": {
+          "dT_degC": 0.39,
+          "dC": 0.0011
+        }
+      },
+      "radius": {
+        "file": "附件2.xlsx",
+        "interp": "linear",
+        "after_72h": "hold_last",
+        "inside_tol": 1e-12
+      },
+      "props": {
+        "q1": {
+          "rho": {
+            "value": 820.0,
+            "unit": "kg/m^3",
+            "source": "附录2"
+          },
+          "cp": {
+            "value": 2600.0,
+            "unit": "J/(kg K)",
+            "source": "附录2"
+          },
+          "k": {
+            "value": 0.36,
+            "unit": "W/(m K)",
+            "source": "附录2"
+          },
+          "D_formula": "7e-9*exp(-0.89/C)"
+        },
+        "q23": {
+          "rho_formula": "650+128*C",
+          "cp_formula": "1450+2736*C/(C+1)",
+          "k_formula": "0.21+0.38*C/(C+1)",
+          "D_formula": "2.4e-3*exp(-0.45/C)*exp(-3850/T_K)",
+          "source": "附录3"
+        },
+        "q4": {
+          "rho_formula": "760+90*C",
+          "cp_formula": "1850+2150*C/(C+1)",
+          "k_formula": "0.12+0.20*C/(C+1)",
+          "D_formula": "4.2e-4*exp(-0.30/C)*exp(-3850/T_K)",
+          "source": "附录4"
+        },
+        "rho_role": "effective_heat_capacity",
+        "rho_s0": "rho(C0)/(1+C0)",
+        "energy_form": "effective",
+        "guards": {
+          "C_floor_for_exp": 1e-300,
+          "exp_underflow_arg": -700.0
+        }
+      },
+      "numerics": {
+        "scheme_baseline": "backward_euler",
+        "scheme_production_candidate": "BDF",
+        "interface": "harmonic",
+        "quadrature": {
+          "interface_points": 8,
+          "interface_points_check": 16
+        },
+        "N_default": 200,
+        "N_verify": [
+          100,
+          200,
+          400,
+          800
+        ],
+        "dt_be_s": 1.0,
+        "dt_be_verify_s": [
+          1.0,
+          0.5,
+          0.25
+        ],
+        "per_question": {
+          "q1": {
+            "candidate_N": [
+              200,
+              400,
+              800,
+              1600,
+              3200
+            ],
+            "final_N": 1600,
+            "applies_event": false,
+            "checks": [
+              "V-1",
+              "V-2",
+              "V-3(1/10/100 s 表面)"
+            ]
+          },
+          "q23": {
+            "candidate_N": [
+              200,
+              400,
+              800,
+              1600
+            ],
+            "final_N": 800,
+            "applies_event": true,
+            "checks": [
+              "V-3(长时表点/表面通量/t*)",
+              "V-4a/b/c",
+              "V-6",
+              "V-11"
+            ]
+          },
+          "q4": {
+            "candidate_N": [
+              200,
+              400,
+              800,
+              1600
+            ],
+            "final_N": 800,
+            "applies_event": true,
+            "checks": [
+              "V-3(晚期剖面/固定厘米重构)",
+              "V-4a/b/c(含 1/R)",
+              "V-10",
+              "V-13"
+            ]
+          }
+        },
+        "candidate": {
+          "interface": "integral",
+          "integral_npts": 8,
+          "stage_N": {
+            "q1": 1600,
+            "q23": 800,
+            "q4": 800
+          },
+          "t_cap_h": {
+            "q23": 90.0,
+            "q4": 200.0
+          }
+        },
+        "picard": {
+          "tol_dC": 1e-09,
+          "tol_dT_K": 1e-07,
+          "tol_res_C_rel": 1e-10,
+          "tol_res_T_K_per_s": 1e-08,
+          "max_iter": 30
+        },
+        "retry": {
+          "halvings_max": 10,
+          "dt_min_s": 0.001,
+          "resample_rule": "减步后在原 1 s 网格点上重新对齐（子步终点落在整数秒），断点处强制落点"
+        },
+        "bdf": {
+          "rtol": 1e-08,
+          "atol_C": 1e-11,
+          "atol_T_K": 1e-08,
+          "atol_I": 1e-11,
+          "max_step_data_s": 60.0,
+          "max_step_after_s": 600.0,
+          "restart_at_breakpoints": true,
+          "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+        },
+        "augmented_flux_state": {
+          "enabled_for": [
+            "V-4a(BDF)"
+          ],
+          "init_I": 0.0,
+          "event_components": "C_only"
+        },
+        "envelope_tol": {
+          "C": 1e-09,
+          "T_K": 1e-06
+        }
+      },
+      "q4": {
+        "kinematics": "affine",
+        "frame": "reference_x",
+        "mesh_velocity": "solid",
+        "axial": "fixed_L"
+      },
+      "criterion": {
+        "applies_to": [
+          "q23",
+          "q4"
+        ],
+        "threshold": 0.15,
+        "domain": "full_unrounded",
+        "event": "continuous_root_on_reconstructed_field",
+        "post_margin_s": 600,
+        "t_sample_rule": "首个 60 s 网格点使实测（未舍入）max C < 0.15",
+        "t_safe": {
+          "enabled": false,
+          "rule": "首个时刻使 max C < 0.15 - delta；delta 由生产配置与更精细对照估计（数值裕量，非认证）"
+        }
+      },
+      "output": {
+        "decimals": 4,
+        "number_format": "0.0000",
+        "excel_max_rows_including_header": 1048576,
+        "result1": {
+          "t_s": "1..1800",
+          "cols_cm": "0..2.0 step 0.1",
+          "sheets": [
+            "温度",
+            "水分浓度"
+          ]
+        },
+        "result2": {
+          "t_end": "until_dry_1s",
+          "cols_cm": "0..2.0 step 0.1",
+          "sheets": [
+            "温度",
+            "水分浓度"
+          ]
+        },
+        "result2_test_modes": [
+          "3h",
+          "72h"
+        ],
+        "result3": {
+          "t_s": "60..t_sample step 60",
+          "cols_cm": "0..2.0 step 0.1",
+          "sheet": "Sheet1"
+        },
+        "result4": {
+          "t_s": "60..t_sample step 60",
+          "cols_cm": "0..1.9 step 0.1",
+          "surface_col": "药材表面",
+          "outside_fill": "blank",
+          "sheet": "Sheet1"
+        },
+        "a1_text": "时间\\到药材中心的距离"
+      },
+      "acceptance": {
+        "table_points": {
+          "dT_degC": 0.01,
+          "dC": 0.0005
+        },
+        "t_star_h": 0.02,
+        "early_rows": {
+          "times_s": [
+            1,
+            10,
+            100
+          ],
+          "rule": "同源轨迹，误差预算必须覆盖；不得自动豁免"
+        },
+        "analytic_spatial": {
+          "rule": "半离散精确解对照，二阶收敛",
+          "tol_factor": 0.0002
+        },
+        "analytic_temporal": {
+          "rule": "固定细网格，BE dt=1/0.5/0.25 s 一阶收敛"
+        },
+        "discrete_balance_rel": 1e-12,
+        "flux_integral": {
+          "be": {
+            "method": "trapezoid_vs_cumulative",
+            "tol_rel": 0.0001,
+            "order": "O(dt)",
+            "note": "减步后用各子步实际步长权重，不用固定 1 s"
+          },
+          "bdf": {
+            "method": "independent_quadrature_refine",
+            "tol_rel_factor_of_rtol": 10.0
+          }
+        },
+        "energy_residual": {
+          "unit": "W/m",
+          "abs_W_per_m": 1e-06,
+          "rel": 1e-08,
+          "ref_scale": "2*pi*R(t)*h*max(dT_ref, 1 K)"
+        }
+      },
+      "production": {
+        "approved": true,
+        "config_id": "D12-20260912-N1600.800.800-integral8pt-bdf1e-8",
+        "note": "D12 已授权：final_N 由各问场点误差选定（reports/D12_config_application.md、D12_evidence.md），config_id 唯一可追溯"
+      },
+      "storage": {
+        "full_field_cache": false,
+        "checkpoint_interval_s": 3600,
+        "keep_profiles_at": "输出采样时刻（1 s/60 s 行）与表格时刻",
+        "keep_scalars": [
+          "Cbar",
+          "Cmax",
+          "argmax",
+          "C_surface",
+          "T_surface",
+          "flux",
+          "RM",
+          "RE"
+        ],
+        "scenario_keep_full_trajectory": false
+      }
+    },
+    "code_sha256": {
+      "src/drymodel/__init__.py": "149a3d1bcec602a112f224e4d90ac1c756bf45d049ba25741d1c5db3d5637154",
+      "src/drymodel/be_bdf_diag.py": "a5c9637277fc990a7f7c77034058a7d3413af46c1085a183580bb81382671b4f",
+      "src/drymodel/config.py": "b9b14a616a96bd1615ebdeece3dab3dddea53c21e39e3907a12c1bc6fab32c26",
+      "src/drymodel/config_check.py": "1cc4b139896b1129b6075888834a87dfe9cb044b8cc30228bdec1d04835624a0",
+      "src/drymodel/criterion.py": "f372d75e036af03637298dd5c3fc2e30453877e6ebaffce98f6ce502200eaa29",
+      "src/drymodel/d12_evidence.py": "616461201b539db5b4d053baad1430ee7637e1ede2fd5ad8f5abe78d90b6e0cd",
+      "src/drymodel/d12_prep.py": "b65bdbada105e9d2e4089967368379558777b46c594778045eef51c03162210d",
+      "src/drymodel/data_io.py": "8faa9c772f2c4a26ca797e7112e73247dec014a964886d81b424f31f56183206",
+      "src/drymodel/grid.py": "25b1393afb099d21cffee39239df004f9fe3a2936701a30e46ec30099207725f",
+      "src/drymodel/latent_heat_diag.py": "93f7c59cebb2ee9a59b91b2f84c3a7a31907e37c49a02b8ff321dcaf25047770",
+      "src/drymodel/operators.py": "082e4ceadaa77a84a02674d0111ff9be251d1a0a11a1b9d435021b5e24bac96a",
+      "src/drymodel/paper.py": "afbca168684d59b7141bd4e2e0025902997af1173c921a52128aa2fa8f60f92a",
+      "src/drymodel/paper_figs.py": "73956e39b3ba77b695c9b8cef547b98a262d1d5033b144bc61a42b0397c3ae8b",
+      "src/drymodel/paper_latex.py": "535e3215275a4da96f93ad7e2c56c967e06e3fa08427df6145f524d093b49993",
+      "src/drymodel/plots.py": "ed414e27886abaff77edfefa234f13970380b1b2add34a6cee7afeabda595191",
+      "src/drymodel/postprocess.py": "32be4ebbab5fe2e2737e44794609e0d8e8094047e1b2a8229baa0a9ca442dc2d",
+      "src/drymodel/production.py": "6a9975ea000b0965c6a76bb6f24572c024deedc57b563af0fe0781337f9381d4",
+      "src/drymodel/props.py": "7a281f2c0fdc8f788ef8acbb8f7dfaa272a8fe46af5a50c203402b7ddc1727b5",
+      "src/drymodel/run_all.py": "418659ed2881f11cc6086ef9f6d9c98dea2c764b3a542c04292f2adee36641fc",
+      "src/drymodel/runners.py": "ecdf687030ecc817bcf20e050f0a4cb0a244f17dc52fef57c73706cadb5d255c",
+      "src/drymodel/sensitivity.py": "a98737ac5b714c5eb96570d5a13ebed1ba9d4a9f370eff8564a3aa9781303fad",
+      "src/drymodel/solver_bdf.py": "71fc0a6be97dbd4c4366c68851b376462945b392bcfe415d0d22c65c9f3d33eb",
+      "src/drymodel/solver_be.py": "d6d475e8b89f05d34e4551a68c3f8db39238e35cb42f27f442d6a5460865c861",
+      "src/drymodel/verify.py": "9963bb6f5a3d2ca578593f8314618454cd30e594ffa8daa81bb6e9ca416f0ee6",
+      "src/drymodel/writers.py": "d47bb6bccafd2b4078bc01afebaa5f73cc4e3761b41795cc400c483d6f1e7a86"
+    },
+    "input_sha256": {
+      "E:\\Lyxose\\Documents\\数模国赛\\2026CUMCM\\附件\\附件1.xlsx": "7ef32870abeef420b89560b2530ff60dfe4255917805151d89988d0311af9dd7",
+      "E:\\Lyxose\\Documents\\数模国赛\\2026CUMCM\\附件\\附件2.xlsx": "5563acbfa4b4afb10cc6c03e2207e5369bf39da27576672aff14cc5c32e704af"
+    },
+    "software": {
+      "python": "3.13.9",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "numpy": "2.3.5",
+      "scipy": "1.16.3",
+      "PyYAML": "6.0.3",
+      "openpyxl": "3.1.5"
+    }
+  },
+  "production_config": {
+    "q1": {
+      "N": 1600,
+      "interface": "integral",
+      "npts": 8,
+      "t_cap_h": 200.0
+    },
+    "q23": {
+      "N": 800,
+      "interface": "integral",
+      "npts": 8,
+      "t_cap_h": 90.0
+    },
+    "q4": {
+      "N": 800,
+      "interface": "integral",
+      "npts": 8,
+      "t_cap_h": 200.0
+    }
+  },
+  "all_ok": true,
+  "complete": true,
+  "flux": {
+    "q23": {
+      "800": {
+        "rel": 1.058032581491483e-08,
+        "rel_refine": 0.0,
+        "tol_10x_rtol": 1e-07,
+        "tolerance_factor_of_rtol": 10.0,
+        "tol_rel": 1e-07,
+        "ok": true,
+        "pass_balance": true,
+        "pass_refinement": true,
+        "I_quad": 2.425695391309637,
+        "I_quad_refined": 2.425695391309637,
+        "dCbar": -2.4256953656449896,
+        "quadrature_error_estimates": [
+          2.6930628741590825e-14,
+          2.6930628741590825e-14
+        ],
+        "quadrature_epsrel": [
+          1e-09,
+          1.0000000000000001e-11
+        ],
+        "quadrature_warnings": [],
+        "quadrature_intervals": 4081,
+        "moving": false,
+        "N": 800,
+        "t_end_s": 206906.49683318622,
+        "configuration": {
+          "N": 800,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "note": "独立连续通量自适应求积，收紧求积容差复核；非同一 RHS 代数恒等式"
+      },
+      "1600": {
+        "rel": 1.1311757557994645e-08,
+        "rel_refine": 0.0,
+        "tol_10x_rtol": 1e-07,
+        "tolerance_factor_of_rtol": 10.0,
+        "tol_rel": 1e-07,
+        "ok": true,
+        "pass_balance": true,
+        "pass_refinement": true,
+        "I_quad": 2.4256931509657904,
+        "I_quad_refined": 2.4256931509657904,
+        "dCbar": -2.425693123526938,
+        "quadrature_error_estimates": [
+          2.6930603868777624e-14,
+          2.6930603868777624e-14
+        ],
+        "quadrature_epsrel": [
+          1e-09,
+          1.0000000000000001e-11
+        ],
+        "quadrature_warnings": [],
+        "quadrature_intervals": 4105,
+        "moving": false,
+        "N": 1600,
+        "t_end_s": 206906.49683318622,
+        "configuration": {
+          "N": 1600,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "note": "独立连续通量自适应求积，收紧求积容差复核；非同一 RHS 代数恒等式"
+      }
+    },
+    "q4": {
+      "800": {
+        "rel": 1.1072952343326485e-08,
+        "rel_refine": 0.0,
+        "tol_10x_rtol": 1e-07,
+        "tolerance_factor_of_rtol": 10.0,
+        "tol_rel": 1e-07,
+        "ok": true,
+        "pass_balance": true,
+        "pass_refinement": true,
+        "I_quad": 2.4315961554071754,
+        "I_quad_refined": 2.4315961554071754,
+        "dCbar": -2.4315961284822274,
+        "quadrature_error_estimates": [
+          2.699614038323064e-14,
+          2.699614038323064e-14
+        ],
+        "quadrature_epsrel": [
+          1e-09,
+          1.0000000000000001e-11
+        ],
+        "quadrature_warnings": [],
+        "quadrature_intervals": 5052,
+        "moving": true,
+        "N": 800,
+        "t_end_s": 183931.30288298926,
+        "configuration": {
+          "N": 800,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "note": "独立连续通量自适应求积，收紧求积容差复核；非同一 RHS 代数恒等式"
+      },
+      "1600": {
+        "rel": 9.115131977777115e-09,
+        "rel_refine": 0.0,
+        "tol_10x_rtol": 1e-07,
+        "tolerance_factor_of_rtol": 10.0,
+        "tol_rel": 1e-07,
+        "ok": true,
+        "pass_balance": true,
+        "pass_refinement": true,
+        "I_quad": 2.4315956727878025,
+        "I_quad_refined": 2.4315956727878025,
+        "dCbar": -2.4315956506234873,
+        "quadrature_error_estimates": [
+          2.699613502507913e-14,
+          2.699613502507913e-14
+        ],
+        "quadrature_epsrel": [
+          1e-09,
+          1.0000000000000001e-11
+        ],
+        "quadrature_warnings": [],
+        "quadrature_intervals": 5017,
+        "moving": true,
+        "N": 1600,
+        "t_end_s": 183931.30288298926,
+        "configuration": {
+          "N": 1600,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "note": "独立连续通量自适应求积，收紧求积容差复核；非同一 RHS 代数恒等式"
+      }
+    }
+  },
+  "sampling": {
+    "q23": {
+      "t_cross_s": 206906.49683318622,
+      "t_sample_s": 206940.0,
+      "regular_step_s": 1,
+      "event_row_included": true,
+      "post_ok": true,
+      "post_max_cmax": 0.15
+    },
+    "q4": {
+      "t_cross_s": 183931.30288298926,
+      "t_sample_s": 183960.0,
+      "regular_step_s": 60,
+      "event_row_included": true,
+      "post_ok": true,
+      "post_max_cmax": 0.15
+    },
+    "q1": {
+      "start_s": 1,
+      "end_s": 1800,
+      "regular_step_s": 1,
+      "event_row_included": false
+    }
+  },
+  "q1": {
+    "q": "q1",
+    "N_final": 1600,
+    "n_rows": 1800,
+    "items": {
+      "spatial": {
+        "maxC": [
+          4.6929113016513924e-05,
+          1.0,
+          2.0
+        ],
+        "maxT": [
+          0.00022319137622162089,
+          1500.0,
+          2.0
+        ],
+        "vs": "N=1600 vs 3200",
+        "baseline": {
+          "N": 1600,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "comparison": {
+          "N": 3200,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "applicable": true,
+        "pass_C": true,
+        "pass_T": true,
+        "pass": true
+      },
+      "time": {
+        "maxC": [
+          2.473136975211787e-07,
+          3.0,
+          2.0
+        ],
+        "maxT": [
+          0.0002278715417105559,
+          1500.0,
+          2.0
+        ],
+        "vs": "rtol 1e-08 vs 1e-10；绝对容差×0.01；max_step 60/600 s vs 30/300 s",
+        "baseline": {
+          "N": 1600,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "comparison": {
+          "N": 1600,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-10,
+            "atol_C": 9.999999999999999e-14,
+            "atol_T_K": 1e-10,
+            "atol_I": 9.999999999999999e-14,
+            "max_step_data_s": 30.0,
+            "max_step_after_s": 300.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "applicable": true,
+        "pass_C": true,
+        "pass_T": true,
+        "pass": true
+      },
+      "interface": {
+        "maxC": [
+          2.0450308113595383e-13,
+          1387.0,
+          2.0
+        ],
+        "maxT": [
+          5.645119927066844e-10,
+          1740.0,
+          2.0
+        ],
+        "vs": "8点 vs 16点（integral）",
+        "baseline": {
+          "N": 1600,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "comparison": {
+          "N": 1600,
+          "interface": "integral",
+          "npts": 16,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "applicable": true,
+        "pass_C": true,
+        "pass_T": true,
+        "pass": true
+      }
+    },
+    "baseline": {
+      "N": 1600,
+      "interface": "integral",
+      "npts": 8,
+      "bdf": {
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+      }
+    },
+    "tolC": 0.0005,
+    "tolT": 0.01,
+    "event_baseline": null,
+    "pass": true
+  },
+  "q23": {
+    "q": "q23",
+    "N_final": 800,
+    "n_rows": 206941,
+    "items": {
+      "spatial": {
+        "maxC": [
+          0.00015488214546754975,
+          1.0,
+          2.0
+        ],
+        "maxT": [
+          0.00020118526515489066,
+          1080.0,
+          2.0
+        ],
+        "vs": "N=800 vs 1600",
+        "baseline": {
+          "N": 800,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "comparison": {
+          "N": 1600,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "applicable": true,
+        "pass_C": true,
+        "pass_T": true,
+        "pass": true,
+        "event": {
+          "baseline": {
+            "covered": true,
+            "t_star_s": 206906.49683317405,
+            "interval_s": [
+              0.0,
+              206940.0
+            ]
+          },
+          "comparison": {
+            "covered": true,
+            "t_star_s": 206906.41693976455,
+            "interval_s": [
+              0.0,
+              206940.0
+            ]
+          },
+          "delta_h": 2.2192613752041425e-05,
+          "tol_h": 0.02,
+          "pass": true
+        }
+      },
+      "time": {
+        "maxC": [
+          4.959378918645285e-07,
+          7621.0,
+          2.0
+        ],
+        "maxT": [
+          0.00022299654347079922,
+          10380.0,
+          2.0
+        ],
+        "vs": "rtol 1e-08 vs 1e-10；绝对容差×0.01；max_step 60/600 s vs 30/300 s",
+        "baseline": {
+          "N": 800,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "comparison": {
+          "N": 800,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-10,
+            "atol_C": 9.999999999999999e-14,
+            "atol_T_K": 1e-10,
+            "atol_I": 9.999999999999999e-14,
+            "max_step_data_s": 30.0,
+            "max_step_after_s": 300.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "applicable": true,
+        "pass_C": true,
+        "pass_T": true,
+        "pass": true,
+        "event": {
+          "baseline": {
+            "covered": true,
+            "t_star_s": 206906.49683317405,
+            "interval_s": [
+              0.0,
+              206940.0
+            ]
+          },
+          "comparison": {
+            "covered": true,
+            "t_star_s": 206906.49689645,
+            "interval_s": [
+              0.0,
+              206940.0
+            ]
+          },
+          "delta_h": 1.757665207454314e-08,
+          "tol_h": 0.02,
+          "pass": true
+        }
+      },
+      "interface": {
+        "maxC": [
+          5.405518079815153e-07,
+          3781.0,
+          2.0
+        ],
+        "maxT": [
+          0.00020830582190001223,
+          10380.0,
+          2.0
+        ],
+        "vs": "8点 vs 16点（integral）",
+        "baseline": {
+          "N": 800,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "comparison": {
+          "N": 800,
+          "interface": "integral",
+          "npts": 16,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "applicable": true,
+        "pass_C": true,
+        "pass_T": true,
+        "pass": true,
+        "event": {
+          "baseline": {
+            "covered": true,
+            "t_star_s": 206906.49683317405,
+            "interval_s": [
+              0.0,
+              206940.0
+            ]
+          },
+          "comparison": {
+            "covered": true,
+            "t_star_s": 206906.49804589996,
+            "interval_s": [
+              0.0,
+              206940.0
+            ]
+          },
+          "delta_h": 3.368683084974893e-07,
+          "tol_h": 0.02,
+          "pass": true
+        }
+      }
+    },
+    "baseline": {
+      "N": 800,
+      "interface": "integral",
+      "npts": 8,
+      "bdf": {
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+      }
+    },
+    "tolC": 0.0005,
+    "tolT": 0.01,
+    "event_baseline": {
+      "covered": true,
+      "t_star_s": 206906.49683317405,
+      "interval_s": [
+        0.0,
+        206940.0
+      ]
+    },
+    "pass": true
+  },
+  "q4": {
+    "q": "q4",
+    "N_final": 800,
+    "n_rows": 3067,
+    "items": {
+      "spatial": {
+        "max": [
+          0.00021941195850328638,
+          124620.0,
+          1.2
+        ],
+        "r1_2cm": 0.00021941195850328638,
+        "vs": "N=800 vs 1600",
+        "baseline": {
+          "N": 800,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "comparison": {
+          "N": 1600,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "applicable": true,
+        "pass": true,
+        "event": {
+          "baseline": {
+            "covered": true,
+            "t_star_s": 183931.3028845345,
+            "interval_s": [
+              0.0,
+              183960.0
+            ]
+          },
+          "comparison": {
+            "covered": true,
+            "t_star_s": 183931.2299461115,
+            "interval_s": [
+              0.0,
+              183960.0
+            ]
+          },
+          "delta_h": 2.0260673053497968e-05,
+          "tol_h": 0.02,
+          "pass": true
+        }
+      },
+      "time": {
+        "max": [
+          6.521208733012429e-07,
+          5760.0,
+          "surface"
+        ],
+        "r1_2cm": 7.601175311400254e-08,
+        "vs": "rtol 1e-08 vs 1e-10；绝对容差×0.01；max_step 60/600 s vs 30/300 s",
+        "baseline": {
+          "N": 800,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "comparison": {
+          "N": 800,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-10,
+            "atol_C": 9.999999999999999e-14,
+            "atol_T_K": 1e-10,
+            "atol_I": 9.999999999999999e-14,
+            "max_step_data_s": 30.0,
+            "max_step_after_s": 300.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "applicable": true,
+        "pass": true,
+        "event": {
+          "baseline": {
+            "covered": true,
+            "t_star_s": 183931.3028845345,
+            "interval_s": [
+              0.0,
+              183960.0
+            ]
+          },
+          "comparison": {
+            "covered": true,
+            "t_star_s": 183931.30079761386,
+            "interval_s": [
+              0.0,
+              183960.0
+            ]
+          },
+          "delta_h": 5.797001762807162e-07,
+          "tol_h": 0.02,
+          "pass": true
+        }
+      },
+      "interface": {
+        "max": [
+          5.560527979175944e-07,
+          4140.0,
+          "surface"
+        ],
+        "r1_2cm": 1.5692070132189428e-07,
+        "vs": "8点 vs 16点（integral）",
+        "baseline": {
+          "N": 800,
+          "interface": "integral",
+          "npts": 8,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "comparison": {
+          "N": 800,
+          "interface": "integral",
+          "npts": 16,
+          "bdf": {
+            "rtol": 1e-08,
+            "atol_C": 1e-11,
+            "atol_T_K": 1e-08,
+            "atol_I": 1e-11,
+            "max_step_data_s": 60.0,
+            "max_step_after_s": 600.0,
+            "restart_at_breakpoints": true,
+            "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+          }
+        },
+        "applicable": true,
+        "pass": true,
+        "event": {
+          "baseline": {
+            "covered": true,
+            "t_star_s": 183931.3028845345,
+            "interval_s": [
+              0.0,
+              183960.0
+            ]
+          },
+          "comparison": {
+            "covered": true,
+            "t_star_s": 183931.30063789614,
+            "interval_s": [
+              0.0,
+              183960.0
+            ]
+          },
+          "delta_h": 6.240662090325107e-07,
+          "tol_h": 0.02,
+          "pass": true
+        }
+      }
+    },
+    "baseline": {
+      "N": 800,
+      "interface": "integral",
+      "npts": 8,
+      "bdf": {
+        "rtol": 1e-08,
+        "atol_C": 1e-11,
+        "atol_T_K": 1e-08,
+        "atol_I": 1e-11,
+        "max_step_data_s": 60.0,
+        "max_step_after_s": 600.0,
+        "restart_at_breakpoints": true,
+        "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+      }
+    },
+    "tolC": 0.0005,
+    "event_baseline": {
+      "covered": true,
+      "t_star_s": 183931.3028845345,
+      "interval_s": [
+        0.0,
+        183960.0
+      ]
+    },
+    "pass": true
+  },
+  "completed_at_utc": "2026-09-19T04:00:01.573074+00:00",
+  "elapsed_seconds": 141.61946290000014
+}

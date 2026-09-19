@@ -1,0 +1,676 @@
+{
+  "scope": "Full result1-4 generation and V8/V9; all paper table cells compared with historical outputs",
+  "source_sha256": {
+    "src\\drymodel\\__init__.py": "149a3d1bcec602a112f224e4d90ac1c756bf45d049ba25741d1c5db3d5637154",
+    "src\\drymodel\\be_bdf_diag.py": "a5c9637277fc990a7f7c77034058a7d3413af46c1085a183580bb81382671b4f",
+    "src\\drymodel\\config.py": "b9b14a616a96bd1615ebdeece3dab3dddea53c21e39e3907a12c1bc6fab32c26",
+    "src\\drymodel\\config_check.py": "1cc4b139896b1129b6075888834a87dfe9cb044b8cc30228bdec1d04835624a0",
+    "src\\drymodel\\criterion.py": "f372d75e036af03637298dd5c3fc2e30453877e6ebaffce98f6ce502200eaa29",
+    "src\\drymodel\\d12_evidence.py": "616461201b539db5b4d053baad1430ee7637e1ede2fd5ad8f5abe78d90b6e0cd",
+    "src\\drymodel\\d12_prep.py": "b65bdbada105e9d2e4089967368379558777b46c594778045eef51c03162210d",
+    "src\\drymodel\\data_io.py": "8faa9c772f2c4a26ca797e7112e73247dec014a964886d81b424f31f56183206",
+    "src\\drymodel\\grid.py": "25b1393afb099d21cffee39239df004f9fe3a2936701a30e46ec30099207725f",
+    "src\\drymodel\\latent_heat_diag.py": "93f7c59cebb2ee9a59b91b2f84c3a7a31907e37c49a02b8ff321dcaf25047770",
+    "src\\drymodel\\operators.py": "082e4ceadaa77a84a02674d0111ff9be251d1a0a11a1b9d435021b5e24bac96a",
+    "src\\drymodel\\paper.py": "afbca168684d59b7141bd4e2e0025902997af1173c921a52128aa2fa8f60f92a",
+    "src\\drymodel\\paper_figs.py": "73956e39b3ba77b695c9b8cef547b98a262d1d5033b144bc61a42b0397c3ae8b",
+    "src\\drymodel\\paper_latex.py": "535e3215275a4da96f93ad7e2c56c967e06e3fa08427df6145f524d093b49993",
+    "src\\drymodel\\plots.py": "ed414e27886abaff77edfefa234f13970380b1b2add34a6cee7afeabda595191",
+    "src\\drymodel\\postprocess.py": "32be4ebbab5fe2e2737e44794609e0d8e8094047e1b2a8229baa0a9ca442dc2d",
+    "src\\drymodel\\production.py": "6a9975ea000b0965c6a76bb6f24572c024deedc57b563af0fe0781337f9381d4",
+    "src\\drymodel\\props.py": "7a281f2c0fdc8f788ef8acbb8f7dfaa272a8fe46af5a50c203402b7ddc1727b5",
+    "src\\drymodel\\run_all.py": "418659ed2881f11cc6086ef9f6d9c98dea2c764b3a542c04292f2adee36641fc",
+    "src\\drymodel\\runners.py": "ecdf687030ecc817bcf20e050f0a4cb0a244f17dc52fef57c73706cadb5d255c",
+    "src\\drymodel\\sensitivity.py": "a98737ac5b714c5eb96570d5a13ebed1ba9d4a9f370eff8564a3aa9781303fad",
+    "src\\drymodel\\solver_bdf.py": "71fc0a6be97dbd4c4366c68851b376462945b392bcfe415d0d22c65c9f3d33eb",
+    "src\\drymodel\\solver_be.py": "d6d475e8b89f05d34e4551a68c3f8db39238e35cb42f27f442d6a5460865c861",
+    "src\\drymodel\\verify.py": "9963bb6f5a3d2ca578593f8314618454cd30e594ffa8daa81bb6e9ca416f0ee6",
+    "src\\drymodel\\writers.py": "d47bb6bccafd2b4078bc01afebaa5f73cc4e3761b41795cc400c483d6f1e7a86"
+  },
+  "config_sha256": "ee73bc0aff14273f71fc832fd1c361ad33f507add199a9ad57a88646bebfee73",
+  "historical_outputs_sha256": {
+    "outputs\\.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "outputs\\production_receipt_supplementary.json": "eb3996fcc08a1580b62e0a1af85cf796d1e664e1ab02943f0240bcd0e3fbd44a",
+    "outputs\\result1.xlsx": "b7270ed1b5eec10ace4a0ef2d70ef7294e4ef92e792353c232f010502f7ccdee",
+    "outputs\\result2.xlsx": "387542f8c9ca09d0dd1af6e3547d47b54d90b0f69b233d4e5943cc13e17de675",
+    "outputs\\result3.xlsx": "6371fbe98dc5f8e3669c15fe537692e36ea9fe09719af8da81d9fab3c1797ecd",
+    "outputs\\result4.xlsx": "fb55c152c5c86d693e0342162f78abb25b0011df98fccec5d0b2093ac119f361",
+    "outputs\\table1_temp.csv": "c0285b618c1c0b6477d27f44722966d7a952e90ecf6d3543955a3fe307ef679a",
+    "outputs\\table2_moist.csv": "245cf8a44372b957876812919e42d199fe4e25e2526da3c5cf4b54b628f4edb4",
+    "outputs\\table3_temp.csv": "eddab2770fe2ffa7bec2911b1f56fac5bbbf0ab6bcd72e6f1bca3c52741a7950",
+    "outputs\\table4_moist.csv": "3b1428311943a8dfa50fef43d15ca54568d07d48cfe49348979da4011268f4f9",
+    "outputs\\table5_moist.csv": "8c95dbbe3dba830ecccb4da2413daa6d6c7f54c83dc3919cceb72678628637f6",
+    "outputs\\table6_moist.csv": "19c0f030c5b0f957295215e38405bb5f9c2e67209b3bd77ab7e566a6c52bd80f",
+    "outputs\\table6_radius.csv": "aada9e82b00a51bcfb18bc2790db4fab4c69c698a8d3f825452ff141c64cd8e1"
+  },
+  "production_ok": true,
+  "table_comparisons": {
+    "table1_temp.csv": {
+      "max_abs_value_difference": 0.0,
+      "max_time_difference": 0.0,
+      "value_tolerance": 0.01,
+      "time_tolerance": 0.0,
+      "changed_displayed_cells": 0,
+      "pass": true,
+      "recomputed_rows": [
+        [
+          100.0,
+          28.0001,
+          28.0003,
+          28.004,
+          28.0327,
+          28.1801
+        ],
+        [
+          300.0,
+          28.0408,
+          28.0635,
+          28.1514,
+          28.3681,
+          28.8487
+        ],
+        [
+          600.0,
+          28.4533,
+          28.536,
+          28.8039,
+          29.3159,
+          30.1652
+        ],
+        [
+          900.0,
+          29.3243,
+          29.4582,
+          29.8755,
+          30.6161,
+          31.7304
+        ],
+        [
+          1200.0,
+          30.5427,
+          30.7098,
+          31.2223,
+          32.1126,
+          33.4276
+        ],
+        [
+          1500.0,
+          31.9957,
+          32.1867,
+          32.766,
+          33.7463,
+          35.1205
+        ],
+        [
+          1800.0,
+          33.5754,
+          33.772,
+          34.3642,
+          35.3621,
+          36.7856
+        ]
+      ]
+    },
+    "table2_moist.csv": {
+      "max_abs_value_difference": 0.0,
+      "max_time_difference": 0.0,
+      "value_tolerance": 0.0005,
+      "time_tolerance": 0.0,
+      "changed_displayed_cells": 0,
+      "pass": true,
+      "recomputed_rows": [
+        [
+          100.0,
+          2.55,
+          2.55,
+          2.55,
+          2.55,
+          2.247
+        ],
+        [
+          300.0,
+          2.55,
+          2.55,
+          2.55,
+          2.5492,
+          2.0508
+        ],
+        [
+          600.0,
+          2.55,
+          2.55,
+          2.55,
+          2.5353,
+          1.877
+        ],
+        [
+          900.0,
+          2.55,
+          2.55,
+          2.5497,
+          2.5045,
+          1.7547
+        ],
+        [
+          1200.0,
+          2.55,
+          2.55,
+          2.5482,
+          2.4646,
+          1.6586
+        ],
+        [
+          1500.0,
+          2.55,
+          2.5499,
+          2.5445,
+          2.4206,
+          1.5787
+        ],
+        [
+          1800.0,
+          2.55,
+          2.5497,
+          2.5383,
+          2.3755,
+          1.5102
+        ]
+      ]
+    },
+    "table3_temp.csv": {
+      "max_abs_value_difference": 0.0,
+      "max_time_difference": 0.0,
+      "value_tolerance": 0.01,
+      "time_tolerance": 0.0,
+      "changed_displayed_cells": 0,
+      "pass": true,
+      "recomputed_rows": [
+        [
+          0.5,
+          32.1892,
+          32.3821,
+          32.9659,
+          33.9608,
+          35.4131
+        ],
+        [
+          1.0,
+          40.3816,
+          40.5536,
+          41.0605,
+          41.8782,
+          42.9976
+        ],
+        [
+          1.5,
+          45.8468,
+          45.9348,
+          46.193,
+          46.6051,
+          47.1401
+        ],
+        [
+          2.0,
+          48.4503,
+          48.4881,
+          48.5985,
+          48.7736,
+          49.0034
+        ],
+        [
+          2.5,
+          49.467,
+          49.4792,
+          49.5137,
+          49.5653,
+          49.6608
+        ],
+        [
+          3.0,
+          49.8495,
+          49.8553,
+          49.8746,
+          49.9101,
+          49.9664
+        ]
+      ]
+    },
+    "table4_moist.csv": {
+      "max_abs_value_difference": 0.0,
+      "max_time_difference": 0.0,
+      "value_tolerance": 0.0005,
+      "time_tolerance": 0.0,
+      "changed_displayed_cells": 0,
+      "pass": true,
+      "recomputed_rows": [
+        [
+          0.5,
+          2.5499,
+          2.5489,
+          2.5256,
+          2.3257,
+          1.6486
+        ],
+        [
+          1.0,
+          2.5257,
+          2.4948,
+          2.3578,
+          2.023,
+          1.4711
+        ],
+        [
+          1.5,
+          2.3861,
+          2.3256,
+          2.1344,
+          1.802,
+          1.3476
+        ],
+        [
+          2.0,
+          2.1709,
+          2.1084,
+          1.9236,
+          1.6259,
+          1.2311
+        ],
+        [
+          2.5,
+          1.9566,
+          1.9006,
+          1.736,
+          1.472,
+          1.1166
+        ],
+        [
+          3.0,
+          1.7662,
+          1.7165,
+          1.5702,
+          1.3333,
+          1.0081
+        ]
+      ]
+    },
+    "table5_moist.csv": {
+      "max_abs_value_difference": 0.0,
+      "max_time_difference": 0.0,
+      "value_tolerance": 0.0005,
+      "time_tolerance": 0.0001,
+      "changed_displayed_cells": 0,
+      "pass": true,
+      "recomputed_rows": [
+        [
+          6.0,
+          1.017,
+          0.9881,
+          0.9015,
+          0.755,
+          0.5328
+        ],
+        [
+          12.0,
+          0.4561,
+          0.4432,
+          0.4031,
+          0.3297,
+          0.1642
+        ],
+        [
+          18.0,
+          0.2988,
+          0.2916,
+          0.2687,
+          0.2253,
+          0.0845
+        ],
+        [
+          24.0,
+          0.2378,
+          0.2327,
+          0.2167,
+          0.1855,
+          0.0665
+        ],
+        [
+          30.0,
+          0.2058,
+          0.2018,
+          0.1892,
+          0.1641,
+          0.0598
+        ],
+        [
+          36.0,
+          0.1859,
+          0.1825,
+          0.1718,
+          0.1504,
+          0.0566
+        ],
+        [
+          42.0,
+          0.1721,
+          0.1691,
+          0.1597,
+          0.1407,
+          0.0548
+        ],
+        [
+          48.0,
+          0.1618,
+          0.1592,
+          0.1507,
+          0.1334,
+          0.0537
+        ],
+        [
+          54.0,
+          0.1539,
+          0.1514,
+          0.1436,
+          0.1277,
+          0.053
+        ],
+        [
+          57.474,
+          0.15,
+          0.1477,
+          0.1402,
+          0.1249,
+          0.0526
+        ]
+      ]
+    },
+    "table6_moist.csv": {
+      "max_abs_value_difference": 0.0,
+      "max_time_difference": 0.0,
+      "value_tolerance": 0.0005,
+      "time_tolerance": 0.0001,
+      "changed_displayed_cells": 0,
+      "pass": true,
+      "recomputed_rows": [
+        [
+          6.0,
+          1.7196,
+          1.5378,
+          1.0226,
+          0.4207
+        ],
+        [
+          12.0,
+          0.7377,
+          0.6546,
+          0.4083,
+          0.1669
+        ],
+        [
+          18.0,
+          0.4088,
+          0.3687,
+          0.2397,
+          0.0892
+        ],
+        [
+          24.0,
+          0.2851,
+          0.2611,
+          0.179,
+          0.0673
+        ],
+        [
+          30.0,
+          0.2263,
+          0.2094,
+          0.1493,
+          0.0595
+        ],
+        [
+          36.0,
+          0.1928,
+          0.1797,
+          0.1317,
+          0.056
+        ],
+        [
+          42.0,
+          0.1712,
+          0.1604,
+          0.12,
+          0.0541
+        ],
+        [
+          48.0,
+          0.1561,
+          0.1468,
+          0.1116,
+          0.053
+        ],
+        [
+          51.092,
+          0.15,
+          0.1413,
+          0.1081,
+          0.0526
+        ]
+      ]
+    },
+    "table6_radius.csv": {
+      "max_abs_value_difference": 0.0,
+      "max_time_difference": 0.0,
+      "value_tolerance": 0.0001,
+      "time_tolerance": 0.0001,
+      "changed_displayed_cells": 0,
+      "pass": true,
+      "recomputed_rows": [
+        [
+          6.0,
+          1.374,
+          0.0
+        ],
+        [
+          12.0,
+          1.248,
+          0.0
+        ],
+        [
+          18.0,
+          1.214,
+          0.0
+        ],
+        [
+          24.0,
+          1.204,
+          0.0
+        ],
+        [
+          30.0,
+          1.201,
+          0.0
+        ],
+        [
+          36.0,
+          1.2,
+          0.0
+        ],
+        [
+          42.0,
+          1.2,
+          0.0
+        ],
+        [
+          48.0,
+          1.2,
+          0.0
+        ],
+        [
+          51.092,
+          1.2,
+          0.0
+        ]
+      ]
+    }
+  },
+  "events": {
+    "q23": {
+      "t_star_s": 206906.49683318622,
+      "t_star_h": 57.47402689810728,
+      "t_sample_s": 206940,
+      "post_max_cmax": 0.15,
+      "cmax_at_tsample": 0.14999024303469236,
+      "difference_from_historical_h": 5.1723974239495067e-11,
+      "tolerance_h": 0.02,
+      "pass": true
+    },
+    "q4": {
+      "t_star_s": 183931.30288298926,
+      "t_star_h": 51.09202857860813,
+      "t_sample_s": 183960,
+      "post_max_cmax": 0.15,
+      "cmax_at_tsample": 0.1499852674507048,
+      "difference_from_historical_h": 2.9831426218152044e-12,
+      "tolerance_h": 0.02,
+      "pass": true
+    }
+  },
+  "V8": {
+    "ok": true,
+    "n_common_times": 3448,
+    "n_mismatch": 0,
+    "n_missing_coverage": 0,
+    "issues": []
+  },
+  "V9": {
+    "result1": {
+      "ok": true,
+      "issues": []
+    },
+    "result2": {
+      "ok": true,
+      "issues": []
+    },
+    "result3": {
+      "ok": true,
+      "issues": []
+    },
+    "result4": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  "effective_config": {
+    "q1": {
+      "N": 1600,
+      "interface": "integral",
+      "npts": 8,
+      "t_cap_h": 200.0
+    },
+    "q23": {
+      "N": 800,
+      "interface": "integral",
+      "npts": 8,
+      "t_cap_h": 90.0
+    },
+    "q4": {
+      "N": 800,
+      "interface": "integral",
+      "npts": 8,
+      "t_cap_h": 200.0
+    }
+  },
+  "all_ok": true,
+  "historical_outputs_unchanged": true,
+  "elapsed_seconds": 306.9259856999997,
+  "production_receipt": {
+    "timestamp": "2026-09-18T20:58:46",
+    "ok": true,
+    "reason": null,
+    "code_commit": "4e066e09c28767290067ad9b820a3f52044ffa97",
+    "config_id": "D12-20260912-N1600.800.800-integral8pt-bdf1e-8",
+    "config_sha256": "ee73bc0aff14273f71fc832fd1c361ad33f507add199a9ad57a88646bebfee73",
+    "config_approved": true,
+    "run_command": "python -m drymodel.run_all --produce",
+    "software": {
+      "python": "3.13.9",
+      "numpy": "2.3.5",
+      "scipy": "1.16.3",
+      "openpyxl": "3.1.5"
+    },
+    "effective_config": {
+      "q1": {
+        "N": 1600,
+        "interface": "integral",
+        "npts": 8,
+        "t_cap_h": 200.0
+      },
+      "q23": {
+        "N": 800,
+        "interface": "integral",
+        "npts": 8,
+        "t_cap_h": 90.0
+      },
+      "q4": {
+        "N": 800,
+        "interface": "integral",
+        "npts": 8,
+        "t_cap_h": 200.0
+      }
+    },
+    "bdf": {
+      "rtol": 1e-08,
+      "atol_C": 1e-11,
+      "atol_T_K": 1e-08,
+      "atol_I": 1e-11,
+      "max_step_data_s": 60.0,
+      "max_step_after_s": 600.0,
+      "restart_at_breakpoints": true,
+      "jac_sparsity": "物理子系统 2x2 块三对角（含 T→D、C→b/k 交叉块）；启用增广态时扩到 2n+1，辅助行仅依赖表面 C 节点"
+    },
+    "results": {
+      "q23": {
+        "t_star_s": 206906.49683318622,
+        "t_end_1s": 206907,
+        "t_sample_s": 206940,
+        "post_max_cmax": 0.15,
+        "cmax_at_tsample": 0.14999024303469236
+      },
+      "q4": {
+        "t_star_s": 183931.30288298926,
+        "t_sample_s": 183960,
+        "post_max_cmax": 0.15,
+        "cmax_at_tsample": 0.1499852674507048
+      }
+    },
+    "file_sha256": {
+      "result1.xlsx": "c785faa9a49ce8125eeb3821b525d0afbbb9e11b9d2b2209de165d6e2ccb9db8",
+      "result2.xlsx": "f898e4e8a7b49964e5a488ee84dc0f9bf95f77d20df42469833bb654c93b07b3",
+      "result3.xlsx": "1a8e624dae9c724d47150773556cf4ce59d01ecde85c21ad4312333196c48213",
+      "result4.xlsx": "ff810ae5ff178a41d9869edebbe8ed933fc43ec8d19de97e81691132b1bfb594"
+    },
+    "V9": {
+      "result1": {
+        "ok": true,
+        "issues": []
+      },
+      "result2": {
+        "ok": true,
+        "issues": []
+      },
+      "result3": {
+        "ok": true,
+        "issues": []
+      },
+      "result4": {
+        "ok": true,
+        "issues": []
+      }
+    },
+    "V8": {
+      "ok": true,
+      "n_common_times": 3448,
+      "n_mismatch": 0,
+      "n_missing_coverage": 0
+    }
+  }
+}

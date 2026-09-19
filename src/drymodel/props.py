@@ -186,11 +186,14 @@ def D_face_integral(Ci, Cj, Tb, Dfun, npts: int = 8):
     Cj = np.asarray(Cj, dtype=np.float64)
     Tb = np.asarray(Tb, dtype=np.float64)
     xi, wt = _gauss01(npts)
-    acc = np.zeros(np.broadcast(Ci, Cj, Tb).shape, dtype=np.float64)
-    for xk, wk in zip(xi, wt):
-        Cmid = (1.0 - xk) * Ci + xk * Cj
-        acc = acc + wk * Dfun(Cmid, Tb)
-    return acc
+    shape = np.broadcast(Ci, Cj, Tb).shape
+    # 求积节点放在独立首轴，一次调用向量化物性；题给 D、节点与权重均不变。
+    qshape = (xi.size,) + (1,) * len(shape)
+    x = xi.reshape(qshape)
+    Cmid = (1.0 - x) * Ci + x * Cj
+    values = np.broadcast_to(Dfun(Cmid, Tb), (xi.size,) + shape)
+    # 显式广播亦保留附录 2 忽略 T 时，由 Tb 决定输出形状的原有语义。
+    return np.sum(wt.reshape(qshape) * values, axis=0)
 
 
 def k_face_harmonic(ki, kj):

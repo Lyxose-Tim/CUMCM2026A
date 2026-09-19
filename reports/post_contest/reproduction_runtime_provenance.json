@@ -1,0 +1,152 @@
+{
+  "process_start_utc": "2026-09-19T03:53:38+00:00",
+  "start_evidence": "Get-CimInstance Win32_Process observed PID22336, CreationDate 2026-09-18 20:53:38 America/Los_Angeles during execution",
+  "scope": "Production modules; D12 was not imported by the production script and was independently edited",
+  "all_production_sources_predate_run": true,
+  "files": [
+    {
+      "path": "src/drymodel/__init__.py",
+      "sha256": "149a3d1bcec602a112f224e4d90ac1c756bf45d049ba25741d1c5db3d5637154",
+      "last_write_utc": "2026-09-12T05:54:17.641901+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/be_bdf_diag.py",
+      "sha256": "a5c9637277fc990a7f7c77034058a7d3413af46c1085a183580bb81382671b4f",
+      "last_write_utc": "2026-09-13T06:11:59.759677+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/config.py",
+      "sha256": "b9b14a616a96bd1615ebdeece3dab3dddea53c21e39e3907a12c1bc6fab32c26",
+      "last_write_utc": "2026-09-12T15:09:52.068041+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/config_check.py",
+      "sha256": "1cc4b139896b1129b6075888834a87dfe9cb044b8cc30228bdec1d04835624a0",
+      "last_write_utc": "2026-09-12T15:10:48.801847+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/criterion.py",
+      "sha256": "f372d75e036af03637298dd5c3fc2e30453877e6ebaffce98f6ce502200eaa29",
+      "last_write_utc": "2026-09-12T10:41:14.148198+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/d12_prep.py",
+      "sha256": "b65bdbada105e9d2e4089967368379558777b46c594778045eef51c03162210d",
+      "last_write_utc": "2026-09-12T16:13:00.463419+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/data_io.py",
+      "sha256": "8faa9c772f2c4a26ca797e7112e73247dec014a964886d81b424f31f56183206",
+      "last_write_utc": "2026-09-12T10:41:14.149439+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/grid.py",
+      "sha256": "25b1393afb099d21cffee39239df004f9fe3a2936701a30e46ec30099207725f",
+      "last_write_utc": "2026-09-12T05:54:12.112991+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/latent_heat_diag.py",
+      "sha256": "93f7c59cebb2ee9a59b91b2f84c3a7a31907e37c49a02b8ff321dcaf25047770",
+      "last_write_utc": "2026-09-13T10:39:20.296731+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/operators.py",
+      "sha256": "082e4ceadaa77a84a02674d0111ff9be251d1a0a11a1b9d435021b5e24bac96a",
+      "last_write_utc": "2026-09-12T06:51:04.177678+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/paper.py",
+      "sha256": "afbca168684d59b7141bd4e2e0025902997af1173c921a52128aa2fa8f60f92a",
+      "last_write_utc": "2026-09-12T18:12:33.043876+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/paper_figs.py",
+      "sha256": "73956e39b3ba77b695c9b8cef547b98a262d1d5033b144bc61a42b0397c3ae8b",
+      "last_write_utc": "2026-09-13T11:58:39.644297+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/paper_latex.py",
+      "sha256": "535e3215275a4da96f93ad7e2c56c967e06e3fa08427df6145f524d093b49993",
+      "last_write_utc": "2026-09-12T19:03:03.912978+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/plots.py",
+      "sha256": "ed414e27886abaff77edfefa234f13970380b1b2add34a6cee7afeabda595191",
+      "last_write_utc": "2026-09-12T15:29:04.622435+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/postprocess.py",
+      "sha256": "32be4ebbab5fe2e2737e44794609e0d8e8094047e1b2a8229baa0a9ca442dc2d",
+      "last_write_utc": "2026-09-12T06:13:30.048277+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/production.py",
+      "sha256": "6a9975ea000b0965c6a76bb6f24572c024deedc57b563af0fe0781337f9381d4",
+      "last_write_utc": "2026-09-19T03:36:32.534920+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/props.py",
+      "sha256": "7a281f2c0fdc8f788ef8acbb8f7dfaa272a8fe46af5a50c203402b7ddc1727b5",
+      "last_write_utc": "2026-09-19T03:52:23.252772+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/run_all.py",
+      "sha256": "418659ed2881f11cc6086ef9f6d9c98dea2c764b3a542c04292f2adee36641fc",
+      "last_write_utc": "2026-09-13T09:04:06.446424+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/runners.py",
+      "sha256": "ecdf687030ecc817bcf20e050f0a4cb0a244f17dc52fef57c73706cadb5d255c",
+      "last_write_utc": "2026-09-19T03:36:32.534920+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/sensitivity.py",
+      "sha256": "a98737ac5b714c5eb96570d5a13ebed1ba9d4a9f370eff8564a3aa9781303fad",
+      "last_write_utc": "2026-09-13T09:03:52.544415+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/solver_bdf.py",
+      "sha256": "71fc0a6be97dbd4c4366c68851b376462945b392bcfe415d0d22c65c9f3d33eb",
+      "last_write_utc": "2026-09-19T03:37:19.668103+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/solver_be.py",
+      "sha256": "d6d475e8b89f05d34e4551a68c3f8db39238e35cb42f27f442d6a5460865c861",
+      "last_write_utc": "2026-09-19T03:37:19.668103+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/verify.py",
+      "sha256": "9963bb6f5a3d2ca578593f8314618454cd30e594ffa8daa81bb6e9ca416f0ee6",
+      "last_write_utc": "2026-09-13T09:03:24.854325+00:00",
+      "last_write_before_start": true
+    },
+    {
+      "path": "src/drymodel/writers.py",
+      "sha256": "d47bb6bccafd2b4078bc01afebaa5f73cc4e3761b41795cc400c483d6f1e7a86",
+      "last_write_utc": "2026-09-12T17:58:00.716851+00:00",
+      "last_write_before_start": true
+    }
+  ]
+}
