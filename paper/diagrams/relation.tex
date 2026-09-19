@@ -1,0 +1,18 @@
+% Independent initial-value problems; only Q3 reuses the Q2 trajectory.
+\begin{tikzpicture}[visual base]
+\node[visual card,fill=vizNavy,draw=vizNavy,text=white,text width=14.65cm,minimum height=.86cm] (common) at (7.9,0) {\textbf{共用一维径向有效传热传质模型}\\[2pt]相同题给初态 $(C_0,T_0)$；按各问设定分别起算};
+\node[visual card,draw=vizBlue,fill=vizBlue!7,text width=4.1cm,minimum height=1.36cm] (q1) at (2.55,-1.72) {\textbf{问题一｜预热}\\[3pt]附录 2：常热物性、$D(C)$\\固定半径 $R_0$；从 $t=0$ 起算};
+\node[visual card,draw=vizTeal,fill=vizTeal!7,text width=4.1cm,minimum height=1.36cm] (q2) at (7.9,-1.72) {\textbf{问题二｜完整干燥}\\[3pt]附录 3：温度与水分耦合\\固定半径 $R_0$；从 $t=0$ 起算};
+\node[visual card,draw=vizCoral,fill=vizCoral!7,text width=4.1cm,minimum height=1.36cm] (q4) at (13.25,-1.72) {\textbf{问题四｜给定收缩}\\[3pt]附录 4 物性与给定半径\\$x=r/R(t)$；从 $t=0$ 起算};
+\draw[visual arrow] (common.south) -- (7.9,-.72) -| (q1.north);
+\draw[visual arrow] (common.south) -- (q2.north);
+\draw[visual arrow] (common.south) -- (7.9,-.72) -| (q4.north);
+\node[visual card,draw=vizBlue,fill=white,text width=4.1cm,minimum height=.83cm] (r1) at (2.55,-3.45) {前 $1800\,\mathrm{s}$ 两场\\径向温度与含水率剖面};
+\node[visual card,draw=vizTeal,fill=white,text width=4.1cm,minimum height=.83cm] (r2) at (7.9,-3.45) {全过程温度与含水率场\\同一条数值轨迹};
+\node[visual card,draw=vizCoral,fill=white,text width=4.1cm,minimum height=.83cm] (r4) at (13.25,-3.45) {移动域含水率与表面状态\\阈值根、严格达标采样};
+\draw[visual arrow,draw=vizBlue] (q1) -- (r1);
+\draw[visual arrow,draw=vizTeal] (q2) -- (r2);
+\draw[visual arrow,draw=vizCoral] (q4) -- (r4);
+\node[visual card,draw=vizPurple,fill=vizPurple!7,text width=7.3cm,minimum height=1.0cm] (q3) at (7.9,-5.18) {\textbf{问题三｜复用问题二轨迹}\\[2pt]全域最大含水率判据：连续阈值根 $t^*$\\随后逐行核验 $C_{\max}<0.15$，确定严格采样终点};
+\draw[visual arrow,draw=vizPurple] (r2) -- node[right,font=\fontsize{8.5}{10}\selectfont,text=vizPurple]{直接提取} (q3);
+\end{tikzpicture}

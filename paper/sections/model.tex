@@ -40,50 +40,8 @@ T(r,0)=T_0=\SI{301.15}{K}\ (\SI{28}{\celsius}),\qquad C(r,0)=C_0=2.55
 连续的控制方程难以直接给出各时刻、各位置的数值。为此把药材沿半径划成同心薄层，用相邻薄层之间的收支计算各节点值。把半径区间 $[0,R_0]$ 均分为 $N$ 个小区间，得到 $N{+}1$ 个节点 $r_i=i\,\Delta r$（$i=0,1,\dots,N$，$\Delta r=R_0/N$）。中心和表面都取为节点：$r_0=0$ 为中心节点，$r_N=R_0$ 为表面节点，节点上的值即为要输出的温度和含水率。相邻节点之间的界面位于 $r_{i+1/2}=(i+\tfrac12)\Delta r$；围绕每个节点取一个控制体，对式~\eqref{eq:govC} 在控制体上积分，按内、外界面的净流入建立收支\cite{fipy}，得到有限体积格式（图~\ref{fig:fvm}）。网格数 $N$（下称\emph{计算网格}）由第~\ref{sec:verification}~节的加密对照确定，计算结果再按题目指定的位置和时刻提取；以 $N=800$、半径 $\SI{2}{cm}$ 为例，计算间距 $\SI{0.0025}{cm}$ 小于 $\SI{0.1}{cm}$ 的输出间距。
 
 \begin{figure}[H]\centering
-% 上图：径向节点型有限体积离散（独立 tikzpicture，自身边界框居中）
-\begin{tikzpicture}[font=\small,>=Stealth]
-\def\dr{1.45}
-% 控制体高亮（浅蓝填充、深蓝描边）
-\fill[palMist] ({1.5*\dr},-0.4) rectangle ({2.5*\dr},0.4);
-\draw[palDeep] ({1.5*\dr},-0.4) rectangle ({2.5*\dr},0.4);
-% 径向轴、节点、界面
-\draw[thick,palChar,->] (-0.3,0) -- (8.9,0);
-\node[anchor=west,palChar] at (8.95,0) {$r$};
-\foreach \i in {0,1,2,3,4,5} {\fill[palDeep] (\i*\dr,0) circle (2.4pt);}
-\foreach \i in {0,1,2,3,4}{\draw[palCoral,thick] ({(\i+0.5)*\dr},0.14)--({(\i+0.5)*\dr},-0.14);}
-% 节点标注（上方，节点值用短引线指向节点）
-\node[anchor=south,palChar] at (0,0.12) {\scriptsize $r_0{=}0$};
-\draw[palDeep,thin] (2*\dr,0.06) -- (2*\dr,0.46);
-\node[anchor=south,text=palDeep] at (2*\dr,0.48) {\scriptsize 节点 $C_i,\,T_i$};
-\node[anchor=south,palChar] at (5*\dr,0.12) {\scriptsize $r_N{=}R_0$};
-% 中心/表面节点标注（下方低层）
-\node[anchor=north,text=palDeep] at (0,-0.55) {\scriptsize 中心节点};
-\node[anchor=north,text=palDeep] at (5*\dr,-0.55) {\scriptsize 表面节点};
-% 控制体标注（下方，短引线指向控制体）
-\draw[palDeep,thin] (2*\dr,-0.4) -- (2*\dr,-0.78);
-\node[anchor=north,text=palDeep] at (2*\dr,-0.8) {\scriptsize 控制体 $V_i$};
-% 界面标注（上方右侧，短引线，与控制体标注错层）
-\draw[palCoral,thin] ({2.5*\dr},0.14) -- ({2.5*\dr+0.35},0.62);
-\node[anchor=south west,text=palCoral] at ({2.5*\dr+0.28},0.6) {\scriptsize 界面 $r_{i+1/2}$};
-% 表面：节点位置标签(0.12)—交换箭头(0.62)—交换说明(0.84) 三层分开
-\draw[->,palCoral,thick] (5*\dr,0.62) -- (5*\dr+0.85,0.62);
-\node[anchor=south,text=palCoral] at (5*\dr+0.42,0.84) {\scriptsize 表面交换 $h,\,h_m$};
-\end{tikzpicture}
-
-\vspace{6pt}
-
-% 下图：参考坐标映射（独立 tikzpicture，去掉 yshift，仅用内部相对坐标）
-\begin{tikzpicture}[font=\small,>=Stealth]
-\fill[palIce!55] (0,0.28) rectangle (3.0,0.5); \draw[palDeep] (0,0.28) rectangle (3.0,0.5);
-\node[anchor=east,palChar] at (-0.1,0.39) {\scriptsize 物理域 $[0,R(t)]$};
-\node[anchor=west,palChar] at (3.1,0.39) {\scriptsize $r=R(t)$};
-\fill[palMist] (0,-0.5) rectangle (6.0,-0.28); \draw[palDeep] (0,-0.5) rectangle (6.0,-0.28);
-\node[anchor=east,palChar] at (-0.1,-0.39) {\scriptsize 参考域 $[0,1]$};
-\node[anchor=west,palChar] at (6.1,-0.39) {\scriptsize $x=1$};
-\draw[->,palDeep,thick] (3.0,0.2) -- (5.8,-0.22);
-\node[anchor=west,text=palDeep] at (6.6,0.08) {\scriptsize $x=r/R(t)$};
-\end{tikzpicture}
-\caption{径向节点型有限体积离散（上图）与问题四的参考坐标映射（下图）。上图：深蓝点为节点、珊瑚色短线为界面、浅蓝方块为一个控制体；下图：物理域 $[0,R(t)]$ 随时间收缩，映射到固定的参考域 $[0,1]$。}
+\input{diagrams/fvm}
+\caption{空间离散与坐标映射：(a) 中心、内部与表面控制体，外向通量为正，边界控制体在物理域内截断；(b) 问题四以 $x=r/R(t)$ 将移动物理域映射至固定参考域，示意不按比例。}
 \label{fig:fvm}
 \end{figure}
 
@@ -137,15 +95,13 @@ V_N\,\dot C_N=A_{N-1/2}F_{N-1/2}-R_0\,h_m\big(C_N-\Cenv\big)
 
 空间离散后得到关于节点温度与含水率的常微分方程组。细网格扩散及热、水分迁移的不同时间尺度使求解具有刚性，因此四问均采用自适应 BDF 方法，通过误差控制兼顾早期快速变化与后期缓慢烘干；另在常物性、恒环境的辅助热问题上采用向后 Euler 方法，通过步长加密核查时间离散误差（对照见第~\ref{sec:verification}~节图~\ref{fig:bebdf}）。
 
-\parahead{自适应 BDF 求解} 四问均采用后向差分公式（Backward Differentiation Formula，BDF）计算，它按误差控制要求自动调整时间步长与阶数（\texttt{scipy} 的 \texttt{solve\_ivp}）\cite{scipy,scipybdf}，相对容差取 $10^{-8}$，绝对容差按状态量分别设定（含水率 $10^{-11}$、温度 $10^{-8}\,\si{K}$）。右端函数在每个求解时刻按当前时间 $t$ 取环境驱动与半径 $R(t)$；为提高效率，向求解器提供右端 Jacobian 的\textbf{稀疏结构}（块三对角），由其据此作有限差分近似。在环境驱动切换处（$\SI{14400}{s}$）分段积分并重启求解器，以处理该已知断点。求解流程可概括为：
+\parahead{自适应 BDF 求解} 四问均采用后向差分公式（Backward Differentiation Formula，BDF）计算，它按误差控制要求自动调整时间步长与阶数（\texttt{scipy} 的 \texttt{solve\_ivp}）\cite{scipy,scipybdf}，相对容差取 $10^{-8}$，绝对容差按状态量分别设定（含水率 $10^{-11}$、温度 $10^{-8}\,\si{K}$）。右端函数在每个求解时刻按当前时间 $t$ 取环境驱动与半径 $R(t)$；为提高效率，向求解器提供右端 Jacobian 的\textbf{稀疏结构}（块三对角），由其据此作有限差分近似。在环境驱动切换处（$\SI{14400}{s}$）分段积分并重启求解器，以处理该已知断点。求解及输出流程见图~\ref{fig:solver}。
 
-\begin{enumerate}[label=\textbf{步骤 \arabic*.},leftmargin=3.4em,itemsep=1pt]
-\item 读入几何、初值与对应附录的物性公式，按 $N$ 生成节点与控制体权重；
-\item 由附件数据构造环境驱动 $\Tair(t)$、$\Cenv(t)$（问题四另构造半径 $R(t)$）；
-\item 以初值 $(C_0,T_0)$ 为起点，用 BDF 向前积分式~\eqref{eq:fvmint}--\eqref{eq:fvms} 及温度方程，遇断点分段重启；
-\item 对连续解在输出时刻重构全域场；对问题三、四追踪最大含水率并求其穿越 $0.15$ 的根；
-\item 按题目要求的时间、位置网格采样，保留四位小数写出结果。
-\end{enumerate}
+\begin{figure}[H]\centering
+\input{diagrams/solver}
+\caption{从初值求解到题定结果输出的流程。判据使用未舍入值，问题二、三共享同一轨迹；在根后 $\SI{600}{s}$ 内的 $61$ 个时刻采样复核无回穿，导出后再核验跨文件与工作簿一致性，检验失败不登记通过。}
+\label{fig:solver}
+\end{figure}
 
 此外，对经验扩散系数的求值设置数值保护：迭代中的非正含水率采用零系数延拓，极小指数项以零近似，使系数求值保持有限且非负；具体阈值与实现见附录及代码说明。
 
@@ -157,7 +113,7 @@ V_N\,\dot C_N=A_{N-1/2}F_{N-1/2}-R_0\,h_m\big(C_N-\Cenv\big)
 
 \begin{figure}[H]\centering
 \includegraphics[width=\textwidth]{fig_inputs.pdf}
-\caption{环境与半径输入：灰圈为附件原始节点，蓝线为分段线性插值，金色区域为常值外推段，(a)(b) 中红色虚线为 $\SI{4}{h}$ 断点。}
+\caption{环境与半径输入：(a)(b) 空气温度与环境含水浓度，圆点为原始节点、实线为插值，$\SI{4}{h}$ 后以虚线表示末小时均值延续；(c) 给定半径及其插值（$0$--$\SI{72}{h}$）。}
 \label{fig:inputs}
 \end{figure}
 
@@ -187,7 +143,7 @@ Bi_h=\frac{hR_0}{k}=\frac{R_0/k}{1/h},\qquad Bi_{m,0}=\frac{h_mR_0}{D(C_0)}=\fra
 \parahead{求解结果} 不同时刻的径向剖面见图~\ref{fig:q1}，代表性数值见表~\ref{tab:t1}、表~\ref{tab:t2}。
 
 \begin{figure}[H]\centering
-\includegraphics[width=0.94\textwidth]{fig_q1_profiles.pdf}
+\includegraphics[width=\textwidth]{fig_q1_profiles.pdf}
 \caption{问题一不同时刻的径向温度剖面（左）与含水率剖面（右）；同一时刻在两幅子图中用同一颜色与标记。}
 \label{fig:q1}
 \end{figure}
@@ -225,9 +181,9 @@ D(C,T)=2.4\times10^{-3}\,e^{-0.45/C}\,e^{-3850/T}\ \si{m^2/s} \label{eq:props3D}
 \label{eq:tstar3}
 \end{equation}
 
-\begin{figure}[H]\centering
-\includegraphics[width=0.98\textwidth]{fig_q23_fields.pdf}
-\caption{问题二、三：温度场在前 $\SI{2}{h}$ 的演化（a）、含水率场全程演化及 $0.15$ 含水率等值线（b）、输出最大含水率的全程曲线（c）与阈值附近放大（d）；温度与含水率使用各自独立的色标与单位，(d) 只示 $\SI{60}{s}$、四位小数的采样分辨率，阈值穿越时刻由未舍入求根确定。}
+\begin{figure}[!ht]\centering
+\includegraphics[width=\textwidth]{fig_q23_fields.pdf}
+\caption{问题二、三：(a) 前 $\SI{2}{h}$ 温度场；(b) 全程含水率场及 $0.15$ 等值线的采样示意；(c) 输出最大含水率；(d) 以连续根为时间零点的阈值放大，空心圆为 $\SI{60}{s}$、四位小数采样，菱形与三角分别为未舍入解确定的连续根和首个严格达标采样点，二者不作曲线连线。}
 \label{fig:q23}
 \end{figure}
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "论文视觉统筹"
+  short_description: "从论文论点统筹图谱、流程图与数据图，统一风格并完成编译验收"
+  default_prompt: "请使用 $paper-visual-director，从论文整体论证出发规划并升级图表，保留真实证据，交付可编辑图源和经编译检查的论文。"

@@ -1,0 +1,12 @@
+{
+  "checks": {
+    "all_65_protected_paths_unchanged": true,
+    "all_7_preexisting_user_files_unchanged": true,
+    "all_25_paper_code_copies_match": true,
+    "installed_skill_matches_project": true,
+    "all_27_data_assets_match_inventory": true
+  },
+  "all_ok": true,
+  "source_drawing_sha256": "1e3f8ac430e73a81bc4c9eb0f3335a8633b8ed51b9e39e41084f6ecda777354d",
+  "scope": "Visual changes only; no new numerical solver test claim. Prior full numerical validation retained separately."
+}

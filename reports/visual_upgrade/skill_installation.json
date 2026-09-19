@@ -1,0 +1,12 @@
+{
+  "skill": "paper-visual-director",
+  "project_path": "skills\\paper-visual-director",
+  "installed_path": "C:\\Users\\Lyxose\\.codex\\skills\\paper-visual-director",
+  "all_files_match": true,
+  "sha256": {
+    "SKILL.md": "d32c40187ab3824faa9852c14d6c595d3fc48db91a4a8d6ee61aa09427a44321",
+    "agents/openai.yaml": "53cf6cc89ca423d45c10f7031ac4256dcc203eef55c28a8940eea95b52445d81",
+    "references/visual-design.md": "fec51711af8ba1eae0a0a171312ed46936b77aa514526a1e18a4b99a3b7ebb17"
+  },
+  "purpose": "Reusable whole-paper visual planning, diagrams, scientific plots, manuscript integration and final-size QA."
+}

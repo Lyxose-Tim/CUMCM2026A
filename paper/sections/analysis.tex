@@ -25,7 +25,7 @@
 四个问题之间的承接关系如图~\ref{fig:relation} 所示：问题一使用附录 2，问题二从初始时刻起统一使用附录 3，问题三基于问题二的同一数值解，问题四同时改用附录 4 物性与给定的收缩半径。
 
 \begin{figure}[H]\centering
-\includegraphics[width=\textwidth]{fig_relation.pdf}
-\caption{四个问题与模型的关系：四问共用同一套径向传热传质模型；问题一为常物性预热特例，问题二为变物性完整过程；问题四在问题二模型上作物性与几何修正，问题三在问题二的结果上按最大含水率判据确定烘干时长。}
+\input{diagrams/relation}
+\caption{四问的模型与数据关系。问题一、二、四按各自物性及几何分别从题给初态求解；仅问题三直接复用问题二轨迹，以全域最大含水率确定阈值根及严格达标采样时刻。}
 \label{fig:relation}
 \end{figure}

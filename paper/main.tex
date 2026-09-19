@@ -67,18 +67,8 @@
 % 段首黑体提示（无前置圆点、无尾部标点；提示与正文同段、段首缩进两字）
 \newcommand{\parahead}[1]{\par\indent{\heiti\bfseries #1}\enspace\ignorespaces}
 
-% ---- 配色（Ocean Jelly + Warm Coral，与插图一致）----
-\definecolor{palDeep}{HTML}{005BBD}
-\definecolor{palOcean}{HTML}{008FF5}
-\definecolor{palJelly}{HTML}{29C7F6}
-\definecolor{palIce}{HTML}{86E6FF}
-\definecolor{palAmber}{HTML}{FFC247}
-\definecolor{palGOrange}{HTML}{FFA83A}
-\definecolor{palCoral}{HTML}{FF7A45}
-\definecolor{palCRed}{HTML}{FF5B57}
-\definecolor{palRed}{HTML}{F0404F}
-\definecolor{palChar}{HTML}{252A30}
-\definecolor{palMist}{HTML}{EAF3F8}
+% ---- 统一图形配色与原生尺寸 TikZ 样式 ----
+\input{diagrams/style}
 
 % ---- 源代码清单样式（附录）----
 \lstset{

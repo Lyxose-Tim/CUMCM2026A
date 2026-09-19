@@ -1,0 +1,36 @@
+% Schematic only: no axial field is solved and no new physical closure is added.
+\begin{tikzpicture}[visual base]
+\node[visual heading] at (.05,2.22) {(a) 一维径向有效模型};
+\node[visual heading] at (9.4,2.22) {(b) 问题四的仿射收缩};
+\fill[vizBlue!7] (1.1,-.75) rectangle (7.75,.75);
+\draw[vizBlue,dashed,line width=.75pt] (1.1,0) ellipse [x radius=.29cm,y radius=.75cm];
+\draw[vizBlue,line width=.9pt] (1.1,.75)--(7.75,.75) (1.1,-.75)--(7.75,-.75);
+\filldraw[fill=vizBlue!12,draw=vizBlue,line width=.9pt] (7.75,0) ellipse [x radius=.29cm,y radius=.75cm];
+\draw[vizInk!60,dashed] (1.0,0)--(8.1,0);
+\draw[vizTeal,line width=1.25pt] (4.42,-.75)--(4.42,.75);
+\fill[vizNavy] (4.42,0) circle (1.5pt);
+\node[anchor=east] at (4.28,-.24) {$r=0$};
+\draw[visual arrow,draw=vizTeal] (4.42,.03)--(4.42,.7);
+\node[anchor=west,text=vizTeal] at (4.52,.36) {$r$};
+\foreach \x in {1.9,2.9,5.95,6.95}{\draw[visual arrow,draw=vizCoral] (\x,1.48)--(\x,.85);}
+\node[text=vizCoral] at (4.42,1.76) {侧面对流换热：$h,\ T_{\mathrm{air}}(t)$};
+\foreach \x in {1.9,2.9,5.95,6.95}{\draw[visual arrow,draw=vizBlue] (\x,-.83)--(\x,-1.40);}
+\node[text=vizBlue] at (4.42,-1.68) {表面失水：$h_m,\ C_{\mathrm{env}}(t)$};
+\draw[<->,vizInk,line width=.6pt] (1.1,-2.12)--(7.75,-2.12);
+\node at (4.42,-2.43) {$L=25\,\mathrm{cm}$，长度保持不变};
+\node[font=\fontsize{8.5}{10}\selectfont,text=vizInk!80] at (4.42,-2.96) {忽略轴向变化及端面交换，以中截面径向场代表状态};
+\begin{scope}[shift={(12.55,-.06)}]
+\fill[vizOutside] (0,0) circle (1.35);
+\draw[vizBlue,dashed,line width=.9pt] (0,0) circle (1.35);
+\filldraw[fill=vizTeal!13,draw=vizTeal,line width=1.0pt] (0,0) circle (.87);
+\foreach \a in {215,270,325}{\draw[visual arrow,draw=vizCoral] ({1.30*cos(\a)},{1.30*sin(\a)})--({.91*cos(\a)},{.91*sin(\a)});}
+\fill[vizNavy] (0,0) circle (1.5pt);
+\draw[visual arrow,draw=vizBlue] (0,0)--({1.35*cos(145)},{1.35*sin(145)});
+\node[text=vizBlue,anchor=south east] at (-1.06,.80) {$R_0$};
+\draw[visual arrow,draw=vizTeal] (0,0)--({.87*cos(35)},{.87*sin(35)});
+\node[text=vizTeal,anchor=south west] at (.7,.57) {$R(t)$};
+\node at (0,-1.86) {初始边界\; $R_0=2\,\mathrm{cm}$};
+\node at (0,-2.37) {当前边界\; $R(t)$ 由附件给定};
+\node[font=\fontsize{8.5}{10}\selectfont,text=vizInk!80] at (0,-2.90) {内部仿射运动另作模型假设};
+\end{scope}
+\end{tikzpicture}

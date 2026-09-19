@@ -1,0 +1,27 @@
+% Shared journal-style palette; native diagram dimensions are in cm.
+\definecolor{vizNavy}{HTML}{17324D}
+\definecolor{vizBlue}{HTML}{2878B5}
+\definecolor{vizTeal}{HTML}{179A92}
+\definecolor{vizCoral}{HTML}{E66B4E}
+\definecolor{vizAmber}{HTML}{E7B34C}
+\definecolor{vizPurple}{HTML}{7B6DB0}
+\definecolor{vizInk}{HTML}{25364A}
+\definecolor{vizGrid}{HTML}{E5EBF0}
+\definecolor{vizOutside}{HTML}{EEF1F4}
+\colorlet{palDeep}{vizBlue}
+\colorlet{palOcean}{vizBlue}
+\colorlet{palJelly}{vizTeal}
+\colorlet{palIce}{vizTeal!30}
+\colorlet{palAmber}{vizAmber}
+\colorlet{palGOrange}{vizAmber}
+\colorlet{palCoral}{vizCoral}
+\colorlet{palCRed}{vizCoral}
+\colorlet{palRed}{vizCoral}
+\colorlet{palChar}{vizInk}
+\colorlet{palMist}{vizGrid}
+\tikzset{
+ visual base/.style={font=\fontsize{9}{11}\selectfont,text=vizInk,>=Stealth,line join=round},
+ visual card/.style={rounded corners=3pt,draw=vizBlue,line width=.75pt,fill=vizBlue!5,align=center,inner sep=4pt},
+ visual arrow/.style={->,draw=vizNavy,line width=.85pt},
+ visual heading/.style={font=\fontsize{10}{12}\selectfont\bfseries,text=vizNavy,anchor=west},
+}

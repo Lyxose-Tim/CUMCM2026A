@@ -1,5 +1,9 @@
 # CUMCM 2026 A题「药材的烘干问题」求解工程
 
+> **全篇视觉升级**：在三轮复盘结果上统一了论文图谱、流程/模型示意图与数据图，采用偏活泼的科研期刊风格。新版交付位于 `deliverables/visual_upgrade/`，上一轮交付仍保留在 `deliverables/post_contest/`。设计、数据保真与排版验收见 [视觉升级报告](reports/visual_upgrade/REPORT.md)。
+>
+> 可复用技能：[paper-visual-director](skills/paper-visual-director/SKILL.md)。它从论文论证和已有数据出发，规划整篇图示、统一视觉语言、生成可编辑图源，并在成品尺寸下检查整篇论文。可使用 `$paper-visual-director` 发起同类任务。
+
 > **赛后优化复盘分支**：`codex/post-contest-three-round-review`。三轮改进与逐项证据见 [迭代记录](reports/post_contest/ITERATIONS.md)、[最新计算结果](reports/RESULTS_REPORT.md) 和 [验收报告](reports/VERIFY_REPORT.md)。以下赛时 D12 记录保留作历史基线。
 >
 > 本分支保留题给参数、四问模型与正式历史结果；修复时间边界、达标/输出门检和同轨迹采样，优化积分界面求值，按实际配置完成全采样独立加密。论文使用现有 LaTeX 工程，明确额外假设与数值精度边界，收束题外外延。

@@ -1,0 +1,38 @@
+% Node-centered control volumes: boundary volumes have half-width, not half-volume.
+\begin{tikzpicture}[visual base]
+\node[visual heading] at (.05,2.05) {(a) 节点型有限体积：相邻控制体共用界面通量};
+\filldraw[fill=vizTeal!10,draw=vizTeal] (.8,-.38) rectangle (2.1,.38);
+\filldraw[fill=vizBlue!12,draw=vizBlue] (4.7,-.38) rectangle (7.3,.38);
+\filldraw[fill=vizCoral!10,draw=vizCoral] (12.5,-.38) rectangle (13.8,.38);
+\draw[visual arrow] (.42,0)--(15.38,0) node[right] {$r$};
+\foreach \x in {.8,3.4,6.0,8.6,11.2,13.8}{\fill[vizNavy] (\x,0) circle (2.2pt);}
+\foreach \x in {2.1,4.7,7.3,9.9,12.5}{\draw[vizCoral,line width=1.1pt] (\x,-.2)--(\x,.2);}
+\node[anchor=south] at (.8,.43) {$r_0=0$};
+\node[anchor=south,text=vizBlue] at (6,.43) {$C_i,\ T_i$};
+\node[anchor=south] at (12.7,.43) {$r_N=R_0$};
+\draw[visual arrow,draw=vizTeal] (3.95,1.02)--(5.42,1.02);
+\draw[visual arrow,draw=vizCoral] (6.58,1.02)--(8.05,1.02);
+\node[anchor=south,text=vizTeal] at (4.7,1.10) {$F_{i-1/2}$};
+\node[anchor=south,text=vizCoral] at (7.3,1.10) {$F_{i+1/2}$};
+\draw[visual arrow,draw=vizCoral] (13.8,.86)--(15.05,.86);
+\node[anchor=south,text=vizCoral] at (14.33,1.08) {表面交换};
+\node[anchor=north,align=center,text=vizTeal] at (1.45,-.57) {中心控制体\\$[0,\Delta r/2]$};
+\node[anchor=north,align=center,text=vizBlue] at (6.0,-.57) {内部控制体 $V_i$\\$[r_{i-1/2},r_{i+1/2}]$};
+\node[anchor=north,align=center,text=vizCoral] at (12.62,-.57) {表面控制体\\$[R_0-\Delta r/2,R_0]$};
+\draw[vizGrid,line width=.8pt] (.05,-1.58)--(15.65,-1.58);
+\node[visual heading] at (.05,-2.04) {(b) 问题四：随物料收缩的参考坐标};
+\node[anchor=west] at (.05,-2.78) {物理域};
+\node[anchor=west] at (.05,-4.02) {参考域};
+\filldraw[fill=vizTeal!15,draw=vizTeal,line width=.8pt] (2.15,-2.94) rectangle (7.45,-2.65);
+\filldraw[fill=vizBlue!10,draw=vizBlue,line width=.8pt] (2.15,-4.18) rectangle (10.25,-3.89);
+\foreach \x in {2.15,4.80,7.45}{\fill[vizTeal] (\x,-2.795) circle (2pt);}
+\foreach \x in {2.15,6.20,10.25}{\fill[vizBlue] (\x,-4.035) circle (2pt);}
+\draw[visual arrow,draw=vizInk!65] (2.15,-3.06)--(2.15,-3.78);
+\draw[visual arrow,draw=vizInk!65] (4.8,-3.06)--(6.2,-3.78);
+\draw[visual arrow,draw=vizInk!65] (7.45,-3.06)--(10.25,-3.78);
+\node[anchor=south] at (2.15,-2.58) {$0$};
+\node[anchor=west,text=vizTeal] at (7.66,-2.80) {$R(t)$};
+\node[anchor=north] at (2.15,-4.25) {$x=0$};
+\node[anchor=north] at (10.25,-4.25) {$x=1$};
+\node[visual card,draw=vizPurple,fill=vizPurple!6,text width=3.35cm,minimum height=1.28cm] at (13.50,-3.42) {$x=r/R(t)$\\表面始终对应 $x=1$\\仿射运动下随物料映射};
+\end{tikzpicture}

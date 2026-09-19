@@ -39,3 +39,6 @@ _tmp/
 
 # 可由 scripts/package_post_contest.py 重建的复盘交付件
 /deliverables/post_contest/
+
+# 全篇视觉升级交付物
+/deliverables/visual_upgrade/

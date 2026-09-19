@@ -3,46 +3,8 @@
 为使模型可解且抓住主要物理机制，作如下假设。图~\ref{fig:geom} 给出几何与主要假设的示意；题给的尺寸、初值与附件来源见第~\ref{sec:restate}~节，控制方程、干物质密度关系、插值与常值延续的具体做法分别见第~\ref{sec:model}~节的相应小节。
 
 \begin{figure}[H]\centering
-\begin{tikzpicture}[font=\small,>=Stealth,line join=round]
-\def\Lx{5.6}\def\Ry{0.9}\def\ee{0.4}
-% 几何主体（侧视）
-\fill[palMist] (0,-\Ry) rectangle (\Lx,\Ry);
-\draw[palDeep,dashed] (0,0) ellipse [x radius=\ee cm,y radius=\Ry cm];              % 背端面（忽略轴向）
-\draw[palDeep] (0,\Ry) -- (\Lx,\Ry) (0,-\Ry) -- (\Lx,-\Ry);
-\filldraw[fill=palIce!45,draw=palDeep] (\Lx,0) ellipse [x radius=\ee cm,y radius=\Ry cm];  % 前端面
-\draw[palCoral,thick] (\Lx/2,-\Ry) -- (\Lx/2,\Ry);             % 中截面
-\fill[palDeep] (\Lx/2,0) circle (1.4pt);
-% 第一层（上）：热交换（箭头避开中截面 x=Lx/2，为中截面标注留出通道）
-\foreach \x in {1.0,1.8,3.8,4.6}{\draw[->,palCoral,thick] (\x,\Ry+0.78) -- (\x,\Ry+0.26);}
-\node[text=palCoral,font=\scriptsize,anchor=south] at (\Lx/2,\Ry+0.98) {热风对流加热 $h$};
-% 中截面标注：中截面正上方独立通道，短引线
-\draw[palCoral,thin] (\Lx/2,\Ry) -- (\Lx/2,\Ry+0.2);
-\node[text=palCoral,font=\scriptsize,anchor=south] at (\Lx/2,\Ry+0.2) {中截面};
-% 中心标注：左侧空白，沿中轴短引线
-\draw[palChar,thin] (\Lx/2,0) -- (-0.12,0);
-\node[palChar,font=\scriptsize,anchor=east] at (-0.15,0) {中心 $r=0$};
-% 第二层（下）：失水
-\foreach \x in {1.0,1.8,3.8,4.6}{\draw[->,palDeep,thick] (\x,-\Ry-0.06) -- (\x,-\Ry-0.56);}
-\node[text=palDeep,font=\scriptsize,anchor=north] at (\Lx/2,-\Ry-0.74) {表面失水 $h_m$};
-% 第三层（最下）：长度尺寸
-\draw[<->,palChar] (0,-\Ry-1.18) -- (\Lx,-\Ry-1.18);
-\node[palChar,font=\scriptsize,anchor=north] at (\Lx/2,-\Ry-1.20) {长度 $L=\SI{25}{cm}$（恒定）};
-\node[palChar,font=\scriptsize,anchor=north] at (\Lx/2,-\Ry-1.78) {(a) 圆柱侧视};
-% —— 截面视图（右，放大；R(t) 置于上部环带、与 R0、r、收缩箭头分区）——
-\begin{scope}[xshift=9.6cm,yshift=-0.55cm]
-\draw[palDeep,dashed] (0,0) circle (1.15);
-\filldraw[fill=palIce!40,draw=palCoral] (0,0) circle (0.72);
-\foreach \a in {200,270,340}{\draw[->,palCoral] ({1.13*cos(\a)},{1.13*sin(\a)}) -- ({0.75*cos(\a)},{0.75*sin(\a)});}
-\draw[->,palDeep,thick] (0,0) -- (0.72,0);
-\node[palDeep,font=\scriptsize,anchor=north] at (0.40,-0.03) {$r$};
-\fill[palDeep] (0,0) circle (1.2pt);
-\node[palChar,font=\scriptsize,anchor=south] at (0,1.18) {$R_0$};
-\node[text=palCoral,font=\scriptsize] at (0,0.92) {$R(t)$};
-\node[palChar,font=\scriptsize,align=center,anchor=north] at (0,-1.34) {$R_0\!\to\!R(t)$、$L$ 不变};
-\node[palChar,font=\scriptsize,anchor=north] at (0,-1.86) {(b) 中截面收缩};
-\end{scope}
-\end{tikzpicture}
-\caption{几何与主要假设示意。左图：圆柱药材侧视图，展示侧面对流换热、表面失水及长度尺寸，虚线端面表示忽略轴向变化的一维径向近似；右图：中截面收缩示意，蓝色虚线与珊瑚色实线分别表示初始边界和当前边界，半径由 $R_0$ 变为 $R(t)$，长度保持不变。}
+\input{diagrams/geometry}
+\caption{几何与模型假设：(a) 侧面换热、失水与一维径向近似；(b) 问题四的给定边界收缩，虚线为初始边界，实线为当前边界，内部仿射运动与长度不变另作假设。}
 \label{fig:geom}
 \end{figure}
 

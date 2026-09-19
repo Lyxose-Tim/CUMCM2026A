@@ -36,20 +36,24 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--pdf", required=True, type=Path,
                         help="Reviewed compiled PDF; relative paths are rooted in this project")
+    parser.add_argument("--output-dir", type=Path, default=Path("deliverables/post_contest"),
+                        help="Destination within this project; use a new folder to preserve a previous edition")
     args = parser.parse_args()
     source_pdf = args.pdf if args.pdf.is_absolute() else ROOT / args.pdf
     if not source_pdf.is_file() or not source_pdf.read_bytes().startswith(b"%PDF-"):
         raise ValueError("A compiled PDF is required")
-    target = ROOT / "deliverables" / "post_contest"
+    target = (ROOT / args.output_dir).resolve()
+    if not target.is_relative_to(ROOT):
+        raise ValueError("The artifact destination must stay within this project")
     target.mkdir(parents=True, exist_ok=True)
     pdf = target / "paper_review.pdf"
     shutil.copy2(source_pdf, pdf)
-    extensions = {".tex", ".pdf", ".png", ".jpg", ".jpeg", ".py", ".md"}
+    extensions = {".tex", ".pdf", ".png", ".jpg", ".jpeg", ".svg", ".json", ".py", ".md"}
     paper_files = [p for p in (ROOT / "paper").rglob("*")
                    if p.is_file() and p.suffix.lower() in extensions
                    and "__pycache__" not in p.parts]
     compiler = archive(target / "paper_overleaf_review.zip", paper_files, ROOT / "paper")
-    dirs = ("src", "tests", "config", "附件", "outputs", "reports", "scripts", "paper")
+    dirs = ("src", "tests", "config", "附件", "outputs", "exports", "reports", "scripts", "paper", "skills")
     support = []
     for folder in dirs:
         support.extend(p for p in (ROOT/folder).rglob("*") if p.is_file()

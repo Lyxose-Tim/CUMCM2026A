@@ -1,0 +1,24 @@
+% Strict output decisions are made from unrounded states on the same trajectory.
+\begin{tikzpicture}[visual base]
+\node[visual card,draw=vizNavy,fill=vizNavy,text=white,text width=14.65cm,minimum height=.82cm] (init) at (7.9,0) {\textbf{按各问设置物性与初值，生成径向节点及控制体权重}\\问题一：附录 2；问题二、三：附录 3；问题四：附录 4；均从 $(C_0,T_0)$ 起算};
+\node[visual card,text width=14.65cm,minimum height=.82cm] (input) at (7.9,-1.45) {构造 $T_{\mathrm{air}}(t),\ C_{\mathrm{env}}(t)$：观测段线性插值，$4\,\mathrm{h}$ 后保持末小时均值\\问题四另读入 $R(t)$，在材料参考坐标 $x=r/R(t)$ 上求解};
+\node[visual card,draw=vizTeal,fill=vizTeal!7,text width=14.65cm,minimum height=.78cm] (bdf) at (7.9,-2.80) {\textbf{节点型有限体积 $\longrightarrow$ 自适应 BDF 时间推进}\\每次取当前状态物性与输入；经过 $4\,\mathrm{h}$ 断点时分段重启};
+\draw[visual arrow] (init)--(input);
+\draw[visual arrow] (input)--(bdf);
+\node[visual card,draw=vizBlue,fill=vizBlue!6,text width=4.55cm,minimum height=1.05cm] (q1) at (2.95,-4.50) {\textbf{问题一：固定终点}\\积分至 $1800\,\mathrm{s}$\\每 $1\,\mathrm{s}$ 提取温度与含水率};
+\node[visual card,draw=vizPurple,fill=vizPurple!7,text width=7.05cm,minimum height=1.05cm] (root) at (10.83,-4.50) {\textbf{问题二、三及问题四：连续阈值根}\\在同一解上用未舍入的全域最大值\\求 $C_{\max}(t^*)-0.15=0$ 的首次下降根};
+\draw[visual arrow,draw=vizBlue] (bdf.south)--(7.9,-3.42)-|(q1.north);
+\draw[visual arrow,draw=vizPurple] (bdf.south)--(7.9,-3.42)-|(root.north);
+\node[visual card,draw=vizPurple,fill=white,text width=7.05cm,minimum height=.8cm] (sample) at (10.83,-6.13) {从根后延续同一解，检查题定采样点 $t_{\mathrm{s}}$\\问题二每 $1\,\mathrm{s}$；问题三、四每 $60\,\mathrm{s}$};
+\draw[visual arrow,draw=vizPurple] (root)--(sample);
+\node[diamond,draw=vizCoral,line width=.85pt,fill=vizCoral!8,aspect=4.0,inner sep=3pt,text width=3.9cm,align=center] (strict) at (10.83,-7.70) {未舍入 $C_{\max}(t_{\mathrm{s}})<0.15$？};
+\draw[visual arrow] (sample)--(strict);
+\draw[visual arrow,draw=vizCoral] (strict.east)--(15.47,-7.70)--(15.47,-6.13)--(sample.east);
+\node[font=\fontsize{8.5}{10}\selectfont,text=vizCoral,align=center,fill=white,inner sep=2pt] at (15.12,-6.87) {否：继续至\\下一采样点};
+\node[visual card,draw=vizTeal,fill=vizTeal!7,text width=7.05cm,minimum height=.70cm] (accept) at (10.83,-9.37) {记录首个严格达标 $t_{\mathrm{s}}$\\根后 $600\,\mathrm{s}$ 采样无回穿；失败则中止};
+\draw[visual arrow,draw=vizTeal] (strict)--node[right,text=vizTeal,font=\fontsize{8.5}{10}\selectfont]{是}(accept);
+\node[visual card,draw=vizNavy,fill=vizOutside,text width=14.65cm,minimum height=.85cm] (out) at (7.9,-10.94) {\textbf{按模板重构、四舍五入并导出，再核验跨文件与工作簿一致性}\\问题四：$r\le R(t)$ 保留，域外留空，表面单列；检验失败不登记通过};
+\draw[visual arrow,draw=vizBlue] (q1.south)--(q1.south |- out.north);
+\draw[visual arrow,draw=vizTeal] (accept.south)--(accept.south |- out.north);
+\node[text=vizBlue,align=center,text width=4.3cm,fill=white,inner sep=4pt] at (2.95,-6.72) {固定终点直接采样\\无需阈值事件判定};
+\end{tikzpicture}
