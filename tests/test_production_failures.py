@@ -67,3 +67,33 @@ def test_cross_file_zero_common_not_pass(tmp_path):
                      np.full((2, 21), 0.3), COLS21, A1, sheet_name="Sheet1")
     res = W.cross_file_check(tmp_path / "result2.xlsx", tmp_path / "result3.xlsx")
     assert res["n_common_times"] == 0 and res["ok"] is False
+
+
+@pytest.mark.parametrize("mode", ["3h", "72h"])
+def test_formal_production_rejects_test_mode_before_writing(cfg, tmp_path, monkeypatch, mode):
+    def forbidden(*args, **kwargs):
+        pytest.fail("formal test mode must be rejected before numerical production")
+    monkeypatch.setattr(PROD, "produce_q1", forbidden)
+    target = tmp_path / "formal"
+    result = PROD.run_production(cfg, outputs_dir=target, result2_mode=mode)
+    assert not result["ok"] and "全过程" in result["reason"]
+    assert not target.exists()
+
+
+@pytest.mark.parametrize("formal", [True, False])
+def test_unknown_output_mode_is_never_accepted(cfg, tmp_path, monkeypatch, formal):
+    monkeypatch.setattr(PROD, "produce_q1", lambda *a, **k: pytest.fail("must reject mode"))
+    result = PROD.run_production(cfg, outputs_dir=tmp_path / "unknown",
+                                 result2_mode="typo", require_approved=formal)
+    assert not result["ok"] and "未知" in result["reason"]
+    assert not (tmp_path / "unknown").exists()
+
+
+@pytest.mark.parametrize("mode", ["3h", "72h"])
+def test_explicit_test_mode_reaches_numerical_pipeline(cfg, tmp_path, monkeypatch, mode):
+    def reached(*args, **kwargs):
+        raise RuntimeError("test numerical pipeline reached")
+    monkeypatch.setattr(PROD, "produce_q1", reached)
+    result = PROD.run_production(cfg, outputs_dir=tmp_path, result2_mode=mode,
+                                 require_approved=False)
+    assert "test numerical pipeline reached" in result["reason"]

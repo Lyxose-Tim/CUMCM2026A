@@ -78,9 +78,13 @@ def _single_trajectory(cfg, question, fc, moving):
 
 def gate_production(question, det, cmax_at_tsample, thr):
     """生产失败阻断门（可单测）：续算回穿、严格合格末行。任一不满足抛 RuntimeError。"""
-    if not det.post_ok:
+    if not np.isfinite(thr) or thr <= 0:
+        raise RuntimeError(f"{question} 生产失败：阈值须有限且为正")
+    if (not det.post_ok or not np.isfinite(det.post_max_cmax)
+            or det.post_max_cmax > thr + 1e-9):
         raise RuntimeError(f"{question} 生产失败：续算回穿检查未过（post_max_cmax={det.post_max_cmax}）")
-    if det.t_sample is None or cmax_at_tsample >= thr:
+    if (det.t_sample is None or not np.isfinite(det.t_sample)
+            or not np.isfinite(cmax_at_tsample) or not 0 < cmax_at_tsample < thr):
         raise RuntimeError(f"{question} 生产失败：严格合格末行 t_sample={det.t_sample} 实测 C_max≥{thr}")
 
 
@@ -200,6 +204,10 @@ def produce_q4(cfg, fc, outdir):
 def run_production(cfg, *, outputs_dir=None, override=None, result2_mode="until_dry_1s",
                    require_approved=True):
     """正式续算 + 官方导出 + V-8/V-9 终检。override/require_approved=False 供缩比测试。"""
+    if result2_mode not in ("until_dry_1s", "3h", "72h"):
+        return {"ok": False, "reason": f"未知 result2_mode={result2_mode!r}，不生成结果文件"}
+    if require_approved and result2_mode != "until_dry_1s":
+        return {"ok": False, "reason": "正式生产必须输出全过程；3h/72h 仅限 require_approved=False 的测试模式"}
     if require_approved and not cfg.raw["production"]["approved"]:
         return {"ok": False, "reason": "production.approved=false（D12 未授权），不生成官方 result1–4"}
     outdir = Path(outputs_dir) if outputs_dir else (cfgmod.PROJECT_ROOT / "outputs")

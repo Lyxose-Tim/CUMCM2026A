@@ -1,0 +1,10 @@
+{
+  "command": "python -X utf8 -m pytest tests/ -q -o addopts=\"\"",
+  "passed": 200,
+  "failed": 0,
+  "elapsed_seconds": 95.95,
+  "all_ok": true,
+  "log_sha256": "7e1d4e351dd895a2724f79c5d928371c8534626d41e65ab121f35229647d8cc2",
+  "stdout": "........................................................................ [ 36%]\n........................................................................ [ 72%]\n........................................................                 [100%]\n200 passed in 95.95s (0:01:35)\n",
+  "scope": "All tests after final source freeze and paper/code synchronization; includes all third-round regressions."
+}

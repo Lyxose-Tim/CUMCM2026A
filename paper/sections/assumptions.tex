@@ -7,9 +7,9 @@
 \def\Lx{5.6}\def\Ry{0.9}\def\ee{0.4}
 % 几何主体（侧视）
 \fill[palMist] (0,-\Ry) rectangle (\Lx,\Ry);
-\draw[palDeep,dashed] (0,0) ellipse (\ee and \Ry);              % 背端面（忽略轴向）
+\draw[palDeep,dashed] (0,0) ellipse [x radius=\ee cm,y radius=\Ry cm];              % 背端面（忽略轴向）
 \draw[palDeep] (0,\Ry) -- (\Lx,\Ry) (0,-\Ry) -- (\Lx,-\Ry);
-\filldraw[fill=palIce!45,draw=palDeep] (\Lx,0) ellipse (\ee and \Ry);  % 前端面
+\filldraw[fill=palIce!45,draw=palDeep] (\Lx,0) ellipse [x radius=\ee cm,y radius=\Ry cm];  % 前端面
 \draw[palCoral,thick] (\Lx/2,-\Ry) -- (\Lx/2,\Ry);             % 中截面
 \fill[palDeep] (\Lx/2,0) circle (1.4pt);
 % 第一层（上）：热交换（箭头避开中截面 x=Lx/2，为中截面标注留出通道）
@@ -51,11 +51,11 @@
 \begin{enumerate}[label=(\arabic*),leftmargin=2.2em,itemsep=2pt]
 \item 药材视为均匀、各向同性的连续多孔介质，初始温度与含水率均匀。
 \item 忽略轴向变化与两端散失，温度和含水率仅随半径及时间变化，中心处满足对称条件。
-\item 水分迁移采用有效扩散描述，将蒸汽扩散、毛细流动等机制的净效果并入有效扩散系数，环境含水浓度作为表面传质的有效驱动量。
-\item 传热过程考虑内部导热与表面对流换热，体积热容取 $\rho(C)c_p(C)$，水分蒸发的吸热项不单独计入。
-\item 各问沿用题给的同一组表面对流换热系数 $h$ 与传质系数 $h_m$。
+\item 水分迁移采用有效扩散描述，将蒸汽扩散、毛细流动等机制的净效果并入有效扩散系数，环境含水浓度作为表面传质的有效驱动量；两者同为 $\si{kg/kg}$ 并不意味着它们是同一相平衡变量。题面未给等温线，故该浓度差边界属于有效闭合。
+\item 传热过程考虑内部导热与表面对流换热，有效热储存系数取 $\rho(C)c_p(C)$，水分蒸发的吸热项不单独计入。
+\item 问题二至四沿用附录 2 的表面对流换热系数 $h$ 与传质系数 $h_m$，将其作为后续各问未另给交换系数时的附加假设。
 \item 问题四中干物质质量守恒，干物质基准密度在各时刻沿半径均匀分布，物料按给定半径作仿射收缩，长度保持不变。
-\item 环境观测结束后，以观测末段的平均状态代表后续的恒定工况。
+\item 环境观测在 $\SI{4}{h}$ 结束后，以最后一小时的原始 $61$ 点均值代表后续恒定工况；该延续不是新增观测。
 \end{enumerate}
 
 其中一维近似的依据见第~\ref{sec:analysis}~节，有效扩散与干物质密度关系的推导见第~\ref{sec:model}~节，这些简化对结果的影响在第~\ref{sec:eval}~节讨论。

@@ -163,6 +163,8 @@ def q23_detect(cfg, *, N=400, interface="integral", npts=8, scenario="base",
     t_cross = res.t_cross
     argmax_node = int(np.argmax(res.y_cross[:n]))
     cont = SBDF.continue_bdf(op, res.y_cross, t_cross, post_s, cfg.bdf)
+    if not cont.ok:
+        raise RuntimeError(f"{question} 事件后续算失败：{cont.message}")
     cmax_cont = _cmax_fn_from(cont, n)
 
     tt = np.linspace(t_cross, t_cross + post_s, 61)
@@ -239,10 +241,12 @@ def q23_candidate(cfg, *, N=None, interface=None, npts=None, t_cap_h=None, save=
     n = N + 1
     thr = cfg.threshold
     t_cross = det.t_cross
-    t_sample = det.t_sample if det.t_sample is not None else int(np.ceil(t_cross))
+    if det.t_sample is None:
+        raise RuntimeError("事件后轨迹中没有严格合格的 60 s 采样点")
+    t_sample = det.t_sample
 
-    # 单一轨迹覆盖到 t_sample（事件段与续算段统一取值；禁区间外稠密输出）
-    full = _integrate_full(op, initial_state(cfg, N), t_sample + 120.0, cfg)
+    # 事件、严格采样与表值共用事件段及其续算，不从初态另行积分。
+    full = SBDF.merge_bdf(res, cont)
 
     def ev(t):
         if t > full.t_end + 1e-6:
@@ -303,9 +307,11 @@ def q4_candidate(cfg, *, N=None, interface=None, npts=None, t_cap_h=None, save=T
                                     question="q4", t_cap_h=t_cap_h)
     n = N + 1
     t_cross = det.t_cross
-    t_sample = det.t_sample if det.t_sample is not None else int(np.ceil(t_cross))
+    if det.t_sample is None:
+        raise RuntimeError("事件后轨迹中没有严格合格的 60 s 采样点")
+    t_sample = det.t_sample
     radius = data_io.make_radius_function(cfg)
-    full = _integrate_full(op, initial_state(cfg, N), t_sample + 120.0, cfg)
+    full = SBDF.merge_bdf(res, cont)
 
     def ev(t):
         if t > full.t_end + 1e-6:

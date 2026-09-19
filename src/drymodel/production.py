@@ -204,6 +204,10 @@ def produce_q4(cfg, fc, outdir):
 def run_production(cfg, *, outputs_dir=None, override=None, result2_mode="until_dry_1s",
                    require_approved=True):
     """正式续算 + 官方导出 + V-8/V-9 终检。override/require_approved=False 供缩比测试。"""
+    if result2_mode not in ("until_dry_1s", "3h", "72h"):
+        return {"ok": False, "reason": f"未知 result2_mode={result2_mode!r}，不生成结果文件"}
+    if require_approved and result2_mode != "until_dry_1s":
+        return {"ok": False, "reason": "正式生产必须输出全过程；3h/72h 仅限 require_approved=False 的测试模式"}
     if require_approved and not cfg.raw["production"]["approved"]:
         return {"ok": False, "reason": "production.approved=false（D12 未授权），不生成官方 result1–4"}
     outdir = Path(outputs_dir) if outputs_dir else (cfgmod.PROJECT_ROOT / "outputs")

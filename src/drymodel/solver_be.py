@@ -9,6 +9,7 @@
 """
 from __future__ import annotations
 
+from bisect import bisect_left, insort
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -70,6 +71,16 @@ def step_be(op, y_old, t_old, dt, *, C0_ref, picard):
     return y_new, converged, iters, min_C
 
 
+def _snap_roundoff_time(t, anchors):
+    """仅将辅助网格时刻吸附到相邻、最多相差 2 ULP 的优先时刻。"""
+    i = bisect_left(anchors, t)
+    nearby = anchors[max(0, i - 1):i + 1]
+    closest = min(nearby, key=lambda a: abs(a - t))
+    if abs(closest - t) <= 2.0 * max(np.spacing(t), np.spacing(closest)):
+        return closest
+    return t
+
+
 def integrate_be(op, y0, t_end, dt, *, C0_ref, picard, retry,
                  record_times=None, breakpoints=(), scalar_recorder=None,
                  flux_recorder=None):
@@ -85,18 +96,25 @@ def integrate_be(op, y0, t_end, dt, *, C0_ref, picard, retry,
     if not np.isfinite(dt) or dt <= 0 or not np.isfinite(t_end) or t_end < 0:
         raise ValueError("BE 要求有限 dt>0、t_end>=0")
     # 保持原基础步网格，再在采样/断点处分割；最后一步允许不足 dt。
+    # 显式采样与终点优先，避免 0.3 与 3*0.1 形成一个舍入量级的假微步。
     base_times = np.arange(0.0, t_end, dt)
-    if record_times is None:
-        record_times = set(base_times) | {t_end}
-    else:
-        record_times = set(float(x) for x in record_times)
+    record_base = record_times is None
+    record_times = set() if record_base else set(float(x) for x in record_times)
     if any(not np.isfinite(x) or x < 0 or x > t_end for x in record_times):
         raise ValueError("BE record_times 须为 [0,t_end] 内有限时刻")
     breakpoints = [float(x) for x in breakpoints]
     if not all(np.isfinite(x) for x in breakpoints):
         raise ValueError("BE breakpoints 须为有限时刻")
-    step_ends = sorted((set(base_times) | record_times | {t_end} |
-                        {x for x in breakpoints if 0 < x < t_end}) - {0.0})
+    # 两个不同的显式采样值均保留；仅合并较低优先级的断点/基础网格。
+    anchors = sorted(record_times | {0.0, t_end})
+    for point in sorted(set(x for x in breakpoints if 0 < x < t_end)):
+        snapped = _snap_roundoff_time(point, anchors)
+        if snapped == point and point not in record_times:
+            insort(anchors, point)
+    base_times = {_snap_roundoff_time(float(t), anchors) for t in base_times}
+    if record_base:
+        record_times = base_times | {t_end}
+    step_ends = sorted((base_times | set(anchors)) - {0.0})
     halvings_max = int(retry["halvings_max"])
     dt_min = float(retry["dt_min_s"])
 

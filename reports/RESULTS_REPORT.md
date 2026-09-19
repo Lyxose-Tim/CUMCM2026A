@@ -6,7 +6,7 @@ Python 3.13.9、NumPy 2.3.5、SciPy 1.16.3，Windows。题面、附件与 config
 
 ## 四问结果与完整复算
 
-Q1前1800 s、Q2整个过程、Q3/Q4分钟结果均用最终生产配置重新生成至临时复算目录。result1两表各1800行，result2两表各206907行，result3共3449行，result4共3066行。工作簿V9全部通过；result2与result3的3448个共同分钟行完全一致。全部论文表1–6和半径表的四位显示与历史正式产出相同，未替换历史文件。
+Q1前1800 s、Q2整个过程、Q3/Q4分钟结果均用正式配置重新生成至临时复算目录。result1两表各1800行，result2两表各206907行，result3共3449行，result4共3066行。工作簿V9全部通过；result2与result3的3448个共同分钟行完全一致。全部论文表1–6和半径表的四位显示与历史正式产出相同，未替换历史文件。
 
 | 量 | Q2/Q3 | Q4 |
 |---|---:|---:|
@@ -40,3 +40,7 @@ Q1覆盖1800逐秒行，Q23覆盖206941行（逐秒至分钟末行并含事件�
 ## 复现
 
 先安装本工程（pip install -e .），然后执行 python scripts/recompute_post_contest.py、python -m drymodel.d12_evidence --output-dir reports/post_contest/round2_evidence。复算脚本只写临时副本和复盘证据；正式输出仍在outputs。最后运行python -m pytest tests/ -q。最终测试、编译与视觉验收见 VERIFY_REPORT.md。
+
+## 最终代码与复算证据的对应关系
+
+第二轮完整 BDF 复算后，第三轮仅修改正式入口的模式校验，以及辅助 BE 对机器舍入重复时间点的调度；默认 BDF 物理路径、物性、算子、输入和数值配置均未改变。因此保存第二轮真实执行时的源文件哈希，并在最终验收记录中列出这两个文件的后续差异，未把旧哈希误称为最终源码哈希。最终论文 code 副本与 src/drymodel 逐文件同步。

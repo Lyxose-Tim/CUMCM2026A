@@ -1,5 +1,23 @@
 # CUMCM 2026 A题「药材的烘干问题」求解工程
 
+> **赛后优化复盘分支**：`codex/post-contest-three-round-review`。三轮改进与逐项证据见 [迭代记录](reports/post_contest/ITERATIONS.md)、[最新计算结果](reports/RESULTS_REPORT.md) 和 [验收报告](reports/VERIFY_REPORT.md)。以下赛时 D12 记录保留作历史基线。
+>
+> 本分支保留题给参数、四问模型与正式历史结果；修复时间边界、达标/输出门检和同轨迹采样，优化积分界面求值，按实际配置完成全采样独立加密。论文使用现有 LaTeX 工程，明确额外假设与数值精度边界，收束题外外延。
+>
+> 复盘论文和两个交付包生成在 `deliverables/post_contest/`；原有 `paper_overleaf.zip` 和用户尚未提交的赛时方案原样保留。新编译包为 `paper_overleaf_review.zip`，可运行源码包为 `reproduction_support.zip`。
+
+赛后验证入口（完成环境安装后运行）：
+
+```bash
+python -m pytest tests/ -q
+python scripts/recompute_post_contest.py
+python -m drymodel.d12_evidence --output-dir reports/post_contest/round2_evidence
+python scripts/benchmark_post_contest.py
+```
+
+完整复算写入 `_tmp/post_contest/reproduction/`，不会覆盖 `outputs/`；结构化证据保存到 `reports/post_contest/`。论文编译后可用 `python scripts/package_post_contest.py --pdf <编译PDF路径>` 重新生成交付包并核验包内哈希。
+
+
 一维径向（中截面）有效扩散—导热模型的 Q1–Q4 建模求解代码。实现严格对齐冻结方案
 《建模方案v1.1/A题_建模方案.md》v1.2，参数唯一来源为 [`config/A题_config.yaml`](config/A题_config.yaml)。
 

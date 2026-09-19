@@ -1,0 +1,48 @@
+{
+  "checked_at_utc": "2026-09-19T04:11:16.904863+00:00",
+  "checks": {
+    "preexisting_user_files_unchanged": true,
+    "original_problem_attachments_config_outputs_unchanged_from_git_baseline": true,
+    "config_matches_numerical_run": true,
+    "attachments_match_numerical_run": true,
+    "historical_outputs_match_numerical_run": true,
+    "all_paper_code_copies_identical": true,
+    "complete_production_rerun_passed": true,
+    "complete_D12_refinement_passed": true,
+    "post_recompute_delta_only_reviewed_guards_and_auxiliary_BE": true
+  },
+  "all_ok": true,
+  "current_source_sha256": {
+    "src/drymodel/__init__.py": "149a3d1bcec602a112f224e4d90ac1c756bf45d049ba25741d1c5db3d5637154",
+    "src/drymodel/be_bdf_diag.py": "a5c9637277fc990a7f7c77034058a7d3413af46c1085a183580bb81382671b4f",
+    "src/drymodel/config.py": "b9b14a616a96bd1615ebdeece3dab3dddea53c21e39e3907a12c1bc6fab32c26",
+    "src/drymodel/config_check.py": "1cc4b139896b1129b6075888834a87dfe9cb044b8cc30228bdec1d04835624a0",
+    "src/drymodel/criterion.py": "f372d75e036af03637298dd5c3fc2e30453877e6ebaffce98f6ce502200eaa29",
+    "src/drymodel/d12_evidence.py": "616461201b539db5b4d053baad1430ee7637e1ede2fd5ad8f5abe78d90b6e0cd",
+    "src/drymodel/d12_prep.py": "b65bdbada105e9d2e4089967368379558777b46c594778045eef51c03162210d",
+    "src/drymodel/data_io.py": "8faa9c772f2c4a26ca797e7112e73247dec014a964886d81b424f31f56183206",
+    "src/drymodel/grid.py": "25b1393afb099d21cffee39239df004f9fe3a2936701a30e46ec30099207725f",
+    "src/drymodel/latent_heat_diag.py": "93f7c59cebb2ee9a59b91b2f84c3a7a31907e37c49a02b8ff321dcaf25047770",
+    "src/drymodel/operators.py": "082e4ceadaa77a84a02674d0111ff9be251d1a0a11a1b9d435021b5e24bac96a",
+    "src/drymodel/paper.py": "afbca168684d59b7141bd4e2e0025902997af1173c921a52128aa2fa8f60f92a",
+    "src/drymodel/paper_figs.py": "73956e39b3ba77b695c9b8cef547b98a262d1d5033b144bc61a42b0397c3ae8b",
+    "src/drymodel/paper_latex.py": "535e3215275a4da96f93ad7e2c56c967e06e3fa08427df6145f524d093b49993",
+    "src/drymodel/plots.py": "ed414e27886abaff77edfefa234f13970380b1b2add34a6cee7afeabda595191",
+    "src/drymodel/postprocess.py": "32be4ebbab5fe2e2737e44794609e0d8e8094047e1b2a8229baa0a9ca442dc2d",
+    "src/drymodel/production.py": "4eac437576022382147a9e4ffcc615c2146164b245c5491a16e57af7a6d87513",
+    "src/drymodel/props.py": "7a281f2c0fdc8f788ef8acbb8f7dfaa272a8fe46af5a50c203402b7ddc1727b5",
+    "src/drymodel/run_all.py": "418659ed2881f11cc6086ef9f6d9c98dea2c764b3a542c04292f2adee36641fc",
+    "src/drymodel/runners.py": "ecdf687030ecc817bcf20e050f0a4cb0a244f17dc52fef57c73706cadb5d255c",
+    "src/drymodel/sensitivity.py": "a98737ac5b714c5eb96570d5a13ebed1ba9d4a9f370eff8564a3aa9781303fad",
+    "src/drymodel/solver_bdf.py": "71fc0a6be97dbd4c4366c68851b376462945b392bcfe415d0d22c65c9f3d33eb",
+    "src/drymodel/solver_be.py": "2c8880d374ba126f8a1aa71f66f3ed4e1b5a0debd6cc0c9f9fcdd683cf925417",
+    "src/drymodel/verify.py": "9963bb6f5a3d2ca578593f8314618454cd30e594ffa8daa81bb6e9ca416f0ee6",
+    "src/drymodel/writers.py": "d47bb6bccafd2b4078bc01afebaa5f73cc4e3761b41795cc400c483d6f1e7a86"
+  },
+  "code_copy_count": 25,
+  "source_changes_since_D12": [
+    "src/drymodel/production.py",
+    "src/drymodel/solver_be.py"
+  ],
+  "explanation": "Round 3 adds a pre-computation formal-output mode guard and fixes auxiliary BE roundoff boundaries. Default production BDF numerics are unchanged; preserve actual run hashes separately."
+}

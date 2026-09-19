@@ -4,11 +4,12 @@
 - 收敛：增量 ∞-范数 ||ΔC||≤1e-9、||ΔT||≤1e-7 K；且速率残差
   ||N_C||≤1e-10·C0/Δt、||N_T||≤1e-8 K/s。最多 30 次。
 - 失败重试：未收敛或出现 C≤0 → Δt 减半（最小 1e-3 s，最多 10 次），
-  子步终点重新对齐到整数秒；仍失败则终止并返回状态快照。
+  子步终点重新对齐到当前步末；仍失败则终止并返回状态快照。
 - 采样：每 1 s 步末状态即输出行（无插值）。
 """
 from __future__ import annotations
 
+from bisect import bisect_left, insort
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -70,21 +71,50 @@ def step_be(op, y_old, t_old, dt, *, C0_ref, picard):
     return y_new, converged, iters, min_C
 
 
+def _snap_roundoff_time(t, anchors):
+    """仅将辅助网格时刻吸附到相邻、最多相差 2 ULP 的优先时刻。"""
+    i = bisect_left(anchors, t)
+    nearby = anchors[max(0, i - 1):i + 1]
+    closest = min(nearby, key=lambda a: abs(a - t))
+    if abs(closest - t) <= 2.0 * max(np.spacing(t), np.spacing(closest)):
+        return closest
+    return t
+
+
 def integrate_be(op, y0, t_end, dt, *, C0_ref, picard, retry,
                  record_times=None, breakpoints=(), scalar_recorder=None,
                  flux_recorder=None):
     """从 t=0 积分到 t_end（含），基础步长 dt（通常 1 s）。
 
-    record_times: 需保存整场状态的时刻集合（默认 = 每个整数秒到 t_end）。
+    record_times: 需保存整场状态的时刻集合（默认 = 基础步末及 t_end）。
+    采样时刻、断点和终点均精确落在步末；允许非整数秒，不做时间插值。
     scalar_recorder(t, C, T): 可选，记录标量诊断。
     flux_recorder(t_end, dt_sub, f): 可选，每**实际(子)步**回调真实通量（W4）。
     返回 BEResult；累计通量 cum_flux 用各实际子步步长（非固定 1 s）。失败 ok=False 显式传播。
     """
-    dt = float(dt)
-    if record_times is None:
-        record_times = set(int(round(x)) for x in np.arange(0, t_end + 1, dt))
-    else:
-        record_times = set(int(round(x)) for x in record_times)
+    dt, t_end = float(dt), float(t_end)
+    if not np.isfinite(dt) or dt <= 0 or not np.isfinite(t_end) or t_end < 0:
+        raise ValueError("BE 要求有限 dt>0、t_end>=0")
+    # 保持原基础步网格，再在采样/断点处分割；最后一步允许不足 dt。
+    # 显式采样与终点优先，避免 0.3 与 3*0.1 形成一个舍入量级的假微步。
+    base_times = np.arange(0.0, t_end, dt)
+    record_base = record_times is None
+    record_times = set() if record_base else set(float(x) for x in record_times)
+    if any(not np.isfinite(x) or x < 0 or x > t_end for x in record_times):
+        raise ValueError("BE record_times 须为 [0,t_end] 内有限时刻")
+    breakpoints = [float(x) for x in breakpoints]
+    if not all(np.isfinite(x) for x in breakpoints):
+        raise ValueError("BE breakpoints 须为有限时刻")
+    # 两个不同的显式采样值均保留；仅合并较低优先级的断点/基础网格。
+    anchors = sorted(record_times | {0.0, t_end})
+    for point in sorted(set(x for x in breakpoints if 0 < x < t_end)):
+        snapped = _snap_roundoff_time(point, anchors)
+        if snapped == point and point not in record_times:
+            insort(anchors, point)
+    base_times = {_snap_roundoff_time(float(t), anchors) for t in base_times}
+    if record_base:
+        record_times = base_times | {t_end}
+    step_ends = sorted((base_times | set(anchors)) - {0.0})
     halvings_max = int(retry["halvings_max"])
     dt_min = float(retry["dt_min_s"])
 
@@ -106,10 +136,9 @@ def integrate_be(op, y0, t_end, dt, *, C0_ref, picard, retry,
 
     total_steps = 0
     total_halvings = 0
-    n_steps = int(round(t_end / dt))
-    for _ in range(n_steps):
+    for target in step_ends:
         y, t, hv, ok, substeps = _advance_one_grid_step(
-            op, y, t, dt, C0_ref=C0_ref, picard=picard,
+            op, y, t, target - t, C0_ref=C0_ref, picard=picard,
             halvings_max=halvings_max, dt_min=dt_min)
         total_steps += 1
         total_halvings += hv
@@ -125,10 +154,10 @@ def integrate_be(op, y0, t_end, dt, *, C0_ref, picard, retry,
                             ok=False, message=f"步进失败于 t={t:.6f}s",
                             total_steps=total_steps, total_halvings=total_halvings,
                             cum_flux=cum_flux)
-        ti = int(round(t))
-        if ti in record_times and abs(t - ti) < 1e-9:
+        t = target  # 消除子步累加的舍入漂移，记录请求的原始时刻。
+        if t in record_times:
             C_s, T_s = op.split(y)
-            rec_t.append(float(ti)); rec_C.append(C_s.copy()); rec_T.append(T_s.copy())
+            rec_t.append(t); rec_C.append(C_s.copy()); rec_T.append(T_s.copy())
         if scalar_recorder is not None:
             C_s, T_s = op.split(y)
             scalar_recorder(t, C_s, T_s)
@@ -139,7 +168,7 @@ def integrate_be(op, y0, t_end, dt, *, C0_ref, picard, retry,
 
 
 def _advance_one_grid_step(op, y, t, dt, *, C0_ref, picard, halvings_max, dt_min):
-    """推进一个基础网格步（整数秒）；失败则内部减步并再对齐到步末整数秒。
+    """推进到当前网格步末；失败则内部减步并再对齐到同一步末。
 
     返回 (y_new, t_new, halvings, ok, substeps)；substeps 为**实际接受的子步**列表
     [(t_end, dt_sub, y_end), ...]，供真实子步通量累计（W4）。
@@ -148,7 +177,7 @@ def _advance_one_grid_step(op, y, t, dt, *, C0_ref, picard, halvings_max, dt_min
     if conv and min_C > 0.0:
         return y_new, t + dt, 0, True, [(t + dt, dt, y_new)]
 
-    # 减步重试：把 [t, t+dt] 细分为 2^k 子步，子步终点仍落在整数秒边界
+    # 减步重试：把 [t, t+dt] 细分为 2^k 子步，最后子步终点仍落在原步末
     total_hv = 0
     for k in range(1, halvings_max + 1):
         sub_dt = dt / (2 ** k)

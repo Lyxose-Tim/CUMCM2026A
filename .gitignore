@@ -36,3 +36,6 @@ A题_支撑材料_20260913/
 
 # 赛后复盘临时日志与编译中间件
 _tmp/
+
+# 可由 scripts/package_post_contest.py 重建的复盘交付件
+/deliverables/post_contest/

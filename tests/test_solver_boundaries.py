@@ -43,6 +43,73 @@ def test_be_preserves_fractional_samples_and_breakpoints(cfg):
     assert all(not (t-ds < 0.6 < t) for t, ds in steps)
 
 
+def test_be_decimal_samples_do_not_create_roundoff_microsteps(cfg):
+    """真实 Q1：0.3 与 arange 的 0.30000000000000004 不能各推进一次。"""
+    samples = [0., .3, .6, 1.]
+    result, steps = _be_run(cfg, t_end=1., dt=.1, record_times=samples)
+    assert result.ok
+    np.testing.assert_array_equal(result.t, samples)
+    assert result.total_steps == 10
+    assert all(ds > .09 for _, ds in steps[1:])
+    assert sum(ds for _, ds in steps) == pytest.approx(1.)
+
+
+@pytest.mark.parametrize("t_end", [.3, np.nextafter(.3, np.inf),
+                                   np.nextafter(np.nextafter(.3, np.inf), np.inf)])
+def test_be_roundoff_near_endpoint_keeps_exact_endpoint(cfg, t_end):
+    result, steps = _be_run(cfg, t_end=t_end, dt=.1)
+    assert result.ok
+    assert result.total_steps == 3
+    assert result.t[-1] == t_end
+    assert steps[-1][0] == t_end
+    assert all(ds > .09 for _, ds in steps[1:])
+    assert max(t for t, _ in steps) <= t_end
+
+
+@pytest.mark.parametrize("point", [np.nextafter(.3, 0.), .3, np.nextafter(.3, np.inf)])
+def test_be_roundoff_breakpoint_yields_to_explicit_sample(cfg, point):
+    samples = [0., .3, .6, 1.]
+    result, steps = _be_run(cfg, t_end=1., dt=.1, record_times=samples,
+                            breakpoints=(point,))
+    assert result.ok and result.total_steps == 10
+    np.testing.assert_array_equal(result.t, samples)
+    assert sum(t == .3 for t, _ in steps) == 1
+
+
+def test_be_decimal_breakpoint_replaces_nearby_default_grid(cfg):
+    result, steps = _be_run(cfg, t_end=1., dt=.1, breakpoints=(.3,))
+    assert result.ok and result.total_steps == 10
+    assert .3 in result.t
+    assert sum(t == .3 for t, _ in steps) == 1
+    assert all(ds > .09 for _, ds in steps[1:])
+
+
+@pytest.mark.parametrize("point_source", ["sample", "breakpoint", "endpoint"])
+@pytest.mark.parametrize("gap", [1e-6, 1e-10])
+def test_be_distinguishable_short_intervals_are_not_merged(cfg, monkeypatch, point_source, gap):
+    """调度回归：真实短间隔保留；替身单步不声称验证微步的 PDE 精度。"""
+    def constant_step(op, y, t, dt, **kwargs):
+        return y.copy(), True, 1, float(np.min(y[:op.N+1]))
+
+    monkeypatch.setattr(BE, "step_be", constant_step)
+    start, end = .3, .3 + gap
+    kwargs = {"t_end": 1., "dt": .1, "record_times": [0., start, 1.]}
+    if point_source == "sample":
+        kwargs["record_times"].append(end)
+    elif point_source == "breakpoint":
+        kwargs["breakpoints"] = (end,)
+    else:
+        kwargs["t_end"] = end
+        kwargs["record_times"] = [0., start, end]
+    result, steps = _be_run(cfg, **kwargs)
+    assert result.ok
+    ends = [t for t, _ in steps]
+    index = ends.index(start)
+    assert ends[index + 1] == end
+    assert steps[index + 1][1] == end - start
+    np.testing.assert_array_equal(result.t, sorted(kwargs["record_times"]))
+
+
 @pytest.mark.parametrize("t_end,dt", [(-1., 1.), (1., 0.), (1., -1.), (np.nan, 1.)])
 def test_be_rejects_invalid_time_parameters(cfg, t_end, dt):
     with pytest.raises(ValueError):
