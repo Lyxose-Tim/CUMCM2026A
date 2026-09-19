@@ -1,5 +1,7 @@
 # CUMCM 2026 A题「药材的烘干问题」求解工程
 
+> **图 3 / 图 4(b) 局部修订**：按用户要求使用内置生图工具生成“药材外观原型 → 抽象物理模型”及同一时刻的参考坐标映射，保留图 4(a) 与全部数值结果。新版交付在 `deliverables/figure_revision/`；[提示词](reports/figure_revision/PROMPTS.md) 与 [修订报告](reports/figure_revision/REPORT.md) 随工程保存。
+
 > **全篇视觉升级**：在三轮复盘结果上统一了论文图谱、流程/模型示意图与数据图，采用偏活泼的科研期刊风格。新版交付位于 `deliverables/visual_upgrade/`，上一轮交付仍保留在 `deliverables/post_contest/`。设计、数据保真与排版验收见 [视觉升级报告](reports/visual_upgrade/REPORT.md)。
 >
 > 可复用技能：[paper-visual-director](skills/paper-visual-director/SKILL.md)。它从论文论证和已有数据出发，规划整篇图示、统一视觉语言、生成可编辑图源，并在成品尺寸下检查整篇论文。可使用 `$paper-visual-director` 发起同类任务。

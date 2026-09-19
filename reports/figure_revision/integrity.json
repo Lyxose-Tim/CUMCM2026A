@@ -1,0 +1,10 @@
+{
+  "protected_files_unchanged": 110,
+  "preexisting_user_files_unchanged": 7,
+  "figure4a_source_prefix_unchanged": true,
+  "figure4a_prefix_sha256": "b630c594d941396435b4aa0192a3248beafaedfee64c941103bbb3293c672191",
+  "generated_assets_match_manifest": true,
+  "diagram_export_script_syntax": "passed",
+  "root_visual_review": "Both complete diagrams and PDF pages 5 and 8 inspected; accepted.",
+  "no_solver_run": true
+}

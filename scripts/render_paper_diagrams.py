@@ -1,8 +1,8 @@
-"""Render editable TikZ diagrams without changing model data or numerical code.
+"""Render diagram sources, including native TikZ and placed image panels.
 
 Example (the project's existing portable environment):
     python scripts/render_paper_diagrams.py --export-relation
-The main paper inputs the TikZ sources directly and does not need this helper.
+The main paper inputs the diagram TeX sources directly and does not need this helper.
 """
 from __future__ import annotations
 import argparse
@@ -12,12 +12,13 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-HEIGHTS = {'relation': 74, 'geometry': 62, 'fvm': 77, 'solver': 128}
+HEIGHTS = {'relation': 74, 'geometry': 62, 'fvm': 108, 'solver': 128}
 PREAMBLE = r'''\documentclass[12pt]{ctexart}
 \usepackage[paperwidth=164mm,paperheight=HEIGHTmm,margin=2mm]{geometry}
-\usepackage{amsmath,amssymb,xcolor,tikz}
+\usepackage{amsmath,amssymb,xcolor,tikz,graphicx}
 \usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,fit}
 \input{SOURCES/style}
+\graphicspath{{FIGURES/}}
 \pagestyle{empty}
 \setlength{\parindent}{0pt}
 \begin{document}
@@ -28,6 +29,8 @@ PREAMBLE = r'''\documentclass[12pt]{ctexart}
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--diagrams', nargs='+', choices=list(HEIGHTS), default=list(HEIGHTS),
+                        help='Render only the selected diagrams')
     parser.add_argument('--engine', type=Path, help='Path to XeLaTeX or Tectonic')
     parser.add_argument('--outdir', type=Path, default=ROOT / '_tmp/visual_upgrade/diagram_previews')
     parser.add_argument('--cache-dir', type=Path, default=ROOT / '_tmp/visual_upgrade/tectonic-cache')
@@ -41,10 +44,14 @@ def main() -> None:
     out = args.outdir.resolve()
     out.mkdir(parents=True, exist_ok=True)
     sources = Path(os.path.relpath(ROOT / 'paper/diagrams', out)).as_posix()
+    figures = Path(os.path.relpath(ROOT / 'paper/figures', out)).as_posix()
     env = os.environ.copy()
     env['TECTONIC_CACHE_DIR'] = str(args.cache_dir.resolve())
-    for name, height in HEIGHTS.items():
-        tex = PREAMBLE.replace('HEIGHT', str(height)).replace('SOURCES', sources).replace('NAME', name)
+    if args.export_relation and 'relation' not in args.diagrams:
+        parser.error('--export-relation requires relation in --diagrams.')
+    for name in args.diagrams:
+        height = HEIGHTS[name]
+        tex = PREAMBLE.replace('HEIGHT', str(height)).replace('SOURCES', sources).replace('NAME', name).replace('FIGURES', figures)
         source = out / f'{name}.tex'
         source.write_text(tex, encoding='utf-8')
         if 'tectonic' in engine.name.lower():

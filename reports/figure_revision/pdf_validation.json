@@ -1,0 +1,52 @@
+{
+  "page_count": 33,
+  "pdf_bytes": 3595299,
+  "pdf_sha256": "8837330b0b648a7dd9eb7e0088c297301cb5332a678feaea6bef575d80369879",
+  "appendix_first_page": 30,
+  "reference_pages": [
+    29
+  ],
+  "geometry_pages": [
+    5
+  ],
+  "fvm_pages": [
+    8
+  ],
+  "text_changed_pages_vs_previous": [
+    5,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29
+  ],
+  "last_revision_changed_pages": [
+    29
+  ],
+  "static_checks": {
+    "missing_refs": [],
+    "duplicate_labels": [],
+    "missing_cites": [],
+    "uncited_bibs": [],
+    "image_count": 13,
+    "missing_images": [],
+    "tex_warnings": []
+  }
+}

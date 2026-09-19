@@ -1,0 +1,28 @@
+[
+  {
+    "path": "paper/figures/fig_geometry_prototype_ai.png",
+    "source_generation": "exec-886095eb-3f27-43b0-8cca-22771f4858c3.png",
+    "pixels": [
+      2172,
+      724
+    ],
+    "sha256": "7b7d1d8b4a76e3a1628fb4fca386258c52751918d9cc61df0bbc537e7a81fc4f",
+    "width_in_paper_mm": 160,
+    "effective_dpi_at_160mm": 344.805,
+    "tool": "built-in image_gen",
+    "kind": "AI-generated explanatory illustration; not experimental data"
+  },
+  {
+    "path": "paper/figures/fig_reference_mapping_ai.png",
+    "source_generation": "exec-8ad23c06-146b-4d05-b6b3-6f8cd545ac56.png",
+    "pixels": [
+      2172,
+      724
+    ],
+    "sha256": "8264bcd872dbf2c843cd81be1ed81a31cc9f9c2962fb2f1061e8b98ef6340652",
+    "width_in_paper_mm": 160,
+    "effective_dpi_at_160mm": 344.805,
+    "tool": "built-in image_gen",
+    "kind": "AI-generated explanatory illustration; not experimental data"
+  }
+]
