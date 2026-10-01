@@ -1,0 +1,52 @@
+\section{问题二：烘干全过程与干燥规律}\label{sec:q2}
+
+\subsection{求解}
+
+问题二采用附录 3 的经验公式：密度、比热和导热系数随含水率变化，扩散系数随含水率和温度变化，式~\eqref{eq:govC}、\eqref{eq:govT} 通过物性双向耦合。以 $N=800$ 联立求解，直到满足烘干要求（第~\ref{sec:q3}~节）。表~\ref{tab:t3}、表~\ref{tab:t4} 给出前 $\SI{3}{h}$ 的结果，完整结果见 result2.xlsx；全过程的温度与含水率变化见图~\ref{fig:q2}、图~\ref{fig:fields}。
+
+\begin{table}[H]\centering\small
+\caption{3 小时内药材的温度（\si{\celsius}）}\label{tab:t3}
+\input{tables/table3}
+\end{table}
+
+\begin{table}[H]\centering\small
+\caption{3 小时内药材的水分浓度（\si{kg/kg}）}\label{tab:t4}
+\input{tables/table4}
+\end{table}
+
+\subsection{两个阶段}
+
+以药材各处与烘房的温差都不超过 $\SI{0.5}{K}$ 作为预热平衡完成的标志，记该时刻为 $\tpe$，计算得 $\tpe=\SI{2.70}{h}$。烘房自身约在 $\SI{1.8}{h}$ 进入恒温段（与 $\SI{50}{\celsius}$ 相差不超过 $\SI{0.5}{K}$），药材滞后约 $\SI{0.9}{h}$，与热扩散时间 $R_0^2/\alpha\approx\SI{0.77}{h}$ 相当（图~\ref{fig:q2}(a)）。
+
+\parahead{预热平衡阶段（$0$--$\SI{2.70}{h}$）} 药材由 $\SI{28}{\celsius}$ 升到约 $\SI{49.7}{\celsius}$，表面与中心的温差最大 $\SI{3.3}{K}$，升温使扩散系数增大约 2.4 倍。这一阶段表面含水率高、干燥速率大，平均含水率由 2.55 降到 1.468，平均干燥速率 $\SI{0.401}{h^{-1}}$；所用时间只占烘干时长的 4.7\%，却完成了全部失水量的 44.6\%。
+
+\parahead{恒温干燥阶段（$\SI{2.70}{h}$ 以后）} 药材各处温度与烘房一致，温度场不再变化（图~\ref{fig:fields}(a)），干燥由内部扩散控制，平均干燥速率只有 $\SI{0.0245}{h^{-1}}$，约为预热平衡阶段的 1/16。含水率 0.15 的等值线由表面逐渐向中心推进（图~\ref{fig:fields}(b)），中心最后达到烘干要求。
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{fig_q2_stages.pdf}
+\caption{问题二的两个阶段。(a) 前 $\SI{6}{h}$ 的烘房、表面与中心温度，阴影为预热平衡阶段；(b) 全过程的中心、平均与表面含水率，虚线为烘干要求 0.15。}
+\label{fig:q2}
+\end{figure}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{fig_q23_fields.pdf}
+\caption{问题二、三的温度场与含水率场。(a) 前 $\SI{3}{h}$ 的温度场，白线为等温线；(b) 全过程的含水率场（色标按幂次拉伸以显示低含水率区），红线为含水率 0.15 的等值线。}
+\label{fig:fields}
+\end{figure}
+
+\subsection{干燥规律}
+
+\parahead{干燥速率单调下降，没有恒速段} 由式~\eqref{eq:rate}，干燥速率只取决于表面含水率与烘房含水浓度之差。表面含水率在开始后迅速下降，干燥速率在开始时最大（$\SI{0.729}{h^{-1}}$），此后单调下降（图~\ref{fig:drying}(b)）。题设的传质边界按含水率差计算失水量，与表面温度和供热无关；表面变干后，干燥速率由内部向表面的扩散决定，因此整个过程都属于降速干燥。第~\ref{sec:evap}~节将说明，若计入蒸发所需的热量，前期会出现恒速干燥段。
+
+\parahead{干燥曲线符合双指数规律} 用水分比 $\mathit{MR}=(\Cbar-C_e)/(C_0-C_e)$ 描述干燥曲线，平衡含水率 $C_e$ 取恒温段的烘房含水浓度 0.05，拟合文献中常用的薄层干燥方程\cite{erbay}。单指数的 Henderson--Pabis 方程 $\mathit{MR}=a\mathrm{e}^{-kt}$ 的决定系数 $R^2=0.9645$，Page 方程 $\mathit{MR}=\mathrm{e}^{-kt^n}$ 的 $R^2=0.9759$，二者都不能同时描述前期的快速失水与后期的缓慢失水；双指数方程
+\begin{equation}
+\mathit{MR}=0.927\,\mathrm{e}^{-t/4.25}+0.075\,\mathrm{e}^{-t/59.2}\qquad(t\ \text{以 h 计})
+\label{eq:twoterm}
+\end{equation}
+的 $R^2=0.99991$，均方根误差 0.0016（图~\ref{fig:drying}(a)）。两项分别对应两个阶段：时间常数 $\SI{4.25}{h}$ 的快速项来自表层失水，振幅 0.927 表明绝大部分水分在前十几个小时内移出；时间常数 $\SI{59.2}{h}$ 的慢速项来自中心附近的扩散，振幅只有 0.075，却决定了烘干时长。问题四的干燥曲线同样符合双指数规律（$R^2=0.99969$，时间常数 $\SI{5.99}{h}$ 和 $\SI{76.4}{h}$）。
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{fig_drying.pdf}
+\caption{干燥曲线与干燥速率曲线。(a) 水分比（对数纵轴），实线为数值解，圆点为式~\eqref{eq:twoterm} 形式的双指数拟合；(b) 干燥速率随平均含水率的变化，横轴自左向右为干燥方向。}
+\label{fig:drying}
+\end{figure}

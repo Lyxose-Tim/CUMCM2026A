@@ -1,0 +1,29 @@
+\section{问题一：预热平衡阶段}\label{sec:q1}
+
+\subsection{求解}
+
+问题一采用附录 2 的常物性，体积热容 $\rho c_p=\SI{2.132e6}{J/(m^3.K)}$，热扩散率 $\alpha=\SI{1.69e-7}{m^2/s}$，扩散系数只依赖含水率。此时式~\eqref{eq:govT} 是常系数线性方程，式~\eqref{eq:govC} 不含温度，温度与含水率互不影响。以 $N=1600$ 求解到 $\SI{1800}{s}$，表~\ref{tab:t1}、表~\ref{tab:t2} 给出指定时刻与位置的结果，完整结果见 result1.xlsx，径向分布见图~\ref{fig:q1}。
+
+\begin{table}[H]\centering\small
+\caption{30 分钟内药材的温度（\si{\celsius}）}\label{tab:t1}
+\input{tables/table1}
+\end{table}
+
+\begin{table}[H]\centering\small
+\caption{30 分钟内药材的水分浓度（\si{kg/kg}）}\label{tab:t2}
+\input{tables/table2}
+\end{table}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{fig_q1.pdf}
+\caption{问题一的温度与含水率径向分布（$100$--$\SI{1800}{s}$）。}
+\label{fig:q1}
+\end{figure}
+
+\subsection{结果分析}
+
+\parahead{温度由表及里升高，预热尚未完成} 烘房温度在 $\SI{1800}{s}$ 内由 $\SI{28}{\celsius}$ 升到 $\SI{41.5}{\celsius}$，药材由表面向内依次升温。$\SI{100}{s}$ 时只有表层开始升温（表面 $\SI{28.18}{\celsius}$，中心不变）；$\SI{1800}{s}$ 时表面 $\SI{36.79}{\celsius}$、中心 $\SI{33.58}{\celsius}$，径向温差 $\SI{3.2}{K}$，中心仍比烘房低 $\SI{7.9}{K}$。此时 Fourier 数 $\alpha t/R_0^2=0.76$，热量刚传到中心，预热平衡远未完成。传热 Biot 数 $Bi_h=1.39$，表面换热与内部导热的阻力相当，所以既有表面与烘房的温差，也有明显的径向温差。
+
+\parahead{失水集中在表层} 表面含水率在 $\SI{100}{s}$ 内就由 2.55 降到 2.2470，$\SI{1800}{s}$ 时降到 1.5102；而距中心 $\SI{1.5}{cm}$ 处降到 2.3755，$\SI{1}{cm}$ 处只降到 2.5383，$\SI{0.5}{cm}$ 以内基本不变。按含水率比初值低 0.01 计，失水层厚约 $\SI{1.0}{cm}$。水分扩散时间 $R_0^2/D\approx\SI{22.5}{h}$ 远大于 $\SI{1800}{s}$，且 $Bi_m=3.24$，表面失水快于内部补给，表层迅速变干，形成陡峭的含水率梯度。$\SI{1800}{s}$ 内平均含水率由 2.55 降到 2.294，干燥速率由 $\SI{0.729}{h^{-1}}$ 降到 $\SI{0.425}{h^{-1}}$。
+
+预热平衡阶段的前 30 分钟里，热量已传到中心，失水却只发生在表层，传热与传质的快慢相差悬殊，这正是问题二中划分两个阶段的依据。

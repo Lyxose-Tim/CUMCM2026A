@@ -1,0 +1,3 @@
+question,t_pe_h,frac_lost_by_tpe,rate_preheat_per_h,rate_isothermal_per_h,Tc_at_tpe,Tair_at_tpe,t_rate_max_h,rate0_per_h,Cbar_end,Cs_end,Cbar_at_tpe,max_Ts_minus_Tc,t_oven_plateau_h
+q23,2.7,0.446032,0.400717,0.0245328,49.6702,49.865,0,0.728747,0.124305,0.0526468,1.46806,3.29298,1.81667
+q4,2.83333,0.356334,0.305809,0.0324322,49.7209,49.895,0,0.728747,0.118404,0.0526075,1.68354,5.06602,1.81667

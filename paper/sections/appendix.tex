@@ -1,96 +1,39 @@
 \appendix
-\section{附录}
+\section*{附录}
+\addcontentsline{toc}{section}{附录}
+\renewcommand{\thesubsection}{附录 \Alph{subsection}}
 
 \subsection{支撑材料清单}
 
-随论文提交的支撑材料包括原始数据、源程序、最终结果与检验报告，主要文件如下表。复现最终结果所需的主要源程序附于本附录第~\ref{sec:code}~节，完整源码（含验证与绘图模块）随源码包 \texttt{paper/code/} 提交，单元测试见源码根目录 \texttt{tests/}。
-
 \begin{center}\small
 \renewcommand{\arraystretch}{1.2}
-\begin{tabular}{C{4.6cm}C{9.6cm}}
+\begin{tabular}{C{4.2cm}C{10.4cm}}
 \toprule
 文件 & 说明 \\
 \midrule
-\texttt{config/A题\_config.yaml} & 全部参数的唯一来源（几何、初值、物性、边界、数值与输出设置）。 \\
-\texttt{附件1.xlsx，附件2.xlsx} & 原始环境时序与半径数据（只读）。 \\
-\texttt{config.py, config\_check.py} & 配置加载与合法性校验。 \\
-\texttt{data\_io.py} & 附件读取、环境驱动与半径函数。 \\
-\texttt{props.py} & 各附录的物性公式（具名函数，不用字符串求值）。 \\
-\texttt{grid.py, operators.py} & 节点/控制体权重与有限体积算子（含界面系数）。 \\
-\texttt{solver\_be.py, solver\_bdf.py} & 向后 Euler 与 BDF 时间积分。 \\
-\texttt{criterion.py, postprocess.py} & 烘干终止判据求根与场重构、采样。 \\
-\texttt{runners.py, production.py, run\_all.py} & 各问求解、最终结果生成与总编排。 \\
-\texttt{writers.py} & 结果写盘与工作簿检查。 \\
-\texttt{verify.py} & 解析对照、收敛、守恒、包络、端面等检验。 \\
-\texttt{paper\_figs.py} & 论文插图重绘入口（只读官方结果与验证记录）。 \\
-\texttt{be\_bdf\_diag.py} & 辅助热问题的向后 Euler 与 BDF 时间积分对照诊断（生成图~\ref{fig:bebdf}，只写诊断 CSV）。 \\
-\texttt{latent\_heat\_diag.py} & 表面蒸发吸热的成对热边界对照诊断（生成图~\ref{fig:latent} 与表~\ref{tab:latent}，只写诊断 CSV）。 \\
-\texttt{outputs/result1--4.xlsx} & 四问最终结果。 \\
-\texttt{outputs/table*.csv} & 表~\ref{tab:t1}--\ref{tab:t6} 的同源数据。 \\
-\texttt{reports/*.md} & 检验与灵敏度报告。 \\
-\texttt{tests/*.py} & 单元测试。 \\
+\texttt{result1.xlsx}--\texttt{result4.xlsx} & 四问的完整结果 \\
+\texttt{drying\_model.py} & 四问求解程序：读入附件，生成 result1--4 及表 1--6 的数据（附录 C） \\
+\texttt{analysis.py} & 分析程序：湿空气状态、两阶段与干燥曲线、能量一致模型、工艺情景、问题四收缩关系与数值检验，结果写为 CSV（附录 D） \\
+\texttt{figures.py} & 由 \texttt{analysis.py} 的 CSV 绘制论文全部插图 \\
+\texttt{exports/redo/*.csv} & \texttt{analysis.py} 的输出数据，正文第 2、6--12 节的数值均出自这些文件 \\
+\texttt{附件1.xlsx}、\texttt{附件2.xlsx} & 题给的烘房温湿度与药材半径数据 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 \subsection{运行环境与复现方式}
 
-运行环境为 Python 3.13，依赖 \texttt{numpy}、\texttt{scipy}、\texttt{openpyxl}、\texttt{PyYAML}、\texttt{matplotlib}。参数来自 \texttt{config/A题\_config.yaml}，输入数据为 \texttt{附件/附件1.xlsx}、\texttt{附件/附件2.xlsx}。三类操作区分如下。
-
+程序在 Python 3.13 下运行，依赖 numpy 2.3、scipy 1.16、openpyxl 3.1、matplotlib 3.10。把附件放在 \texttt{附件/} 目录后依次执行：
 \begin{enumerate}[label=(\arabic*),leftmargin=2.2em,itemsep=1pt]
-\item \textbf{只读重绘图表}（不重跑求解）：\texttt{python -m drymodel.paper\_figs} 由官方结果与验证记录重绘 \texttt{figures/*.pdf}；\texttt{python -m drymodel.paper\_latex} 由 \texttt{outputs/*.csv} 重新生成表格片段。图~\ref{fig:bebdf} 所需的时间积分对照数据由 \texttt{python -m drymodel.be\_bdf\_diag}、图~\ref{fig:latent} 与表~\ref{tab:latent} 的蒸发吸热对照数据由 \texttt{python -m drymodel.latent\_heat\_diag} 单独生成（仅写 \texttt{exports/} 下的诊断 CSV/JSON，不触发生产计算）。论文的图与结果表均由此得到，重新排版不需要重跑生产导出。
-\item \textbf{候选/验证计算}：\texttt{python -m drymodel.run\_all}（不加 \texttt{-{}-produce}）走候选与验证管线，生成 \texttt{reports/} 下的检验报告，不导出最终结果。
-\item \textbf{最终结果复现}：\texttt{python -m drymodel.run\_all -{}-produce} 在 \texttt{config.production.approved=true} 下续算并导出官方 \texttt{result1--4.xlsx}，同时执行工作簿终检。文字与图表的修订不需要执行该步。
+\item \texttt{python drying\_model.py -{}-data 附件 -{}-out output}：生成 result1--4.xlsx 与表 1--6 的 CSV；
+\item \texttt{python analysis.py -{}-data 附件 -{}-out exports/redo}：生成第 2、6--12 节所用的全部数据；
+\item \texttt{python figures.py}：读取上述 CSV，生成全部插图。
 \end{enumerate}
 
-Overleaf 编译包用于论文编译，与可独立运行 Python 的支撑材料包分开。
+\subsection{四问求解程序 drying\_model.py}
 
-\subsection{散度展开与离散代数核算}\label{sec:divexp}
+\lstinputlisting{code/drying_model.py}
 
-\paragraph{散度形式中的系数梯度项}
-把式~\eqref{eq:govC} 右端在 $r>0$ 处展开
-\begin{equation}
-\frac1r\pd{}{r}\!\left(rD\pd{C}{r}\right)=D\!\left(\frac{\partial^2C}{\partial r^2}+\frac1r\pd{C}{r}\right)+\pd{D}{r}\pd{C}{r}
-\label{eq:divexp-eq}
-\end{equation}
+\subsection{分析程序 analysis.py}
 
-其中最后一项 $\partial D/\partial r\cdot\partial C/\partial r$ 反映扩散能力随位置变化的影响。若把方程写成 $D\,\nabla^2C$，便省去该项，使局部含水率变化与原扩散通量的净流入不再一致，从而改变含水率场与烘干完成时刻；在状态梯度陡峭的区域这一影响可能更明显。本文保留散度形式并按界面通量离散，正是为把该项完整包含在通量里。
-
-\paragraph{离散代数自洽核算}
-向后 Euler 的逐步离散累计通量为
-\begin{equation}
-I_{\mathrm{BE}}^{n}=\sum_{j=1}^{n}\Delta t_j\,\frac{2h_m}{R_j}\big[C_s^{j}-\Cenv(t_j)\big]
-\label{eq:ibe}
-\end{equation}
-
-其中 $j$ 为实际时间子步编号，$\Delta t_j=t_j-t_{j-1}$，$C_s^{j}$ 为该步末表面值，固定域取 $R_j=R_0$、动域取 $R_j=R(t_j)$。以之作离散代数收支，$|\Cbar^{n}-\Cbar^{0}+I_{\mathrm{BE}}^{n}|/|\Delta\Cbar|$ 约为 $\num{1.5e-14}$（$\Cbar^{n}$、$\Cbar^{0}$ 为末、初时间层的平均含水率）；热量收支的残差约 $\SI{3.212e-10}{W/m}$。这类代数恒等式核验离散实现的自洽性，与第~\ref{sec:verification}~节把连续解表面通量独立求积的水分收支核验分属不同层次。
-
-\paragraph{向后 Euler 的稳定性与迭代说明}
-在冻结正系数的线性耗散扩散子问题下，向后 Euler 格式无条件稳定；这一性质并不保证大步长下的计算精度，也不能推出非线性 Picard 迭代必然收敛，故正文只把向后 Euler 用作辅助热问题上的时间离散核查，实际收敛性由每步的迭代增量、方程残差判据与失败缩步机制保证。
-
-\paragraph{诊断用的近似汽化焓}
-第~\ref{sec:latent}~节的表面蒸发吸热扩展分析采用一个诊断用的纯水汽化焓近似关系式
-\begin{equation}
-L_v(T)=10^{3}\big(2500.8-2.36\,\theta+0.0016\,\theta^2-6\times10^{-5}\,\theta^3\big)\ \si{J/kg},\qquad \theta=T-273.15
-\end{equation}
-
-其中函数输入 $T$ 以 $\si{K}$ 计、$\theta$ 为对应摄氏温度，近 $\SI{50}{\celsius}$ 给出约 $\SI{2.38e6}{J/kg}$；本算例采样温度约在 $10$--$\SI{50}{\celsius}$。该式为本诊断选用的近似关系，纯水汽化焓的物性背景见\cite{iapws}，本文不据此声称已完成对该组多项式系数的独立拟合或核定其适用温区。
-
-\subsection{主要源程序}\label{sec:code}
-
-以下按调用关系给出复现最终结果所需的主要源程序，包括配置校验与结果写盘等依赖模块；验证与绘图模块见源码包 \texttt{paper/code/}，单元测试见源码根目录 \texttt{tests/}。
-
-\lstinputlisting[caption={config.py：配置加载与访问},label={lst:config}]{code/config.py}
-\lstinputlisting[caption={config\_check.py：配置合法性校验},label={lst:cfgchk}]{code/config_check.py}
-\lstinputlisting[caption={props.py：各附录物性公式},label={lst:props}]{code/props.py}
-\lstinputlisting[caption={data\_io.py：附件读取与环境/半径驱动},label={lst:dataio}]{code/data_io.py}
-\lstinputlisting[caption={grid.py：节点与控制体权重},label={lst:grid}]{code/grid.py}
-\lstinputlisting[caption={operators.py：有限体积算子与界面系数},label={lst:operators}]{code/operators.py}
-\lstinputlisting[caption={solver\_be.py：向后 Euler 时间积分},label={lst:be}]{code/solver_be.py}
-\lstinputlisting[caption={solver\_bdf.py：BDF 自适应时间积分},label={lst:bdf}]{code/solver_bdf.py}
-\lstinputlisting[caption={criterion.py：烘干终止判据求根},label={lst:crit}]{code/criterion.py}
-\lstinputlisting[caption={postprocess.py：场重构与采样},label={lst:post}]{code/postprocess.py}
-\lstinputlisting[caption={runners.py：各问求解},label={lst:runners}]{code/runners.py}
-\lstinputlisting[caption={writers.py：结果写盘与工作簿检查},label={lst:writers}]{code/writers.py}
-\lstinputlisting[caption={production.py：最终结果生成},label={lst:prod}]{code/production.py}
-\lstinputlisting[caption={run\_all.py：总编排},label={lst:runall}]{code/run_all.py}
+\lstinputlisting{code/analysis.py}

@@ -1,7 +1,7 @@
 % !TEX program = xelatex
 % CUMCM 2026 A 题「药材的烘干问题」
 % 编译器：XeLaTeX（ctex 需要）。TeX Live 2023+ / Overleaf 均可。
-% 版式：A4、四边页边距 2.5 cm、匿名、无目录、从摘要页起页码从 1 连续编号。
+% 版式：A4、四边页边距 2.5 cm、匿名、无目录、从摘要页起页码连续编号。
 \documentclass[a4paper,12pt]{ctexart}
 
 \usepackage[a4paper,margin=2.5cm]{geometry}
@@ -14,18 +14,16 @@
 \usepackage[shortlabels]{enumitem}
 \usepackage{siunitx}
 \usepackage{xcolor}
-\usepackage{tabularx}
 \usepackage{longtable}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,fit}
 \usepackage{listings}
 \usepackage{fancyhdr}
 
 \sisetup{detect-all}
 \graphicspath{{figures/}}
 \captionsetup{font=footnotesize,labelsep=quad}
+\captionsetup[table]{skip=4pt}
 
-% 页眉页脚：页码居中于页脚，页眉留空（不要左上角小标与文字、无页眉横线）
+% 页眉页脚：页码居中于页脚，页眉留空、无横线
 \pagestyle{fancy}
 \fancyhf{}
 \fancyfoot[C]{\thepage}
@@ -37,69 +35,61 @@
 \linespread{1.25}
 \setlength{\parindent}{2em}
 
-% 显示公式与上下文留出约一行的清晰间距（统一设置，不逐处叠加 \\ 或负 vspace）
-\setlength{\abovedisplayskip}{10pt plus 2pt minus 2pt}
-\setlength{\belowdisplayskip}{10pt plus 2pt minus 2pt}
-\setlength{\abovedisplayshortskip}{6pt plus 2pt}
-\setlength{\belowdisplayshortskip}{8pt plus 2pt}
+% 显示公式与上下文的间距
+\setlength{\abovedisplayskip}{8pt plus 2pt minus 2pt}
+\setlength{\belowdisplayskip}{8pt plus 2pt minus 2pt}
+\setlength{\abovedisplayshortskip}{5pt plus 2pt}
+\setlength{\belowdisplayshortskip}{6pt plus 2pt}
 
-% 公式编号 (节号,节内序号)，例如 (5,1)、(5,2)、(6,1)
+% 公式编号 (节号,节内序号)
 \numberwithin{equation}{section}
 \renewcommand{\theequation}{\arabic{section},\arabic{equation}}
 
 % 居中且允许换行的定宽列
 \newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
 
-% 符号说明续表用：保存/恢复表计数，使无编号 longtable 不占用结果表 1--7 的编号
+% 符号说明用：保存/恢复表计数，使无编号 longtable 不占用结果表 1--6 的编号
 \newcounter{symtblsave}
 
 % ---- 统一记号 ----
 \newcommand{\pd}[2]{\dfrac{\partial #1}{\partial #2}}
 \newcommand{\Cbar}{\bar{C}}
 \newcommand{\tstar}{t^{*}}
-\newcommand{\tsamp}{t_{\mathrm{s}}}
-\newcommand{\tsampq}[1]{t_{\mathrm{s},#1}}   % 带问题编号的严格合格采样时刻
+\newcommand{\tpe}{t_{\mathrm{pe}}}
 \newcommand{\Cmax}{C_{\max}}
 \newcommand{\Cenv}{C_{\mathrm{env}}}
 \newcommand{\Tair}{T_{\mathrm{air}}}
+\newcommand{\Twb}{T_{\mathrm{wb}}}
 \newcommand{\rhos}{\rho_{\mathrm{s}}}
-% 段首黑体提示（无前置圆点、无尾部标点；提示与正文同段、段首缩进两字）
 \newcommand{\parahead}[1]{\par\indent{\heiti\bfseries #1}\enspace\ignorespaces}
 
-% ---- 配色（Ocean Jelly + Warm Coral，与插图一致）----
+% ---- 配色（与插图一致）----
 \definecolor{palDeep}{HTML}{005BBD}
-\definecolor{palOcean}{HTML}{008FF5}
-\definecolor{palJelly}{HTML}{29C7F6}
-\definecolor{palIce}{HTML}{86E6FF}
-\definecolor{palAmber}{HTML}{FFC247}
-\definecolor{palGOrange}{HTML}{FFA83A}
-\definecolor{palCoral}{HTML}{FF7A45}
-\definecolor{palCRed}{HTML}{FF5B57}
 \definecolor{palRed}{HTML}{F0404F}
 \definecolor{palChar}{HTML}{252A30}
-\definecolor{palMist}{HTML}{EAF3F8}
 
 % ---- 源代码清单样式（附录）----
 \lstset{
-  basicstyle=\ttfamily\footnotesize,
+  basicstyle=\linespread{1.0}\ttfamily\scriptsize,
   keywordstyle=\color{palDeep}\bfseries,
   commentstyle=\color{palChar!70},
   stringstyle=\color{palRed},
-  numbers=left, numberstyle=\tiny\color{gray}, numbersep=6pt,
+  numbers=left, numberstyle=\tiny\color{gray}, numbersep=5pt,
   frame=single, rulecolor=\color{gray!40},
   breaklines=true, breakatwhitespace=false,
   columns=fullflexible, keepspaces=true, showstringspaces=false,
   extendedchars=true, tabsize=4, language=Python,
-  aboveskip=6pt, belowskip=6pt,
+  aboveskip=4pt, belowskip=4pt,
 }
 
-\title{\vspace{-1.0cm}{\zihao{2}\heiti\bfseries 基于径向传热传质模型的药材干燥分析}}
+\title{\vspace{-1.2cm}{\zihao{3}\heiti\bfseries 药材热风烘干的径向传热传质模型与干燥规律分析}}
 \author{}
 \date{}
 
 \begin{document}
 \maketitle
 \thispagestyle{plain}
+\vspace{-1.2cm}
 
 \input{sections/abstract}
 
@@ -109,22 +99,35 @@
 \input{sections/assumptions}
 \input{sections/symbols}
 \input{sections/model}
+\input{sections/q1}
+\input{sections/q2}
+\input{sections/q3}
+\input{sections/q4}
+\input{sections/process}
+\input{sections/evap}
 \input{sections/verification}
 \input{sections/evaluation}
 
 \input{sections/ai_statement}
 
-% 参考文献按正文首次引用顺序排列（thebibliography 为唯一来源）。
-\begin{thebibliography}{9}
+% 参考文献按正文首次引用顺序排列
+\begin{thebibliography}{99}
+\setlength{\itemsep}{1pt}
+\small
+\bibitem{whitaker} Whitaker S. Simultaneous heat, mass, and momentum transfer in porous media: a theory of drying[J]. Advances in Heat Transfer, 1977, 13: 119--203.
 \bibitem{crank} Crank J. The Mathematics of Diffusion[M]. 2nd ed. Oxford: Clarendon Press, 1975.
 \bibitem{carslaw} Carslaw H S, Jaeger J C. Conduction of Heat in Solids[M]. 2nd ed. Oxford: Clarendon Press, 1959.
-\bibitem{fipy} National Institute of Standards and Technology. FiPy: Discretization[EB/OL]. [2026-09-12]. https://pages.nist.gov/fipy/en/stable/numerical/discret.html.
-\bibitem{maddix2018b} Maddix D C, Sampaio L, Gerritsen M. Numerical artifacts in the discontinuous Generalized Porous Medium Equation: How to avoid spurious temporal oscillations[J]. Journal of Computational Physics, 2018, 368: 277--298. DOI: 10.1016/j.jcp.2018.04.045.
-\bibitem{maddix2018a} Maddix D C, Sampaio L, Gerritsen M. Numerical artifacts in the Generalized Porous Medium Equation: Why harmonic averaging itself is not to blame[J]. Journal of Computational Physics, 2018, 361: 280--298. DOI: 10.1016/j.jcp.2018.02.010.
-\bibitem{scipy} Virtanen P, Gommers R, Oliphant T E, et al. SciPy 1.0: fundamental algorithms for scientific computing in Python[J]. Nature Methods, 2020, 17: 261--272. DOI: 10.1038/s41592-019-0686-2.
-\bibitem{scipybdf} SciPy Developers. scipy.integrate.BDF --- SciPy Reference Guide[EB/OL]. [2026-09-12]. https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.BDF.html.
-\bibitem{iapws} International Association for the Properties of Water and Steam (IAPWS). Saturation properties of ordinary water substance: liquid and vapour enthalpy[EB/OL]. [2026-09-13]. https://iapws.org/technical-guidance/release/Supp-sat.
-\bibitem{comsol} COMSOL. An Introduction to Modeling Evaporative Cooling[EB/OL]. [2026-09-13]. https://www.comsol.com/blogs/intro-to-modeling-evaporative-cooling.
+\bibitem{crank1984} Crank J. Free and Moving Boundary Problems[M]. Oxford: Clarendon Press, 1984.
+\bibitem{patankar} Patankar S V. Numerical Heat Transfer and Fluid Flow[M]. Washington: Hemisphere Publishing Corporation, 1980.
+\bibitem{maddix} Maddix D C, Sampaio L, Gerritsen M. Numerical artifacts in the discontinuous Generalized Porous Medium Equation: How to avoid spurious temporal oscillations[J]. Journal of Computational Physics, 2018, 368: 277--298.
+\bibitem{shampine} Shampine L F, Reichelt M W. The MATLAB ODE Suite[J]. SIAM Journal on Scientific Computing, 1997, 18(1): 1--22.
+\bibitem{scipy} Virtanen P, Gommers R, Oliphant T E, et al. SciPy 1.0: fundamental algorithms for scientific computing in Python[J]. Nature Methods, 2020, 17: 261--272.
+\bibitem{erbay} Erbay Z, Icier F. A review of thin layer drying of foods: theory, modeling, and experimental results[J]. Critical Reviews in Food Science and Nutrition, 2010, 50(5): 441--464.
+\bibitem{bergman} Bergman T L, Lavine A S, Incropera F P, et al. Fundamentals of Heat and Mass Transfer[M]. 7th ed. Hoboken: John Wiley \& Sons, 2011.
+\bibitem{chp} 国家药典委员会. 中华人民共和国药典（2025 年版）一部：凡例第十七条[S]. 2025.
+\bibitem{ashrae} ASHRAE. 2001 ASHRAE Handbook: Fundamentals (SI Edition), Chapter 6: Psychrometrics[M]. Atlanta: ASHRAE, 2001.
+\bibitem{tan} 谭天恩, 窦梅, 周明华, 等. 化工原理（下册）[M]. 3 版. 北京: 化学工业出版社, 2006.
+\bibitem{mujumdar} Mujumdar A S. Handbook of Industrial Drying[M]. 4th ed. Boca Raton: CRC Press, 2015.
 \bibitem{mcmrule} 全国大学生数学建模竞赛组委会. 全国大学生数学建模竞赛人工智能工具使用规定（2026 年试行）[EB/OL]. (2026-08-03). https://www.mcm.edu.cn/.
 \end{thebibliography}
 

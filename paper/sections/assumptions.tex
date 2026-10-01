@@ -1,61 +1,10 @@
-\section{模型假设}
-
-为使模型可解且抓住主要物理机制，作如下假设。图~\ref{fig:geom} 给出几何与主要假设的示意；题给的尺寸、初值与附件来源见第~\ref{sec:restate}~节，控制方程、干物质密度关系、插值与常值延续的具体做法分别见第~\ref{sec:model}~节的相应小节。
-
-\begin{figure}[H]\centering
-\begin{tikzpicture}[font=\small,>=Stealth,line join=round]
-\def\Lx{5.6}\def\Ry{0.9}\def\ee{0.4}
-% 几何主体（侧视）
-\fill[palMist] (0,-\Ry) rectangle (\Lx,\Ry);
-\draw[palDeep,dashed] (0,0) ellipse (\ee and \Ry);              % 背端面（忽略轴向）
-\draw[palDeep] (0,\Ry) -- (\Lx,\Ry) (0,-\Ry) -- (\Lx,-\Ry);
-\filldraw[fill=palIce!45,draw=palDeep] (\Lx,0) ellipse (\ee and \Ry);  % 前端面
-\draw[palCoral,thick] (\Lx/2,-\Ry) -- (\Lx/2,\Ry);             % 中截面
-\fill[palDeep] (\Lx/2,0) circle (1.4pt);
-% 第一层（上）：热交换（箭头避开中截面 x=Lx/2，为中截面标注留出通道）
-\foreach \x in {1.0,1.8,3.8,4.6}{\draw[->,palCoral,thick] (\x,\Ry+0.78) -- (\x,\Ry+0.26);}
-\node[text=palCoral,font=\scriptsize,anchor=south] at (\Lx/2,\Ry+0.98) {热风对流加热 $h$};
-% 中截面标注：中截面正上方独立通道，短引线
-\draw[palCoral,thin] (\Lx/2,\Ry) -- (\Lx/2,\Ry+0.2);
-\node[text=palCoral,font=\scriptsize,anchor=south] at (\Lx/2,\Ry+0.2) {中截面};
-% 中心标注：左侧空白，沿中轴短引线
-\draw[palChar,thin] (\Lx/2,0) -- (-0.12,0);
-\node[palChar,font=\scriptsize,anchor=east] at (-0.15,0) {中心 $r=0$};
-% 第二层（下）：失水
-\foreach \x in {1.0,1.8,3.8,4.6}{\draw[->,palDeep,thick] (\x,-\Ry-0.06) -- (\x,-\Ry-0.56);}
-\node[text=palDeep,font=\scriptsize,anchor=north] at (\Lx/2,-\Ry-0.74) {表面失水 $h_m$};
-% 第三层（最下）：长度尺寸
-\draw[<->,palChar] (0,-\Ry-1.18) -- (\Lx,-\Ry-1.18);
-\node[palChar,font=\scriptsize,anchor=north] at (\Lx/2,-\Ry-1.20) {长度 $L=\SI{25}{cm}$（恒定）};
-\node[palChar,font=\scriptsize,anchor=north] at (\Lx/2,-\Ry-1.78) {(a) 圆柱侧视};
-% —— 截面视图（右，放大；R(t) 置于上部环带、与 R0、r、收缩箭头分区）——
-\begin{scope}[xshift=9.6cm,yshift=-0.55cm]
-\draw[palDeep,dashed] (0,0) circle (1.15);
-\filldraw[fill=palIce!40,draw=palCoral] (0,0) circle (0.72);
-\foreach \a in {200,270,340}{\draw[->,palCoral] ({1.13*cos(\a)},{1.13*sin(\a)}) -- ({0.75*cos(\a)},{0.75*sin(\a)});}
-\draw[->,palDeep,thick] (0,0) -- (0.72,0);
-\node[palDeep,font=\scriptsize,anchor=north] at (0.40,-0.03) {$r$};
-\fill[palDeep] (0,0) circle (1.2pt);
-\node[palChar,font=\scriptsize,anchor=south] at (0,1.18) {$R_0$};
-\node[text=palCoral,font=\scriptsize] at (0,0.92) {$R(t)$};
-\node[palChar,font=\scriptsize,align=center,anchor=north] at (0,-1.34) {$R_0\!\to\!R(t)$、$L$ 不变};
-\node[palChar,font=\scriptsize,anchor=north] at (0,-1.86) {(b) 中截面收缩};
-\end{scope}
-\end{tikzpicture}
-\caption{几何与主要假设示意。左图：圆柱药材侧视图，展示侧面对流换热、表面失水及长度尺寸，虚线端面表示忽略轴向变化的一维径向近似；右图：中截面收缩示意，蓝色虚线与珊瑚色实线分别表示初始边界和当前边界，半径由 $R_0$ 变为 $R(t)$，长度保持不变。}
-\label{fig:geom}
-\end{figure}
-
-基于上述物理图景，本文作如下假设：
+\section{模型假设}\label{sec:assume}
 
 \begin{enumerate}[label=(\arabic*),leftmargin=2.2em,itemsep=2pt]
-\item 药材视为均匀、各向同性的连续多孔介质，初始温度与含水率均匀。
-\item 忽略轴向变化与两端散失，温度和含水率仅随半径及时间变化，中心处满足对称条件。
-\item 水分迁移采用有效扩散描述，将蒸汽扩散、毛细流动等机制的净效果并入有效扩散系数，环境含水浓度作为表面传质的有效驱动量。
-\item 传热过程考虑内部导热与表面对流换热，体积热容取 $\rho(C)c_p(C)$，水分蒸发的吸热项不单独计入。
-\item 各问沿用题给的同一组表面对流换热系数 $h$ 与传质系数 $h_m$。
-\item 问题四中干物质质量守恒，干物质基准密度在各时刻沿半径均匀分布，物料按给定半径作仿射收缩，长度保持不变。
-\item 环境观测结束后，以观测末段的平均状态代表后续的恒定工况。
+\item 药材为均质、各向同性的长圆柱，初始温度和含水率均匀。长度是半径的 12.5 倍，端面只占总表面积的约 7\%，忽略端面的传热传质，温度和含水率只随半径和时间变化。
+\item 药材内部的水分迁移用有效扩散描述\cite{whitaker}，扩散系数取题给经验公式；水分在表面离开药材，内部不计相变。
+\item 表面换热服从牛顿冷却定律，表面失水服从对流传质定律，系数 $h=\SI{25}{W/(m^2.K)}$、$h_m=\SI{8e-7}{m/s}$ 取自附录 2，各问沿用。题设的热边界不含蒸发吸热，第~\ref{sec:evap}~节放宽这一假设。
+\item 烘房空气充分混合，温度和含水浓度只随时间变化：前 $\SI{4}{h}$ 按附件 1 线性插值；此后烘房处于恒温段，取最后 $\SI{1}{h}$ 数据的平均值。
+\item 附件 1 中烘房的含水浓度理解为空气含湿量（kg 水/kg 干空气），据此折算的相对湿度在 60\%--82\% 之间。这一理解只用于第~\ref{sec:evap}~节的湿球温度计算，不影响四问的结果。
+\item 问题二、三中药材尺寸不变；问题四中药材按附件 2 的半径均匀收缩，干物质随药材骨架一起移动，72 h 之后半径保持末值。
 \end{enumerate}
-
-其中一维近似的依据见第~\ref{sec:analysis}~节，有效扩散与干物质密度关系的推导见第~\ref{sec:model}~节，这些简化对结果的影响在第~\ref{sec:eval}~节讨论。

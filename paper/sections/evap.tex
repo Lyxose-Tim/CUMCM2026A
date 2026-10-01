@@ -1,0 +1,49 @@
+\section{蒸发吸热与能量一致的干燥模型}\label{sec:evap}
+
+\subsection{烘房的湿空气状态}
+
+把附件 1 的含水浓度看作空气含湿量 $W$，按湿空气关系\cite{ashrae}，水蒸气分压 $p_w$ 满足 $W=0.62198\,p_w/(p-p_w)$，与饱和蒸气压之比即相对湿度；湿球温度 $\Twb$ 由
+\begin{equation}
+W=\frac{(2501-2.381\,\Twb)\,W_s(\Twb)-1.006\,(T-\Twb)}{2501+1.805\,T-4.186\,\Twb}
+\label{eq:wb}
+\end{equation}
+求得，其中温度以 \si{\celsius} 计，$W_s(\Twb)$ 为湿球温度下的饱和含湿量，大气压 $p$ 取 $\SI{101.325}{kPa}$。计算得相对湿度在 59.5\%--82.0\% 之间，恒温段为 61\%，符合烘房的常见状态；湿球温度由 $\SI{25.5}{\celsius}$ 升到 $\SI{41.7}{\celsius}$（图~\ref{fig:environment}）。
+
+\subsection{题设模型的能量核算}
+
+水分在表面汽化需要吸热。按题设传质边界，单位表面积的失水通量为 $j=\rhos h_m(C_s-\Cenv)$，需要汽化热 $L_vj$；而湿润表面最低只能冷却到湿球温度，空气所能提供的对流热最多为 $h(\Tair-\Twb)$。取干物质密度 $\rhos=\rho(C_0)/(1+C_0)=\SI{275.0}{kg/m^3}$，汽化潜热 $L_v=(2501-2.381\,\Twb)\,\si{kJ/kg}$\cite{ashrae}，二者之比见图~\ref{fig:evap}(c)：烘干开始时所需汽化热是可供对流热的 21.7 倍，直到 $\SI{6.9}{h}$ 后才降到 1 以下。也就是说，题设模型前期的失水速率在能量上无法实现，它实际假定蒸发所需的热量总能得到满足，所得烘干时长是供热充足条件下的下限。
+
+\subsection{能量一致模型}
+
+干燥理论指出，物料表面充分湿润时，干燥速率由传热控制，表面温度等于湿球温度，称为恒速干燥阶段；表面变干后转入由内部扩散控制的降速干燥阶段\cite{tan,mujumdar}。据此保留题设的传质系数，把表面条件改为
+\begin{gather}
+-D\pd{C}{r}\bigg|_{R_0}=\varphi=\min\left\{h_m(C_s-\Cenv),\ \varphi_c\right\},\qquad \varphi_c=\frac{h(\Tair-\Twb)}{L_v(\Twb)\,\rhos} \label{eq:evapC}\\
+-k\pd{T}{r}\bigg|_{R_0}=h(T_s-\Tair)+L_v(T_s)\,\rhos\varphi \label{eq:evapT}
+\end{gather}
+式~\eqref{eq:evapC} 表示失水通量不超过对流供热所能蒸发的水量，式~\eqref{eq:evapT} 在表面热平衡中计入汽化吸热。传质边界给出的通量小于 $\varphi_c$ 时，失水量与题设模型相同，只多了汽化吸热。问题四取 $\rhos=\rhos^0(R_0/R)^2$，在参考坐标下同样处理。
+
+\subsection{结果}
+
+能量一致模型给出了典型的三段干燥过程（图~\ref{fig:evap}(a)(b)）。前约 $\SI{3}{h}$ 药材升温，干燥速率随 $\Tair-\Twb$ 增大而上升；此后表面与中心都停在湿球温度 $\SI{41.7}{\celsius}$，干燥速率恒为 $\SI{0.1135}{h^{-1}}$，即恒速干燥段；$\SI{16.45}{h}$ 时平均含水率降到临界值 0.711（表面 0.443），转入降速干燥段，药材温度逐步升向 $\SI{50}{\celsius}$。问题三、四的烘干时长分别为 $\SI{68.62}{h}$ 和 $\SI{69.02}{h}$，比题设模型长 19.4\% 和 35.1\%（表~\ref{tab:evap}）。问题四的恒速段持续到 $\SI{27.83}{h}$，因为收缩后单位干物质对应的表面积变小，同样的供热只能维持较低的干燥速率。
+
+\begin{table}[H]\centering\small
+\caption{题设模型与能量一致模型的对比}\label{tab:evap}
+\begin{tabular}{ccccccc}
+\toprule
+ & \multicolumn{2}{c}{烘干时长/h} & & \multicolumn{3}{c}{恒速干燥段} \\
+\cmidrule(lr){2-3}\cmidrule(lr){5-7}
+ & 题设模型 & 能量一致模型 & 增幅 & 结束时刻/h & 临界平均含水率 & 段末干燥速率/\si{h^{-1}} \\
+\midrule
+问题三 & 57.47 & 68.62 & 19.4\% & 16.45 & 0.711 & 0.1135 \\
+问题四 & 51.09 & 69.02 & 35.1\% & 27.83 & 0.531 & 0.0673 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{fig_evap.pdf}
+\caption{蒸发吸热的影响。(a) 问题三的药材温度，阴影为能量一致模型的恒速干燥段；(b) 干燥速率曲线，圆点为临界含水率；(c) 题设模型中按传质边界计算的汽化热与湿球状态下可供对流热之比；(d) 最大含水率随时间的变化及烘干时长。}
+\label{fig:evap}
+\end{figure}
+
+以上结果说明三点。第一，题设模型给出的 $\SI{57.47}{h}$ 和 $\SI{51.09}{h}$ 是供热充足时的下限，计入蒸发吸热后约为 $\SI{69}{h}$，仍在 2--3 天之内。第二，「恒温干燥阶段」在能量一致模型中细分为恒速段和降速段，恒速段的药材温度是湿球温度而不是烘房温度。第三，前期干燥受供热限制，这正是第~\ref{sec:process}~节中湿度和风速在能量一致模型里影响显著的原因。
