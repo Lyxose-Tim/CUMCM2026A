@@ -4,22 +4,22 @@
 
 附件 2 显示，半径在前 $\SI{6}{h}$ 由 $\SI{2}{cm}$ 降到 $\SI{1.374}{cm}$，$\SI{12}{h}$ 降到 $\SI{1.248}{cm}$，此后缓慢趋于 $\SI{1.2}{cm}$；收缩主要发生在快速失水的前期，与平均含水率的下降同步（图~\ref{fig:q4}(c)）。按第~\ref{sec:ref}~节的参考坐标，以附录 4 的物性和附件 2 的半径联立求解式~\eqref{eq:ref}、\eqref{eq:refbc}，取 $N=800$。result4.xlsx 以固定位置 $0,0.1,\dots,\SI{1.9}{cm}$ 和「药材表面」为列，位于药材之外的位置留空。
 
+\begin{figure}[htbp]\centering
+\includegraphics[width=\textwidth]{fig_q4.pdf}
+\caption{问题四的结果。(a) 物理坐标下的含水率场，红线为表面 $R(t)$，橙色虚线为含水率 0.15 的等值线，右侧白色为药材之外；(b) 固定位置与表面的含水率；(c) 附件 2 的半径与计算的平均含水率；(d) 物性与收缩对烘干时长的分别影响（$N=400$）。}
+\label{fig:q4}
+\end{figure}
+
 同样以 $\Cmax$ 降到 0.15 为判据（最大值仍在中心），得到烘干时长
 \begin{equation}
 \tstar=\SI{51.0920}{h}\quad(\SI{183931.30}{s})
 \end{equation}
 表~\ref{tab:t6} 给出每隔 $\SI{6}{h}$ 的含水率与当时的半径。预热平衡阶段在 $\SI{2.83}{h}$ 结束，完成了全部失水量的 35.6\%；干燥曲线同样符合双指数规律（图~\ref{fig:drying}）。
 
-\begin{table}[H]\centering\small
+\begin{table}[htbp]\centering\small
 \caption{药材烘干过程的水分浓度（\si{kg/kg}）}\label{tab:t6}
 \input{tables/table6}
 \end{table}
-
-\begin{figure}[htbp]\centering
-\includegraphics[width=\textwidth]{fig_q4.pdf}
-\caption{问题四的结果。(a) 物理坐标下的含水率场，红线为表面 $R(t)$，橙色虚线为含水率 0.15 的等值线，右侧白色为药材之外；(b) 固定位置与表面的含水率；(c) 附件 2 的半径与计算的平均含水率；(d) 物性与收缩对烘干时长的分别影响（$N=400$）。}
-\label{fig:q4}
-\end{figure}
 
 \subsection{物性与收缩的影响}
 
