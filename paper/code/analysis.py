@@ -23,13 +23,13 @@ import drying_model as dm
 P_ATM = 101325.0            # 烘房按标准大气压计 / Pa
 N_SCAN = 400                # 情景扫描网格（与 N=800 的烘干时长相差约 1e-4 h）
 T_CAP_SCAN = 400.0          # 情景扫描积分上限 / h
-T_SCAN = (45.0, 50.0, 55.0, 60.0, 65.0, 70.0)            # 恒温段温度情景 / ℃
+T_SCAN = (45.0, 50.0, 55.0, 60.0, 65.0, 70.0)            # 恒温段温度情景 / °C
 C_SCAN = (0.02, 0.03, 0.04, 0.05, 0.06, 0.07)            # 恒温段含水浓度情景 / (kg/kg)
 
 
 # ============================== 1 湿空气性质（ASHRAE Fundamentals 2001，第 6 章） ==============================
 def p_ws(t_C):
-    """饱和水蒸气压 / Pa（Hyland–Wexler 关联式，0～200 ℃，式 (6)）。"""
+    """饱和水蒸气压 / Pa（Hyland–Wexler 关联式，0～200 °C，式 (6)）。"""
     T = np.asarray(t_C, dtype=np.float64) + 273.15
     return np.exp(-5.8002206e3 / T + 1.3914993 - 4.8640239e-2 * T + 4.1764768e-5 * T ** 2
                   - 1.4452093e-8 * T ** 3 + 6.5459673 * np.log(T))
@@ -41,7 +41,7 @@ def rel_humidity(t_C, W, p=P_ATM):
 
 
 def wet_bulb(t_C, W, p=P_ATM):
-    """湿球温度 / ℃：解式 (35) W = [(2501−2.381t*)W_s* − 1.006(t−t*)]/(2501+1.805t−4.186t*)。"""
+    """湿球温度 / °C：解式 (35) W = [(2501-2.381t*)W_s* - 1.006(t-t*)]/(2501+1.805t-4.186t*)。"""
     def f(tw):
         ps = p_ws(tw)
         Ws = 0.62198 * ps / (p - ps)
@@ -50,15 +50,15 @@ def wet_bulb(t_C, W, p=P_ATM):
 
 
 def latent_heat(t_C):
-    """汽化潜热 h_fg ≈ h_g − h_w = (2501+1.805t) − 4.186t = (2501 − 2.381t) kJ/kg（式 (32)(34)）→ J/kg。"""
+    """汽化潜热 h_fg ~ h_g - h_w = (2501+1.805t) - 4.186t = (2501 - 2.381t) kJ/kg（式 (32)(34)）-> J/kg。"""
     return (2501.0 - 2.381 * t_C) * 1.0e3
 
 
 # ============================== 2 环境情景 ==============================
 def env_variant(t, T_C, C, *, T_set=None, C_set=None, wetbulb=False):
     """在附件 1 基础上构造情景：
-    T_set：升温段按 T_air−28 ℃ 等比例缩放，4 h 后取 T_set；
-    C_set：含水浓度的增量按升温进度 (T_air−28)/(T̄−28) 叠加，初值不变，4 h 后取 C_set；
+    T_set：升温段按 T_air-28 °C 等比例缩放，4 h 后取 T_set；
+    C_set：含水浓度的增量按升温进度 (T_air-28)/(Tbar-28) 叠加，初值不变，4 h 后取 C_set；
     wetbulb：以湿球温度代替空气温度（供能量一致模型取 T_wb）。不加参数时与基准环境完全相同。"""
     win = (t >= dm.WINDOW[0]) & (t <= dm.WINDOW[1])
     Tm, Cm = float(np.mean(T_C[win])), float(np.mean(C[win]))
@@ -113,7 +113,7 @@ def tstar(model, cap_h=T_CAP_SCAN, rtol=dm.RTOL):
 
 
 def integrate_rate(model, traj, t_end, nodes):
-    """∫_0^t_end (−dC̄/dt) dt：以 BDF 步点与输入数据节点划分小区间，每段 8 点 Gauss 求积
+    """int_0^t_end (-dCbar/dt) dt：以 BDF 步点与输入数据节点划分小区间，每段 8 点 Gauss 求积
     （稠密输出在步内是多项式，环境与半径在节点间线性，故求积误差只剩舍入）。"""
     n = model.N + 1
     knots = np.concatenate([seg.t for seg in traj.segments] + [np.asarray(nodes, float), [0.0, t_end]])
@@ -127,7 +127,7 @@ def integrate_rate(model, traj, t_end, nodes):
 
 
 def degree_hours(env, t_end):
-    """烘房相对初温的加热度时 ∫(T_air − T0)dt / (K·h)，作热损失的代理量。"""
+    """烘房相对初温的加热度时 int (T_air - T0)dt / (K·h)，作热损失的代理量。"""
     ts = np.linspace(0.0, t_end, 20001)
     return float(np.trapezoid(np.asarray(env.T_air_K(ts)) - dm.KELVIN - dm.T0_C, ts)) / 3600.0
 
@@ -148,7 +148,7 @@ def thin_layer_fits(t_h, MR):
 
 # ============================== 4 常系数圆柱解析解（数值检验） ==============================
 def bessel_roots(Bi, M=200):
-    """λJ1(λ) = Bi·J0(λ) 的前 M 个正根；第 n 个根位于 J1 的第 n−1 个零点与 J0 的第 n 个零点之间。"""
+    """lambda·J1(lambda) = Bi·J0(lambda) 的前 M 个正根；第 n 个根位于 J1 的第 n-1 个零点与 J0 的第 n 个零点之间。"""
     z0 = jn_zeros(0, M)
     z1 = np.concatenate([[0.0], jn_zeros(1, M - 1)])
     return np.array([brentq(lambda s: s * j1(s) - Bi * j0(s), a + 1e-12, b - 1e-12) for a, b in zip(z1, z0)])
@@ -156,7 +156,7 @@ def bessel_roots(Bi, M=200):
 
 def series_cylinder(Bi, Fo, xi, M=200):
     """常系数无限长圆柱、第三类边界、均匀初值的无量纲解（Crank 第 5 章；Carslaw–Jaeger 第 7 章）：
-    θ = Σ 2Bi·J0(λ_n ξ)·exp(−λ_n² Fo) / [(λ_n² + Bi²)·J0(λ_n)]，θ = (u − u_∞)/(u_0 − u_∞)。"""
+    theta = sum 2Bi·J0(lambda_n xi)·exp(-lambda_n² Fo) / [(lambda_n² + Bi²)·J0(lambda_n)]，theta = (u - u_inf)/(u_0 - u_inf)。"""
     lam = bessel_roots(Bi, M)
     A = 2.0 * Bi / ((lam ** 2 + Bi ** 2) * j0(lam))
     return j0(np.outer(xi, lam)) @ (A * np.exp(-lam ** 2 * Fo))
@@ -194,16 +194,16 @@ def analytic_check(N, T_inf_C=50.0, C_inf=0.05, t_end=86400.0):
 # ============================== 5 能量一致的表面蒸发（恒速—降速干燥） ==============================
 class EvapLimitedModel(dm.Model):
     """表面失水通量不超过对流供热所能蒸发的水量（恒速干燥段由传热控制）：
-    φ = min(h_m(C_s − C_env), φ_c)，φ_c = h(T_air − T_wb) / (L_v(T_wb)·ρ_s)；
-    表面热平衡同时扣除蒸发吸热 L_v(T_s)·ρ_s·φ。φ 按干基含水率计（m/s），ρ_s 为干物质密度，
-    固定域取初始值 ρ(C0)/(1+C0)，问题四按干物质守恒取 ρ_s0·(R0/R)²。"""
+    phi = min(h_m(C_s - C_env), phi_c)，phi_c = h(T_air - T_wb) / (L_v(T_wb)·rho_s)；
+    表面热平衡同时扣除蒸发吸热 L_v(T_s)·rho_s·phi。phi 按干基含水率计（m/s），rho_s 为干物质密度，
+    固定域取初始值 rho(C0)/(1+C0)，问题四按干物质守恒取 rho_s0·(R0/R)²。"""
     def __init__(self, N, props, env, env_wb, *, radius=None, **kw):
         super().__init__(N, props, env, radius=radius, **kw)
         self.env_wb = env_wb
         self.rho_s0 = float(props.rho(dm.C0)) / (1.0 + dm.C0)
 
     def flux(self, t, Cs):
-        """返回 (实际失水通量 φ, 当前半径 R, 干物质密度 ρ_s)。"""
+        """返回 (实际失水通量 phi, 当前半径 R, 干物质密度 rho_s)。"""
         R = float(self.radius.R(t)) if self.ref else self.R0
         rho_s = self.rho_s0 * (self.R0 / R) ** 2 if self.ref else self.rho_s0
         Ta, Tw = float(self.env.T_air_K(t)), float(self.env_wb.T_air_K(t))
@@ -228,7 +228,7 @@ class EvapLimitedModel(dm.Model):
 
 # ============================== 6 问题四：半径—平均含水率收缩律 ==============================
 class ShrinkModel(dm.Model):
-    """参考坐标模型，半径由平均含水率决定：R = g(C̄)，C̄ = C0 − I，I 为累计失水（增广状态）。"""
+    """参考坐标模型，半径由平均含水率决定：R = g(Cbar)，Cbar = C0 - I，I 为累计失水（增广状态）。"""
     def __init__(self, N, props, env, g):
         super().__init__(N, props, env, radius=dm.Radius(np.array([0.0, 1.0]), np.array([dm.R0, dm.R0])))
         self.g, self._R = g, dm.R0
@@ -298,7 +298,7 @@ def main(argv=None):
     rows.append(["plateau", Tm, Wm, rel_humidity(Tm, Wm), wet_bulb(Tm, Wm)])
     write_csv(out / "env_psychro.csv", ["t_s", "T_air_C", "W", "RH", "T_wb_C"], rows)
     log(f"湿空气：RH {min(r[3] for r in rows[:-1]):.3f}–{max(r[3] for r in rows[:-1]):.3f}，"
-        f"恒温段 T_wb={wet_bulb(Tm, Wm):.2f} ℃")
+        f"恒温段 T_wb={wet_bulb(Tm, Wm):.2f} °C")
 
     # ---- 5.2 问题一：预热平衡阶段 ----
     m1 = dm.Model(dm.N_FINAL["q1"], dm.PropsQ1(), env)
@@ -319,9 +319,9 @@ def main(argv=None):
           ["dT_air_material_1800", float(s1["dTmax"][-1])], ["Cbar_1800", float(s1["Cbar"][-1])],
           ["rate_1800_per_h", float(s1["rate"][-1] * 3600)]]
     write_csv(out / "q1_scales.csv", ["quantity", "value"], q1)
-    log(f"问题一：Fo(1800s)={q1[0][1]:.3f}，表层失水深度≈{depth:.2f} cm")
+    log(f"问题一：Fo(1800s)={q1[0][1]:.3f}，表层失水深度~{depth:.2f} cm")
 
-    # 时间尺度与 Biot 数：热扩散时间 R0²/α、水分扩散时间 R0²/D，Bi_h = hR0/k，Bi_m = h_m R0/D
+    # 时间尺度与 Biot 数：热扩散时间 R0²/alpha、水分扩散时间 R0²/D，Bi_h = hR0/k，Bi_m = h_m R0/D
     T0K, TpK = dm.T0_C + dm.KELVIN, env.T_const_K
     scales = []
     for name, p in (("q1", dm.PropsQ1()), ("q23", dm.PropsQ23()), ("q4", dm.PropsQ4())):
@@ -333,7 +333,7 @@ def main(argv=None):
             scales.append([name, tag, D, dm.R0 ** 2 / D / 3600, dm.HM * dm.R0 / D, dm.H * dm.R0 / kC])
         scales.append([name, "thermal", k0 / b0, dm.R0 ** 2 / (k0 / b0) / 3600, None, dm.H * dm.R0 / k0])
     write_csv(out / "scales.csv", ["question", "state", "D_or_alpha_m2s", "time_scale_h", "Bi_m", "Bi_h"], scales)
-    t_oven = float(t1[np.where(np.abs(T1 - (TpK - dm.KELVIN)) > 0.5)[0][-1] + 1])   # 此后烘房与恒温段均值相差 ≤0.5 K
+    t_oven = float(t1[np.where(np.abs(T1 - (TpK - dm.KELVIN)) > 0.5)[0][-1] + 1])   # 此后烘房与恒温段均值相差 <=0.5 K
 
     # ---- 5.3 问题二三、问题四基准轨迹（N=800）：两阶段、干燥曲线 ----
     m23 = dm.Model(dm.N_FINAL["q23"], dm.PropsQ23(), env)
@@ -364,18 +364,17 @@ def main(argv=None):
                                    "t_oven_plateau_h"], stages)
     log("两阶段：" + "；".join(f"{r[0]} t_pe={r[1]:.2f} h，失水 {100 * r[2]:.1f}%" for r in stages))
 
-    # 烘干标准的影响：最大含水率首次降到各阈值的时刻（60 s 序列线性插值）
-    thr = []
-    for c in (0.30, 0.25, 0.20, 0.18, 0.16, 0.15):
-        row = [c]
-        for s in (s23, s4):
-            i = int(np.argmax(s["Cmax"] <= c))
-            t0, t1_, c0, c1 = s["t"][i - 1], s["t"][i], s["Cmax"][i - 1], s["Cmax"][i]
-            row.append((t0 + (c0 - c) / (c0 - c1) * (t1_ - t0)) / 3600)
-        thr.append(row)
-    write_csv(out / "threshold.csv", ["threshold", "t_q3_h", "t_q4_h"], thr)
+    # 烘干标准的影响：最大、表面、平均含水率首次降到各阈值的时刻（60 s 序列线性插值）
+    def crossing(t, y, c):
+        i = int(np.argmax(y <= c))
+        return (t[i - 1] + (y[i - 1] - c) / (y[i - 1] - y[i]) * (t[i] - t[i - 1])) / 3600
 
-    # 干燥曲线的薄层模型拟合：水分比 MR = (C̄ − C_e)/(C0 − C_e)，C_e 取恒温段环境含水浓度
+    thr = [[c] + [crossing(s["t"], s[key], c) for s in (s23, s4) for key in ("Cmax", "Cs", "Cbar")]
+           for c in (0.30, 0.25, 0.20, 0.18, 0.16, 0.15)]
+    write_csv(out / "threshold.csv", ["threshold", "t_q3_max_h", "t_q3_surface_h", "t_q3_mean_h",
+                                      "t_q4_max_h", "t_q4_surface_h", "t_q4_mean_h"], thr)
+
+    # 干燥曲线的薄层模型拟合：水分比 MR = (Cbar - C_e)/(C0 - C_e)，C_e 取恒温段环境含水浓度
     fits = []
     for name, s in (("q3", s23), ("q4", s4)):
         Ce = env.C_const
@@ -431,8 +430,8 @@ def main(argv=None):
         ec.append([th, Ta, Tw, Cs, jw, q_req, q_avail, q_req / q_avail if q_avail > 0 else None])
     write_csv(out / "energy_check.csv", ["t_h", "T_air_C", "T_wb_C", "C_s", "j_w_kg_m2s", "q_evap_W_m2",
                                          "q_conv_wb_W_m2", "ratio"], ec)
-    log("蒸发吸热：" + "；".join(f"{r[0]} 题设 {r[1]:.2f} h → 能量一致 {r[2]:.2f} h" for r in bracket)
-        + "；恒速段结束 " + "，".join(f"{c[0]} {c[1]:.2f} h（C̄={c[2]:.3f}）" for c in crit))
+    log("蒸发吸热：" + "；".join(f"{r[0]} 题设 {r[1]:.2f} h -> 能量一致 {r[2]:.2f} h" for r in bracket)
+        + "；恒速段结束 " + "，".join(f"{c[0]} {c[1]:.2f} h（Cbar={c[2]:.3f}）" for c in crit))
 
     # ---- 5.5 工艺参数（问题二三，N=400） ----
     base400 = tstar(dm.Model(N_SCAN, dm.PropsQ23(), env))
@@ -442,13 +441,13 @@ def main(argv=None):
         return (tstar(dm.Model(N_SCAN, dm.PropsQ23(), e, **kw)),
                 tstar(EvapLimitedModel(N_SCAN, dm.PropsQ23(), e, ew, **kw)), e)
 
-    # 温度下限取 45 ℃：恒温段含湿量 0.05 kg/kg 在 40 ℃ 时已超过饱和含湿量（约 0.049），情景不成立
+    # 温度下限取 45 °C：恒温段含湿量 0.05 kg/kg 在 40 °C 时已超过饱和含湿量（约 0.049），情景不成立
     rowsT = []
     for Ts in T_SCAN:
         tb, te, e = pair({"T_set": Ts})
         rowsT.append([Ts, tb, degree_hours(e, tb * 3600.0), te])
     write_csv(out / "process_Tset.csv", ["T_set_C", "t_star_h", "degree_hours_Kh", "t_star_evap_h"], rowsT)
-    log("温度：" + "，".join(f"{r[0]:.0f}℃→{r[1]:.2f}/{r[3]:.2f} h" for r in rowsT))
+    log("温度：" + "，".join(f"{r[0]:.0f}°C->{r[1]:.2f}/{r[3]:.2f} h" for r in rowsT))
     rowsC = [[Cs, *pair({"C_set": Cs})[:2]] for Cs in C_SCAN]
     write_csv(out / "process_Cenv.csv", ["C_set", "t_star_h", "t_star_evap_h"], rowsC)
     rowsR = [[R, *pair({}, R0=R / 100.0)[:2]] for R in (1.0, 1.5, 2.0, 2.5)]
@@ -497,7 +496,7 @@ def main(argv=None):
     # ---- 5.7 数值检验 ----
     ana = [[N, *analytic_check(N)] for N in (200, 400, 800, 1600)]
     write_csv(out / "analytic.csv", ["N", "maxerr_T_K", "maxerr_C"], ana)
-    log("解析对照：" + "；".join(f"N={r[0]} ΔT={r[1]:.2e} ΔC={r[2]:.2e}" for r in ana))
+    log("解析对照：" + "；".join(f"N={r[0]} Delta T={r[1]:.2e} Delta C={r[2]:.2e}" for r in ana))
     ver = [["q23_tstar_N200_h", tstar(dm.Model(200, dm.PropsQ23(), env))],
            ["q23_tstar_N400_h", base400],
            ["q23_tstar_N800_h", ts23 / 3600],

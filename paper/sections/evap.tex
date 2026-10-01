@@ -4,7 +4,7 @@
 
 把附件 1 的含水浓度看作空气含湿量 $W$，按湿空气关系\cite{ashrae}，水蒸气分压 $p_w$ 满足 $W=0.62198\,p_w/(p-p_w)$，与饱和蒸气压之比即相对湿度；湿球温度 $\Twb$ 由
 \begin{equation}
-W=\frac{(2501-2.381\,\Twb)\,W_s(\Twb)-1.006\,(T-\Twb)}{2501+1.805\,T-4.186\,\Twb}
+W=\frac{(2501-2.381\,\Twb)\,W_s(\Twb)-1.006\,(\Tair-\Twb)}{2501+1.805\,\Tair-4.186\,\Twb}
 \label{eq:wb}
 \end{equation}
 求得，其中温度以 \si{\celsius} 计，$W_s(\Twb)$ 为湿球温度下的饱和含湿量，大气压 $p$ 取 $\SI{101.325}{kPa}$。计算得相对湿度在 59.5\%--82.0\% 之间，恒温段为 61\%，符合烘房的常见状态；湿球温度由 $\SI{25.5}{\celsius}$ 升到 $\SI{41.7}{\celsius}$（图~\ref{fig:environment}）。

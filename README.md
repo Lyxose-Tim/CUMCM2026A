@@ -1,5 +1,24 @@
 # CUMCM 2026 A题「药材的烘干问题」求解工程
 
+## 论文重做版（`redo/award-version` 分支）
+
+重做后的论文在 `paper/`（编译说明见 [`paper/README_compile.md`](paper/README_compile.md)），所用程序都在 `paper/code/`：
+
+| 程序 | 作用 | 输出 |
+|---|---|---|
+| `drying_model.py` | 四问求解（单文件，与下文工程包的生产结果逐单元格一致） | result1–4.xlsx、表 1–6 的 CSV |
+| `analysis.py` | 湿空气状态、两阶段与干燥曲线、能量一致的蒸发模型、工艺情景、问题四收缩关系、数值检验 | `exports/redo/*.csv` |
+| `figures.py` | 论文插图 | `paper/figures/*.pdf` |
+
+```bash
+cd paper/code
+python drying_model.py --data ../../附件 --out output
+python analysis.py --data ../../附件 --out ../../exports/redo
+python figures.py
+```
+
+以下为原工程包的说明。
+
 一维径向（中截面）有效扩散—导热模型的 Q1–Q4 建模求解代码。实现严格对齐冻结方案
 《建模方案v1.1/A题_建模方案.md》v1.2，参数唯一来源为 [`config/A题_config.yaml`](config/A题_config.yaml)。
 

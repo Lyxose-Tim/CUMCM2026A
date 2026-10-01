@@ -336,7 +336,7 @@ def fig_drying(save, C):
         p = [float(fits[f"p{i}"][m][0]) for i in (1, 2, 3, 4)]
         a.semilogy(h, MR, color=col, label=f"{lab} 数值解")
         a.semilogy(h[::30], two_term(h[::30], *p), "o", ms=2.6, mfc="white", mec=col, mew=0.8,
-                   label=f"双指数：$\\tau_1$={1 / p[1]:.1f} h，$\\tau_2$={1 / p[3]:.0f} h")
+                   label=f"双指数：$\\tau_1$={1 / p[1]:.2f} h，$\\tau_2$={1 / p[3]:.1f} h")
         b.semilogy(s["Cbar"], s["rate"] * 3600, color=col, label=lab)
         tpe = float(st["t_pe_h"][k])
         i = int(np.argmin(np.abs(h - tpe)))

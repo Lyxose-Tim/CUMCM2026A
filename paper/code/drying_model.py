@@ -27,7 +27,7 @@ from scipy.sparse import lil_matrix
 
 # ============================== 1 题给参数与数值设置 ==============================
 R0 = 0.02                    # 初始半径 / m
-T0_C = 28.0                  # 初始温度 / ℃
+T0_C = 28.0                  # 初始温度 / °C
 C0 = 2.55                    # 初始干基含水率 / (kg/kg)
 H = 25.0                     # 对流换热系数 / (W/(m²·K))，附录 2，各问沿用
 HM = 8.0e-7                  # 对流传质系数 / (m/s)，附录 2，各问沿用
@@ -48,7 +48,7 @@ A1 = "时间\\到药材中心的距离"
 
 # ============================== 2 经验物性（附录 2/3/4） ==============================
 def _exp_neg_over(beta, C):
-    """exp(-beta/C)：C≤0 处取 0；指数小于 -700 时以 0 近似（避免下溢）。"""
+    """exp(-beta/C)：C<=0 处取 0；指数小于 -700 时以 0 近似（避免下溢）。"""
     C = np.asarray(C, dtype=np.float64)
     out = np.zeros_like(C)
     pos = C > 0.0
@@ -141,7 +141,7 @@ _XI, _WT = 0.5 * (_U + 1.0), 0.5 * _W      # [0,1] 上的 Gauss 节点与权重
 
 
 def face_integral(Ci, Cj, Tb, Dfun):
-    """积分平均界面系数 ∫_0^1 D((1-ξ)Ci+ξCj, Tb) dξ（8 点 Gauss）。"""
+    """积分平均界面系数 int_0^1 D((1-xi)*Ci + xi*Cj, Tb) dxi（8 点 Gauss）。"""
     acc = np.zeros(np.broadcast(Ci, Cj, Tb).shape, dtype=np.float64)
     for xk, wk in zip(_XI, _WT):
         acc = acc + wk * Dfun((1.0 - xk) * Ci + xk * Cj, Tb)
@@ -185,7 +185,7 @@ class Env:
 
 
 def load_env_data(data_dir):
-    """附件 1：返回 (t/s, T_air/℃, C_env)。"""
+    """附件 1：返回 (t/s, T_air/°C, C_env)。"""
     t, T_C, C = read_columns(Path(data_dir) / "附件1.xlsx")
     return t, T_C, C
 
@@ -214,7 +214,7 @@ def load_radius(data_dir):
 
 # ============================== 4 节点型有限体积离散 ==============================
 class Grid:
-    """节点 i·d（i=0..N），界面 (i+1/2)d，控制体权重 V_i = ∫ r dr（约去 2πL）。"""
+    """节点 i·d（i=0..N），界面 (i+1/2)d，控制体权重 V_i = int r dr（约去 2*pi*L）。"""
     def __init__(self, N, length):
         self.N, self.d = N, length / N
         self.x = np.arange(N + 1) * self.d
@@ -223,7 +223,7 @@ class Grid:
         V[0] = self.d ** 2 / 8.0
         V[1:N] = self.x[1:N] * self.d
         V[N] = length * self.d / 2.0 - self.d ** 2 / 8.0
-        self.V = V                                   # ΣV_i = length²/2
+        self.V = V                                   # sum V_i = length²/2
 
 
 class Model:
@@ -276,12 +276,12 @@ class Model:
         return np.concatenate([np.full(n, C0), np.full(n, T0_C + KELVIN)])
 
     def cbar(self, C):
-        """干物质质量加权平均含水率：固定域 (2/R0²)ΣV_iC_i，参考坐标 2ΣV_ic_i。"""
+        """干物质质量加权平均含水率：固定域 (2/R0²)·sum(V_i·C_i)，参考坐标 2·sum(V_i·c_i)。"""
         L = 1.0 if self.ref else self.R0
         return float(np.dot(2.0 / L ** 2 * self.grid.V, C))
 
     def drying_rate(self, t, C):
-        """平均含水率的下降速率 -dC̄/dt = (2h_m/R)(C_s − C_env)。"""
+        """平均含水率的下降速率 -dCbar/dt = (2h_m/R)(C_s - C_env)。"""
         R = float(self.radius.R(t)) if self.ref else self.R0
         return 2.0 * self.hm / R * (float(C[-1]) - float(self.env.C_env(t)))
 
