@@ -17,6 +17,17 @@
 \usepackage{longtable}
 \usepackage{listings}
 \usepackage{fancyhdr}
+\usepackage{needspace}
+\usepackage[section]{placeins}   % 浮动体不越过节的边界
+
+% 浮动体参数：允许插图占页面较大比例，减少页底空白与只有插图的页面
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.6}
+\renewcommand{\textfraction}{0.12}
+\renewcommand{\floatpagefraction}{0.75}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
 
 \sisetup{detect-all}
 \graphicspath{{figures/}}

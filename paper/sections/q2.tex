@@ -22,13 +22,13 @@
 
 \parahead{恒温干燥阶段（$\SI{2.70}{h}$ 以后）} 药材各处温度与烘房一致，温度场不再变化（图~\ref{fig:fields}(a)），干燥由内部扩散控制，平均干燥速率只有 $\SI{0.0245}{h^{-1}}$，约为预热平衡阶段的 1/16。含水率 0.15 的等值线由表面逐渐向中心推进（图~\ref{fig:fields}(b)），中心最后达到烘干要求。
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
 \includegraphics[width=\textwidth]{fig_q2_stages.pdf}
 \caption{问题二的两个阶段。(a) 前 $\SI{6}{h}$ 的烘房、表面与中心温度，阴影为预热平衡阶段；(b) 全过程的中心、平均与表面含水率，虚线为烘干要求 0.15。}
 \label{fig:q2}
 \end{figure}
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
 \includegraphics[width=\textwidth]{fig_q23_fields.pdf}
 \caption{问题二、三的温度场与含水率场。(a) 前 $\SI{3}{h}$ 的温度场，白线为等温线；(b) 全过程的含水率场（色标按幂次拉伸以显示低含水率区），红线为含水率 0.15 的等值线。}
 \label{fig:fields}
@@ -45,7 +45,7 @@
 \end{equation}
 的 $R^2=0.99991$，均方根误差 0.0016（图~\ref{fig:drying}(a)）。两项分别对应两个阶段：时间常数 $\SI{4.25}{h}$ 的快速项来自表层失水，振幅 0.927 表明绝大部分水分在前十几个小时内移出；时间常数 $\SI{59.2}{h}$ 的慢速项来自中心附近的扩散，振幅只有 0.075，却决定了烘干时长。问题四的干燥曲线同样符合双指数规律（$R^2=0.99969$，时间常数 $\SI{5.99}{h}$ 和 $\SI{76.4}{h}$）。
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
 \includegraphics[width=\textwidth]{fig_drying.pdf}
 \caption{干燥曲线与干燥速率曲线。(a) 水分比（对数纵轴），实线为数值解，圆点为式~\eqref{eq:twoterm} 形式的双指数拟合；(b) 干燥速率随平均含水率的变化，横轴自左向右为干燥方向。}
 \label{fig:drying}

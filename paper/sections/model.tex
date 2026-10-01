@@ -17,7 +17,7 @@ T(r,0)=\SI{301.15}{K},\qquad C(r,0)=C_0=2.55 \label{eq:init}\\
 \end{gather}
 烘房温度 $\Tair(t)$ 与含水浓度 $\Cenv(t)$ 在 $0$--$\SI{4}{h}$ 内按附件 1（每 $\SI{60}{s}$ 一个数据）线性插值；$\SI{4}{h}$ 后取最后 $\SI{1}{h}$ 共 61 个数据的平均值 $\SI{49.9989}{\celsius}$ 和 $0.049988$（图~\ref{fig:environment}）。
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
 \includegraphics[width=\textwidth]{fig_environment.pdf}
 \caption{烘房的湿空气状态。(a) 烘房温度与湿球温度；(b) 含水浓度与相对湿度。$\SI{4}{h}$ 后（阴影区）取最后 $\SI{1}{h}$ 数据的平均值；湿球温度与相对湿度按第~\ref{sec:evap}~节的湿空气关系由含水浓度折算。}
 \label{fig:environment}
@@ -41,7 +41,7 @@ T(r,0)=\SI{301.15}{K},\qquad C(r,0)=C_0=2.55 \label{eq:init}\\
 \end{gather}
 计算域固定为 $[0,1]$，收缩只体现为扩散项的系数 $1/R^2$ 和边界项的系数 $1/R$（图~\ref{fig:geometry}(b)），式~\eqref{eq:rate} 中的 $R_0$ 相应换为 $R(t)$。题目要求的固定位置 $r_j$ 在 $t$ 时刻对应 $x_j=r_j/R(t)$；当 $r_j>R(t)$ 时该位置已在药材之外，结果留空。
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
 \includegraphics[width=\textwidth]{fig_geometry.pdf}
 \caption{物理模型示意。(a) 横截面上的热量、水分交换与中心对称条件，同心环的深浅示意内湿外干的含水率分布；(b) 问题四中物理域 $[0,R(t)]$ 随附件 2 收缩，映射到固定的参考域 $[0,1]$ 上计算。}
 \label{fig:geometry}
